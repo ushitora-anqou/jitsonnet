@@ -7,12 +7,22 @@
   exception Unexpected_char of char
 }
 
+let newline = '\n' | '\r' | "\r\n"
+
 rule main = parse
-|  [' ' '\009' '\012']+ {
+| [' ' '\t']+ {
   main lexbuf
 }
-| '\n' {
+| newline {
   Lexing.new_line lexbuf;
+  main lexbuf
+}
+| "//" | '#' {
+  line_comment lexbuf;
+  main lexbuf
+}
+| "/*" {
+  block_comment lexbuf;
   main lexbuf
 }
 | "-"? ['0'-'9']+ {
@@ -29,4 +39,20 @@ rule main = parse
 }
 | _ as c {
   raise (Unexpected_char c)
+}
+
+and line_comment = parse
+| newline {
+  ()
+}
+| _ {
+  line_comment lexbuf
+}
+
+and block_comment = parse
+| "*/" {
+  ()
+}
+| _ {
+  block_comment lexbuf
 }
