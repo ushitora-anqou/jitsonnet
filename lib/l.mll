@@ -41,7 +41,12 @@
 }
 
 let newline = '\n' | '\r' | "\r\n"
-let hexadecimal_unicode_escape = '\\' 'u' ['0'-'9' 'a'-'f' 'A'-'F'] ['0'-'9' 'a'-'f' 'A'-'F'] ['0'-'9' 'a'-'f' 'A'-'F'] ['0'-'9' 'a'-'f' 'A'-'F']
+let hexadecimal_unicode_escape =
+  "\\u"
+  ['0'-'9' 'a'-'f' 'A'-'F']
+  ['0'-'9' 'a'-'f' 'A'-'F']
+  ['0'-'9' 'a'-'f' 'A'-'F']
+  ['0'-'9' 'a'-'f' 'A'-'F']
 
 rule main = parse
 | [' ' '\t']+ {
