@@ -1,8 +1,9 @@
 (menhir
- (modules parser))
+ (modules p))
 
 (ocamllex
- (modules lexer))
+ (modules l))
 
 (library
- (name jitsonnet))
+ (name jitsonnet)
+ (libraries logs))

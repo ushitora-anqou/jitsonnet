@@ -1,7 +1,23 @@
 {
-  module P = Parser
-
   let keywords = [
+    ("assert", P.Assert);
+    ("else", P.Else);
+    ("error", P.Error);
+    ("false", P.False);
+    ("for", P.For);
+    ("function", P.Function);
+    ("if", P.If);
+    ("import", P.Import);
+    ("importstr", P.Importstr);
+    ("importbin", P.Importbin);
+    ("in", P.In);
+    ("local", P.Local);
+    ("null", P.Null);
+    ("tailstrict", P.Tailstrict);
+    ("then", P.Then);
+    ("self", P.Self);
+    ("super", P.Super);
+    ("true", P.True);
   ]
 
   exception Unexpected_char of char
@@ -25,8 +41,8 @@ rule main = parse
   block_comment lexbuf;
   main lexbuf
 }
-| "-"? ['0'-'9']+ {
-  P.IntLiteral (int_of_string (Lexing.lexeme lexbuf))
+| ('0' | ['1'-'9'] ['0'-'9']*) ('.' ['0'-'9']+)? (['e' 'E'] ['-' '+']? ['0'-'9']+)? {
+  P.Number (Lexing.lexeme lexbuf |> float_of_string)
 }
 | ['a'-'z'] ['a'-'z' '0'-'9' '_' '\'']* {
   let id = Lexing.lexeme lexbuf in

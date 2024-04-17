@@ -1,7 +1,4 @@
-let run file_path =
-  match Jitsonnet.Cmd.run file_path with
-  | Ok () -> ()
-  | Error msg -> Logs.err (fun m -> m "%s" msg)
+let run file_path = Jitsonnet.Cmd.run file_path
 
 let () =
   Fmt.set_style_renderer Fmt.stderr `Ansi_tty;

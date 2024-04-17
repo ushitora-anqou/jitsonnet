@@ -9,6 +9,7 @@ homepage: "https://github.com/ushitora-anqou/jitsonnet"
 doc: "https://github.com/ushitora-anqou/jitsonnet"
 bug-reports: "https://github.com/ushitora-anqou/jitsonnet/issues"
 depends: [
+  "alcotest" {with-test}
   "cmdliner"
   "dune" {>= "3.15"}
   "fmt"
