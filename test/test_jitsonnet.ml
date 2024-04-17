@@ -83,6 +83,39 @@ c'|};
   assert_token (String "\r") {|'\r'|};
   assert_token (String "\t") {|'\t'|};
   assert_token (String "\u{30F9}") {|'\u30F9'|};
+
+  assert_token (String "") {|@""|};
+  assert_token (String "abc") {|@"abc"|};
+  assert_token (String "ab\nc") {|@"ab
+c"|};
+  assert_token (String "\\") {|@"\"|};
+  assert_token (String "\"") {|@""""|};
+  assert_token (String "\'") {|"\'"|};
+  assert_token (String "\\\\") {|@"\\"|};
+  assert_token (String "\\/") {|@"\/"|};
+  assert_token (String "\\b") {|@"\b"|};
+  assert_token (String "\\f") {|@"\f"|};
+  assert_token (String "\\n") {|@"\n"|};
+  assert_token (String "\\r") {|@"\r"|};
+  assert_token (String "\\t") {|@"\t"|};
+  assert_token (String "\\u30F9") {|@"\u30F9"|};
+
+  assert_token (String "") {|@''|};
+  assert_token (String "abc") {|@'abc'|};
+  assert_token (String "ab\nc") {|@'ab
+c'|};
+  assert_token (String "\\\"") {|@'\"'|};
+  assert_token (String "\\") {|@'\'|};
+  assert_token (String "'") {|@''''|};
+  assert_token (String "\\\\") {|@'\\'|};
+  assert_token (String "\\/") {|@'\/'|};
+  assert_token (String "\\b") {|@'\b'|};
+  assert_token (String "\\f") {|@'\f'|};
+  assert_token (String "\\n") {|@'\n'|};
+  assert_token (String "\\r") {|@'\r'|};
+  assert_token (String "\\t") {|@'\t'|};
+  assert_token (String "\\u30F9") {|@'\u30F9'|};
+
   ()
 
 let () =

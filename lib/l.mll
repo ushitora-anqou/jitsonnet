@@ -22,6 +22,7 @@
 
   exception Unexpected_char of char
 
+  let is_string_literal_verbatim = ref false
   let string_literal_buffer = Buffer.create 0
 
   let add_unicode_char_to_buffer s =
@@ -67,12 +68,16 @@ rule main = parse
 | ('0' | ['1'-'9'] ['0'-'9']*) ('.' ['0'-'9']+)? (['e' 'E'] ['-' '+']? ['0'-'9']+)? {
   P.Number (Lexing.lexeme lexbuf |> float_of_string)
 }
-| ('\'' | '"') as c {
+| ('@'? as c1) (('\'' | '"') as c2) {
   Buffer.clear string_literal_buffer;
-  if c = '"' then
-    double_quoted_string lexbuf
-  else
-    single_quoted_string lexbuf;
+  let () =
+    match c1, c2 with
+    | "", '"' -> double_quoted_string lexbuf
+    | "", '\'' -> single_quoted_string lexbuf
+    | _, '"' -> double_quoted_verbatim_string lexbuf
+    | _, '\'' -> single_quoted_verbatim_string lexbuf
+    | _ -> assert false (* unreachable *)
+  in
   P.String (Buffer.contents string_literal_buffer)
 }
 | ['a'-'z'] ['a'-'z' '0'-'9' '_' '\'']* {
@@ -136,4 +141,30 @@ and single_quoted_string = parse
 | _ as c {
   Buffer.add_char string_literal_buffer c;
   single_quoted_string lexbuf
+}
+
+and double_quoted_verbatim_string = parse
+| '"' {
+  ()
+}
+| '"' '"' {
+  Buffer.add_char string_literal_buffer '"';
+  double_quoted_verbatim_string lexbuf
+}
+| _ as c {
+  Buffer.add_char string_literal_buffer c;
+  double_quoted_verbatim_string lexbuf
+}
+
+and single_quoted_verbatim_string = parse
+| '\'' {
+  ()
+}
+| '\'' '\'' {
+  Buffer.add_char string_literal_buffer '\'';
+  single_quoted_verbatim_string lexbuf
+}
+| _ as c {
+  Buffer.add_char string_literal_buffer c;
+  single_quoted_verbatim_string lexbuf
 }
