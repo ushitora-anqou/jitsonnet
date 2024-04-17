@@ -44,6 +44,13 @@ let test_lexer_keyword () =
 
 let test_lexer_number () =
   assert_token (Number 0.0) "0";
+  assert_token (Number 1.0) "1";
+  assert_token (Number 0.0) "0.0";
+  assert_token (Number 1.0) "1.0";
+  assert_token (Number 1.0) "1e0";
+  assert_token (Number 10.0) "1e1";
+  assert_token (Number 10.0) "1e+1";
+  assert_token (Number 0.1) "1e-1";
   ()
 
 let () =
