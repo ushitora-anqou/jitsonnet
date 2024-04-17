@@ -21,9 +21,27 @@
   ]
 
   exception Unexpected_char of char
+
+  let string_literal_buffer = Buffer.create 0
+
+  let add_unicode_char_to_buffer s =
+    let v = "0x" ^ (String.sub s 2 (String.length s - 2)) |> int_of_string in
+    let e = Uutf.encoder `UTF_8 (`Buffer string_literal_buffer) in
+    Uutf.encode e (`Uchar (Uchar.of_int v)) |> ignore;
+    Uutf.encode e `End |> ignore;
+    ()
+
+  let char_for_backslash = function
+    | 'b' -> '\008'
+    | 'f' -> '\012'
+    | 'n' -> '\010'
+    | 'r' -> '\013'
+    | 't' -> '\009'
+    | c -> c
 }
 
 let newline = '\n' | '\r' | "\r\n"
+let hexadecimal_unicode_escape = '\\' 'u' ['0'-'9' 'a'-'f' 'A'-'F'] ['0'-'9' 'a'-'f' 'A'-'F'] ['0'-'9' 'a'-'f' 'A'-'F'] ['0'-'9' 'a'-'f' 'A'-'F']
 
 rule main = parse
 | [' ' '\t']+ {
@@ -43,6 +61,14 @@ rule main = parse
 }
 | ('0' | ['1'-'9'] ['0'-'9']*) ('.' ['0'-'9']+)? (['e' 'E'] ['-' '+']? ['0'-'9']+)? {
   P.Number (Lexing.lexeme lexbuf |> float_of_string)
+}
+| ('\'' | '"') as c {
+  Buffer.clear string_literal_buffer;
+  if c = '"' then
+    double_quoted_string lexbuf
+  else
+    single_quoted_string lexbuf;
+  P.String (Buffer.contents string_literal_buffer)
 }
 | ['a'-'z'] ['a'-'z' '0'-'9' '_' '\'']* {
   let id = Lexing.lexeme lexbuf in
@@ -71,4 +97,38 @@ and block_comment = parse
 }
 | _ {
   block_comment lexbuf
+}
+
+and double_quoted_string = parse
+| '"' {
+  ()
+}
+| hexadecimal_unicode_escape {
+  add_unicode_char_to_buffer (Lexing.lexeme lexbuf);
+  double_quoted_string lexbuf
+}
+| '\\' ([^ 'u'] as c) {
+  Buffer.add_char string_literal_buffer (char_for_backslash c);
+  double_quoted_string lexbuf
+}
+| _ as c {
+  Buffer.add_char string_literal_buffer c;
+  double_quoted_string lexbuf
+}
+
+and single_quoted_string = parse
+| '\'' {
+  ()
+}
+| hexadecimal_unicode_escape {
+  add_unicode_char_to_buffer (Lexing.lexeme lexbuf);
+  single_quoted_string lexbuf
+}
+| '\\' ([^ 'u'] as c) {
+  Buffer.add_char string_literal_buffer (char_for_backslash c);
+  single_quoted_string lexbuf
+}
+| _ as c {
+  Buffer.add_char string_literal_buffer c;
+  single_quoted_string lexbuf
 }

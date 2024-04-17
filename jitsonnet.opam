@@ -17,6 +17,7 @@ depends: [
   "menhir"
   "ocaml"
   "odoc" {with-doc}
+  "uutf"
 ]
 build: [
   ["dune" "subst"] {dev}

@@ -20,6 +20,7 @@ let string_of_token = function
   | EOF -> "EOF"
   | Number f -> Printf.sprintf "Number(%f)" f
   | ID s -> Printf.sprintf "ID(\"%s\")" s
+  | String s -> Printf.sprintf "String(\"%s\")" s
 
 let parse_lex lex =
   let format_error fmt =

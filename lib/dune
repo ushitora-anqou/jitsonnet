@@ -6,4 +6,4 @@
 
 (library
  (name jitsonnet)
- (libraries logs))
+ (libraries logs uutf))

@@ -5,6 +5,7 @@
 %token EOF
 %token <float> Number
 %token <string> ID
+%token <string> String
 
 %start toplevel
 %type <Syntax.program option> toplevel

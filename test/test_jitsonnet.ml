@@ -53,6 +53,38 @@ let test_lexer_number () =
   assert_token (Number 0.1) "1e-1";
   ()
 
+let test_lexer_string () =
+  assert_token (String "") {|""|};
+  assert_token (String "abc") {|"abc"|};
+  assert_token (String "ab\nc") {|"ab
+c"|};
+  assert_token (String "\"") {|"\""|};
+  assert_token (String "\'") {|"\'"|};
+  assert_token (String "\\") {|"\\"|};
+  assert_token (String "/") {|"\/"|};
+  assert_token (String "\b") {|"\b"|};
+  assert_token (String "\x0c") {|"\f"|};
+  assert_token (String "\n") {|"\n"|};
+  assert_token (String "\r") {|"\r"|};
+  assert_token (String "\t") {|"\t"|};
+  assert_token (String "\u{30F9}") {|"\u30F9"|};
+
+  assert_token (String "") {|''|};
+  assert_token (String "abc") {|'abc'|};
+  assert_token (String "ab\nc") {|'ab
+c'|};
+  assert_token (String "\"") {|'\"'|};
+  assert_token (String "\'") {|'\''|};
+  assert_token (String "\\") {|'\\'|};
+  assert_token (String "/") {|'\/'|};
+  assert_token (String "\b") {|'\b'|};
+  assert_token (String "\x0c") {|'\f'|};
+  assert_token (String "\n") {|'\n'|};
+  assert_token (String "\r") {|'\r'|};
+  assert_token (String "\t") {|'\t'|};
+  assert_token (String "\u{30F9}") {|'\u30F9'|};
+  ()
+
 let () =
   let open Alcotest in
   Fmt.set_style_renderer Fmt.stderr `Ansi_tty;
@@ -65,5 +97,6 @@ let () =
         [
           test_case "keyword" `Quick test_lexer_keyword;
           test_case "number" `Quick test_lexer_number;
+          test_case "string" `Quick test_lexer_string;
         ] );
     ]
