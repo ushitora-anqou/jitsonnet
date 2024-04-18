@@ -116,6 +116,22 @@ c'|};
   assert_token (String "\\t") {|@'\t'|};
   assert_token (String "\\u30F9") {|@'\u30F9'|};
 
+  assert_token (String "\nabc\n\ndef\n  gh\n\n|||\n |||\n")
+    {|
+
+ |||
+
+  abc
+
+  def
+    gh
+
+  |||
+   |||
+ |||
+
+|};
+
   ()
 
 let () =

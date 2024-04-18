@@ -21,7 +21,9 @@
   ]
 
   exception Unexpected_char of char
+  exception General_error of string
 
+  let text_block_w = ref None
   let is_string_literal_verbatim = ref false
   let string_literal_buffer = Buffer.create 0
 
@@ -41,6 +43,7 @@
     | c -> c
 }
 
+let whitespace = [' ' '\t']
 let newline = '\n' | '\r' | "\r\n"
 let hexadecimal_unicode_escape =
   "\\u"
@@ -50,7 +53,7 @@ let hexadecimal_unicode_escape =
   ['0'-'9' 'a'-'f' 'A'-'F']
 
 rule main = parse
-| [' ' '\t']+ {
+| whitespace+ {
   main lexbuf
 }
 | newline {
@@ -67,6 +70,11 @@ rule main = parse
 }
 | ('0' | ['1'-'9'] ['0'-'9']*) ('.' ['0'-'9']+)? (['e' 'E'] ['-' '+']? ['0'-'9']+)? {
   P.Number (Lexing.lexeme lexbuf |> float_of_string)
+}
+| "|||" whitespace* newline {
+  Buffer.clear string_literal_buffer;
+  text_block lexbuf;
+  P.String (Buffer.contents string_literal_buffer)
 }
 | ('@'? as c1) (('\'' | '"') as c2) {
   Buffer.clear string_literal_buffer;
@@ -167,4 +175,42 @@ and single_quoted_verbatim_string = parse
 | _ as c {
   Buffer.add_char string_literal_buffer c;
   single_quoted_verbatim_string lexbuf
+}
+
+and text_block = parse
+| newline {
+  Buffer.add_string string_literal_buffer (Lexing.lexeme lexbuf);
+  text_block lexbuf
+}
+| (whitespace* as w) (('|' '|' '|')? as marker) {
+  let () =
+    match !text_block_w with
+    | None when String.length w = 0 ->
+      raise (General_error "text block's first line must start with whitespace.")
+    | None ->
+      text_block_w := Some w
+    | Some _ ->
+      ()
+  in
+  if String.starts_with ~prefix:(Option.get !text_block_w) w then begin
+    let l = String.length (Option.get !text_block_w) in
+    Buffer.add_string string_literal_buffer (String.sub w l (String.length w - l));
+    Buffer.add_string string_literal_buffer marker;
+    text_block' lexbuf;
+    text_block lexbuf
+  end else if marker <> "" then begin
+    ()
+  end else begin
+    raise (General_error (Printf.sprintf "Text block not terminated with ||| %s" (Buffer.contents string_literal_buffer)))
+  end
+}
+
+and text_block' = parse
+| newline {
+  Buffer.add_string string_literal_buffer (Lexing.lexeme lexbuf);
+  ()
+}
+| _ as c {
+  Buffer.add_char string_literal_buffer c;
+  text_block' lexbuf
 }
