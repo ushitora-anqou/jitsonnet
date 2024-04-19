@@ -1,23 +1,23 @@
 {
   let keywords = [
-    ("assert", P.Assert);
-    ("else", P.Else);
-    ("error", P.Error);
-    ("false", P.False);
-    ("for", P.For);
-    ("function", P.Function);
-    ("if", P.If);
-    ("import", P.Import);
-    ("importstr", P.Importstr);
-    ("importbin", P.Importbin);
-    ("in", P.In);
-    ("local", P.Local);
-    ("null", P.Null);
-    ("tailstrict", P.Tailstrict);
-    ("then", P.Then);
-    ("self", P.Self);
-    ("super", P.Super);
-    ("true", P.True);
+    ("assert", P.ASSERT);
+    ("else", P.ELSE);
+    ("error", P.ERROR);
+    ("false", P.FALSE);
+    ("for", P.FOR);
+    ("function", P.FUNCTION);
+    ("if", P.IF);
+    ("import", P.IMPORT);
+    ("importstr", P.IMPORTSTR);
+    ("importbin", P.IMPORTBIN);
+    ("in", P.IN);
+    ("local", P.LOCAL);
+    ("null", P.NULL);
+    ("tailstrict", P.TAILSTRICT);
+    ("then", P.THEN);
+    ("self", P.SELF);
+    ("super", P.SUPER);
+    ("true", P.TRUE);
   ]
 
   exception Unexpected_char of char
@@ -68,13 +68,28 @@ rule main = parse
   block_comment lexbuf;
   main lexbuf
 }
+| '$' { P.DOLLAR }
+| '(' { P.LPAREN }
+| ')' { P.RPAREN }
+| '+' { P.PLUS }
+| ',' { P.COMMA }
+| '.' { P.DOT }
+| ':' { P.COLON }
+| "::" { P.DOUBLECOLONS }
+| ":::" { P.TRIPLECOLONS }
+| ';' { P.SEMICOLON }
+| '=' { P.EQUAL }
+| '[' { P.LBRACKET }
+| ']' { P.RBRACKET }
+| '{' { P.LBRACE }
+| '}' { P.RBRACE }
 | ('0' | ['1'-'9'] ['0'-'9']*) ('.' ['0'-'9']+)? (['e' 'E'] ['-' '+']? ['0'-'9']+)? {
-  P.Number (Lexing.lexeme lexbuf |> float_of_string)
+  P.NUMBER (Lexing.lexeme lexbuf |> float_of_string)
 }
 | "|||" whitespace* newline {
   Buffer.clear string_literal_buffer;
   text_block lexbuf;
-  P.String (Buffer.contents string_literal_buffer)
+  P.STRING (Buffer.contents string_literal_buffer)
 }
 | ('@'? as c1) (('\'' | '"') as c2) {
   Buffer.clear string_literal_buffer;
@@ -86,7 +101,7 @@ rule main = parse
     | _, '\'' -> single_quoted_verbatim_string lexbuf
     | _ -> assert false (* unreachable *)
   in
-  P.String (Buffer.contents string_literal_buffer)
+  P.STRING (Buffer.contents string_literal_buffer)
 }
 | ['a'-'z'] ['a'-'z' '0'-'9' '_' '\'']* {
   let id = Lexing.lexeme lexbuf in

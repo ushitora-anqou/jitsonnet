@@ -1,16 +1,36 @@
 open Jitsonnet
 
-(*
 let assert_expr expected got =
-  assert (Parser.parse_string got = Ok Syntax.{ expr = expected });
+  match Parser.parse_string got with
+  | Error msg ->
+      Logs.err (fun m -> m "failed to parse: %s" msg);
+      Logs.info (fun m -> m "expected %s" (Syntax.show_expr expected));
+      assert false
+  | Ok { expr = got } ->
+      Logs.info (fun m ->
+          m "got %s, expected %s" (Syntax.show_expr got)
+            (Syntax.show_expr expected));
+      assert (got = expected);
+      ()
+
+let test_parse_atoms () =
+  assert_expr Null "null";
+  assert_expr True "true";
+  assert_expr False "false";
+  assert_expr Self "self";
+  assert_expr Dollar "$";
+  assert_expr (String "abc") "\"abc\"";
+  assert_expr (Number 1.0) "1";
   ()
 
-let test_parse_comment () =
-  assert_expr (Number 0) "0 # comment";
-  assert_expr (Number 0) "0 // comment";
-  assert_expr (Number 0) "/* comment */ 0 /* comment */";
+let test_parse_object () =
+  assert_expr (Object (ObjectMemberList [])) "{}";
+  assert_expr
+    (Object
+       (ObjectMemberList
+          [ MemberField (Field (FieldnameID "x", H 1, Number 1.0)) ]))
+    "{x: 1}";
   ()
-*)
 
 let assert_token expected got_src =
   let got = L.main (Lexing.from_string got_src) in
@@ -22,101 +42,101 @@ let assert_token expected got_src =
   ()
 
 let test_lexer_keyword () =
-  assert_token Assert "assert";
-  assert_token Else "else";
-  assert_token Error "error";
-  assert_token False "false";
-  assert_token For "for";
-  assert_token Function "function";
-  assert_token If "if";
-  assert_token Import "import";
-  assert_token Importstr "importstr";
-  assert_token Importbin "importbin";
-  assert_token In "in";
-  assert_token Local "local";
-  assert_token Null "null";
-  assert_token Tailstrict "tailstrict";
-  assert_token Then "then";
-  assert_token Self "self";
-  assert_token Super "super";
-  assert_token True "true";
+  assert_token ASSERT "assert";
+  assert_token ELSE "else";
+  assert_token ERROR "error";
+  assert_token FALSE "false";
+  assert_token FOR "for";
+  assert_token FUNCTION "function";
+  assert_token IF "if";
+  assert_token IMPORT "import";
+  assert_token IMPORTSTR "importstr";
+  assert_token IMPORTBIN "importbin";
+  assert_token IN "in";
+  assert_token LOCAL "local";
+  assert_token NULL "null";
+  assert_token TAILSTRICT "tailstrict";
+  assert_token THEN "then";
+  assert_token SELF "self";
+  assert_token SUPER "super";
+  assert_token TRUE "true";
   ()
 
 let test_lexer_number () =
-  assert_token (Number 0.0) "0";
-  assert_token (Number 1.0) "1";
-  assert_token (Number 0.0) "0.0";
-  assert_token (Number 1.0) "1.0";
-  assert_token (Number 1.0) "1e0";
-  assert_token (Number 10.0) "1e1";
-  assert_token (Number 10.0) "1e+1";
-  assert_token (Number 0.1) "1e-1";
+  assert_token (NUMBER 0.0) "0";
+  assert_token (NUMBER 1.0) "1";
+  assert_token (NUMBER 0.0) "0.0";
+  assert_token (NUMBER 1.0) "1.0";
+  assert_token (NUMBER 1.0) "1e0";
+  assert_token (NUMBER 10.0) "1e1";
+  assert_token (NUMBER 10.0) "1e+1";
+  assert_token (NUMBER 0.1) "1e-1";
   ()
 
 let test_lexer_string () =
-  assert_token (String "") {|""|};
-  assert_token (String "abc") {|"abc"|};
-  assert_token (String "ab\nc") {|"ab
+  assert_token (STRING "") {|""|};
+  assert_token (STRING "abc") {|"abc"|};
+  assert_token (STRING "ab\nc") {|"ab
 c"|};
-  assert_token (String "\"") {|"\""|};
-  assert_token (String "\'") {|"\'"|};
-  assert_token (String "\\") {|"\\"|};
-  assert_token (String "/") {|"\/"|};
-  assert_token (String "\b") {|"\b"|};
-  assert_token (String "\x0c") {|"\f"|};
-  assert_token (String "\n") {|"\n"|};
-  assert_token (String "\r") {|"\r"|};
-  assert_token (String "\t") {|"\t"|};
-  assert_token (String "\u{30F9}") {|"\u30F9"|};
+  assert_token (STRING "\"") {|"\""|};
+  assert_token (STRING "\'") {|"\'"|};
+  assert_token (STRING "\\") {|"\\"|};
+  assert_token (STRING "/") {|"\/"|};
+  assert_token (STRING "\b") {|"\b"|};
+  assert_token (STRING "\x0c") {|"\f"|};
+  assert_token (STRING "\n") {|"\n"|};
+  assert_token (STRING "\r") {|"\r"|};
+  assert_token (STRING "\t") {|"\t"|};
+  assert_token (STRING "\u{30F9}") {|"\u30F9"|};
 
-  assert_token (String "") {|''|};
-  assert_token (String "abc") {|'abc'|};
-  assert_token (String "ab\nc") {|'ab
+  assert_token (STRING "") {|''|};
+  assert_token (STRING "abc") {|'abc'|};
+  assert_token (STRING "ab\nc") {|'ab
 c'|};
-  assert_token (String "\"") {|'\"'|};
-  assert_token (String "\'") {|'\''|};
-  assert_token (String "\\") {|'\\'|};
-  assert_token (String "/") {|'\/'|};
-  assert_token (String "\b") {|'\b'|};
-  assert_token (String "\x0c") {|'\f'|};
-  assert_token (String "\n") {|'\n'|};
-  assert_token (String "\r") {|'\r'|};
-  assert_token (String "\t") {|'\t'|};
-  assert_token (String "\u{30F9}") {|'\u30F9'|};
+  assert_token (STRING "\"") {|'\"'|};
+  assert_token (STRING "\'") {|'\''|};
+  assert_token (STRING "\\") {|'\\'|};
+  assert_token (STRING "/") {|'\/'|};
+  assert_token (STRING "\b") {|'\b'|};
+  assert_token (STRING "\x0c") {|'\f'|};
+  assert_token (STRING "\n") {|'\n'|};
+  assert_token (STRING "\r") {|'\r'|};
+  assert_token (STRING "\t") {|'\t'|};
+  assert_token (STRING "\u{30F9}") {|'\u30F9'|};
 
-  assert_token (String "") {|@""|};
-  assert_token (String "abc") {|@"abc"|};
-  assert_token (String "ab\nc") {|@"ab
+  assert_token (STRING "") {|@""|};
+  assert_token (STRING "abc") {|@"abc"|};
+  assert_token (STRING "ab\nc") {|@"ab
 c"|};
-  assert_token (String "\\") {|@"\"|};
-  assert_token (String "\"") {|@""""|};
-  assert_token (String "\'") {|"\'"|};
-  assert_token (String "\\\\") {|@"\\"|};
-  assert_token (String "\\/") {|@"\/"|};
-  assert_token (String "\\b") {|@"\b"|};
-  assert_token (String "\\f") {|@"\f"|};
-  assert_token (String "\\n") {|@"\n"|};
-  assert_token (String "\\r") {|@"\r"|};
-  assert_token (String "\\t") {|@"\t"|};
-  assert_token (String "\\u30F9") {|@"\u30F9"|};
+  assert_token (STRING "\\") {|@"\"|};
+  assert_token (STRING "\"") {|@""""|};
+  assert_token (STRING "\'") {|"\'"|};
+  assert_token (STRING "\\\\") {|@"\\"|};
+  assert_token (STRING "\\/") {|@"\/"|};
+  assert_token (STRING "\\b") {|@"\b"|};
+  assert_token (STRING "\\f") {|@"\f"|};
+  assert_token (STRING "\\n") {|@"\n"|};
+  assert_token (STRING "\\r") {|@"\r"|};
+  assert_token (STRING "\\t") {|@"\t"|};
+  assert_token (STRING "\\u30F9") {|@"\u30F9"|};
 
-  assert_token (String "") {|@''|};
-  assert_token (String "abc") {|@'abc'|};
-  assert_token (String "ab\nc") {|@'ab
+  assert_token (STRING "") {|@''|};
+  assert_token (STRING "abc") {|@'abc'|};
+  assert_token (STRING "ab\nc") {|@'ab
 c'|};
-  assert_token (String "\\\"") {|@'\"'|};
-  assert_token (String "\\") {|@'\'|};
-  assert_token (String "'") {|@''''|};
-  assert_token (String "\\\\") {|@'\\'|};
-  assert_token (String "\\/") {|@'\/'|};
-  assert_token (String "\\b") {|@'\b'|};
-  assert_token (String "\\f") {|@'\f'|};
-  assert_token (String "\\n") {|@'\n'|};
-  assert_token (String "\\r") {|@'\r'|};
-  assert_token (String "\\t") {|@'\t'|};
-  assert_token (String "\\u30F9") {|@'\u30F9'|};
+  assert_token (STRING "\\\"") {|@'\"'|};
+  assert_token (STRING "\\") {|@'\'|};
+  assert_token (STRING "'") {|@''''|};
+  assert_token (STRING "\\\\") {|@'\\'|};
+  assert_token (STRING "\\/") {|@'\/'|};
+  assert_token (STRING "\\b") {|@'\b'|};
+  assert_token (STRING "\\f") {|@'\f'|};
+  assert_token (STRING "\\n") {|@'\n'|};
+  assert_token (STRING "\\r") {|@'\r'|};
+  assert_token (STRING "\\t") {|@'\t'|};
+  assert_token (STRING "\\u30F9") {|@'\u30F9'|};
 
-  assert_token (String "\nabc\n\ndef\n  gh\n\n|||\n |||\n")
+  assert_token (STRING "\nabc\n\ndef\n  gh\n\n|||\n |||\n")
     {|
 
  |||
@@ -141,7 +161,11 @@ let () =
   Logs.set_level (Some Logs.Debug);
   run "jitsonnet"
     [
-      (*("parse", [ test_case "comment" `Quick test_parse_comment ]);*)
+      ( "parse",
+        [
+          test_case "atoms" `Quick test_parse_atoms;
+          test_case "object" `Quick test_parse_object;
+        ] );
       ( "lexer",
         [
           test_case "keyword" `Quick test_lexer_keyword;

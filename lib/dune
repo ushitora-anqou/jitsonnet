@@ -6,4 +6,6 @@
 
 (library
  (name jitsonnet)
+ (preprocess
+  (pps ppx_deriving.show))
  (libraries logs uutf))

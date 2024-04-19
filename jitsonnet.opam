@@ -17,6 +17,7 @@ depends: [
   "menhir"
   "ocaml"
   "odoc" {with-doc}
+  "ppx_deriving"
   "uutf"
 ]
 build: [
