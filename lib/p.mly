@@ -174,14 +174,7 @@ Objinside0 :
   | x=Objlocal {
     Syntax.ObjectMemberList [MemberObjlocal x]
   }
-  | x=Objlocal COMMA y=Objinside0 {
-    match y with
-    | Syntax.ObjectMemberList xs ->
-      Syntax.ObjectMemberList (MemberObjlocal x :: xs)
-    | Syntax.ObjectFor (xs, e1, e2, robjlocals, forspec, compspec) ->
-      Syntax.ObjectFor (x :: xs, e1, e2, robjlocals, forspec, compspec)
-  }
-  | x=Objlocal COMMA y=Objinside1 {
+  | x=Objlocal COMMA y=Objinside {
     match y with
     | Syntax.ObjectMemberList xs ->
       Syntax.ObjectMemberList (MemberObjlocal x :: xs)
