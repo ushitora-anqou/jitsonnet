@@ -28,8 +28,30 @@ let test_parse_object () =
   assert_expr
     (Object
        (ObjectMemberList
-          [ MemberField (Field (FieldnameID "x", H 1, Number 1.0)) ]))
-    "{x: 1}";
+          [
+            MemberField (Field (FieldnameID "x", H 1, Number 1.0));
+            MemberObjlocal (Bind ("a", String "b"));
+            MemberField (FieldFunc (FieldnameID "y", [], H 2, String "a"));
+            MemberAssert (True, None);
+            MemberField
+              (FieldFunc
+                 ( FieldnameID "z",
+                   [ ("v1", None); ("v2", Some (String "s")) ],
+                   H 2,
+                   String "s" ));
+            MemberAssert (True, Some (String "s"));
+            MemberField (Field (FieldnameString "w", H 3, Number 1.0));
+          ]))
+    {|
+{
+  x: 1,
+  local a = "b",
+  y():: "a",
+  assert true,
+  z(v1, v2="s")::"s",
+  assert true : "s",
+  "w":::1.0,
+}|};
   ()
 
 let assert_token expected got_src =

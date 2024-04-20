@@ -44,6 +44,17 @@
 %type <Syntax.program option> toplevel
 %%
 
+separated_list1(separator, X):
+  | /* nothing */ {
+    []
+  }
+  | x=X {
+    [x]
+  }
+  | x=X; separator; xs=separated_list1(separator, X) {
+    x :: xs
+  }
+
 toplevel :
   | EOF { None }
   | e=Expr { Some Syntax.{ expr = e } }
@@ -114,7 +125,7 @@ Expr :
   | Expr LBRACE Objinside RBRACE {
     Syntax.ObjSeq
   }
-  | FUNCTION LPAREN option(Params) RPAREN Expr {
+  | FUNCTION LPAREN Params RPAREN Expr {
     Syntax.Function
   }
   | Assert SEMICOLON Expr {
@@ -138,12 +149,14 @@ Expr :
   *)
 
 Objinside :
-  | xs=loption(xs=separated_nonempty_list(COMMA, Member) option(COMMA) { xs }) {
+  | xs=separated_list1(COMMA, Member) {
     Syntax.ObjectMemberList xs
   }
+  (*
   | lobjlocals=list(x=Objlocal COMMA { x }) LBRACKET e1=Expr RBRACKET COLON e2=Expr robjlocals=list(COMMA x=Objlocal { x }) option(COMMA) forspec=Forspec compspec=Compspec {
     Syntax.ObjectFor (lobjlocals, e1, e2, robjlocals, forspec, compspec)
   }
+*)
 
 Member :
   | x=Objlocal {
@@ -160,7 +173,7 @@ Field :
   | name=Fieldname option(PLUS) h=H e=Expr {
     Syntax.Field (name, h, e)
   }
-  | name=Fieldname LPAREN params=option(Params) RPAREN h=H e=Expr {
+  | name=Fieldname LPAREN params=Params RPAREN h=H e=Expr {
     Syntax.FieldFunc (name, params, h, e)
   }
 
@@ -208,14 +221,14 @@ Fieldname :
 
 Assert :
   | ASSERT e1=Expr e2=option(COLON e=Expr { e }) {
-    Syntax.Assert (e1, e2)
+    (e1, e2)
   }
 
 Bind :
   | id=ID EQUAL e=Expr {
     Syntax.Bind (id, e)
   }
-  | id=ID LPAREN params=option(Params) RPAREN EQUAL e=Expr {
+  | id=ID LPAREN params=Params RPAREN EQUAL e=Expr {
     Syntax.BindFunc (id, params, e)
   }
 
@@ -230,8 +243,8 @@ Args :
 *)
 
 Params :
-  | params=separated_nonempty_list(COMMA, Param) option(COMMA) {
-    params
+  | xs=separated_list1(COMMA, Param) {
+    xs
   }
 
 Param :

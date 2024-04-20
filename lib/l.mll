@@ -87,6 +87,7 @@ rule main = parse
   P.NUMBER (Lexing.lexeme lexbuf |> float_of_string)
 }
 | "|||" whitespace* newline {
+  Lexing.new_line lexbuf;
   Buffer.clear string_literal_buffer;
   text_block lexbuf;
   P.STRING (Buffer.contents string_literal_buffer)
@@ -118,6 +119,7 @@ rule main = parse
 
 and line_comment = parse
 | newline {
+  Lexing.new_line lexbuf;
   ()
 }
 | _ {
@@ -194,6 +196,7 @@ and single_quoted_verbatim_string = parse
 
 and text_block = parse
 | newline {
+  Lexing.new_line lexbuf;
   Buffer.add_string string_literal_buffer (Lexing.lexeme lexbuf);
   text_block lexbuf
 }
@@ -222,6 +225,7 @@ and text_block = parse
 
 and text_block' = parse
 | newline {
+  Lexing.new_line lexbuf;
   Buffer.add_string string_literal_buffer (Lexing.lexeme lexbuf);
   ()
 }

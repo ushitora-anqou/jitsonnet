@@ -23,7 +23,7 @@ and member =
 
 and field =
   | Field of (fieldname * h * expr)
-  | FieldFunc of (fieldname * params option * h * expr)
+  | FieldFunc of (fieldname * params * h * expr)
 
 and h = H of int
 and objlocal = bind
@@ -37,8 +37,8 @@ and fieldname =
   | FieldnameString of string
   | FieldnameExpr of expr
 
-and assert_ = Assert of (expr * expr option)
-and bind = Bind of (id * expr) | BindFunc of (id * params option * expr)
+and assert_ = expr * expr option
+and bind = Bind of (id * expr) | BindFunc of (id * params * expr)
 and params = param list
 and param = id * expr option [@@deriving show]
 
