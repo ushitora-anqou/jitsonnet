@@ -44,6 +44,13 @@
 %type <Syntax.program option> toplevel
 %%
 
+(*
+  Rule for the following:
+  - /* nothing */
+  - X
+  - X sep X ... sep
+  - X sep X ... sep X
+*)
 separated_list1(separator, X):
   | /* nothing */ {
     []
@@ -55,6 +62,13 @@ separated_list1(separator, X):
     x :: xs
   }
 
+(*
+  Rule for the following:
+  - /* nothing */
+  - sep
+  - sep X sep ... sep
+  - sep X sep ... sep X
+*)
 separated_list2(separator, X):
   | /* nothing */ {
     []
@@ -95,11 +109,11 @@ Expr :
   | LBRACE x=Objinside RBRACE {
     Syntax.Object x
   }
+  | LBRACKET xs=separated_list1(COMMA, Expr) RBRACKET {
+    Syntax.Array xs
+  }
 
   (*
-  | LBRACKET option(separated_nonempty_list(COMMA, Expr) option(COMMA)) RBRACKET {
-    Syntax.Array
-  }
   | LBRACKET Expr option(COMMA) Forspec Compspec {
     Syntax.ArrayFor
   }

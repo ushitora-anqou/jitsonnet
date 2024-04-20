@@ -85,6 +85,12 @@ let test_parse_object () =
 
   ()
 
+let test_parse_array () =
+  assert_expr (Array []) "[]";
+  assert_expr (Array [ Number 1.0 ]) "[1]";
+  assert_expr (Array [ Number 1.0; String "s" ]) {|[1, "s"]|};
+  ()
+
 let assert_token expected got_src =
   let got = L.main (Lexing.from_string got_src) in
   Logs.info (fun m ->
@@ -218,6 +224,7 @@ let () =
         [
           test_case "atoms" `Quick test_parse_atoms;
           test_case "object" `Quick test_parse_object;
+          test_case "array" `Quick test_parse_array;
         ] );
       ( "lexer",
         [

@@ -8,6 +8,7 @@ type expr =
   | Dollar
   | String of string
   | Object of objinside
+  | Array of expr list
 
 and id = string
 
