@@ -55,6 +55,17 @@ separated_list1(separator, X):
     x :: xs
   }
 
+separated_list2(separator, X):
+  | /* nothing */ {
+    []
+  }
+  | separator {
+    []
+  }
+  | separator; x=X xs=separated_list2(separator, X) {
+    x :: xs
+  }
+
 toplevel :
   | EOF { None }
   | e=Expr { Some Syntax.{ expr = e } }
@@ -149,14 +160,53 @@ Expr :
   *)
 
 Objinside :
-  | xs=separated_list1(COMMA, Member) {
-    Syntax.ObjectMemberList xs
+  | x=Objinside1 {
+    Syntax.ObjectMemberList x
   }
-  (*
-  | lobjlocals=list(x=Objlocal COMMA { x }) LBRACKET e1=Expr RBRACKET COLON e2=Expr robjlocals=list(COMMA x=Objlocal { x }) option(COMMA) forspec=Forspec compspec=Compspec {
-    Syntax.ObjectFor (lobjlocals, e1, e2, robjlocals, forspec, compspec)
+  | x=Objinside2 {
+    Syntax.ObjectFor x
   }
-*)
+  | x=Objinside0 {
+    x
+  }
+
+Objinside0 :
+  | /* nothing */ {
+    Syntax.ObjectMemberList []
+  }
+  | x=Objlocal {
+    Syntax.ObjectMemberList [Syntax.MemberObjlocal x]
+  }
+  | x=Objlocal COMMA y=Objinside0 {
+    match y with
+    | Syntax.ObjectMemberList xs ->
+      ObjectMemberList (MemberObjlocal x :: xs)
+    | Syntax.ObjectFor (xs, e1, e2, robjlocals, forspec, compspec) ->
+      ObjectFor (x :: xs, e1, e2, robjlocals, forspec, compspec)
+  }
+  | x=Objlocal COMMA y=Assert xs=separated_list2(COMMA, Member) {
+    Syntax.ObjectMemberList (MemberObjlocal x :: MemberAssert y :: xs)
+  }
+  | x=Objlocal COMMA y=Field xs=separated_list2(COMMA, Member) {
+    Syntax.ObjectMemberList (MemberObjlocal x :: MemberField y :: xs)
+  }
+  | x=Objlocal COMMA y=Objinside2 {
+    let (xs, e1, e2, robjlocals, forspec, compspec) = y in
+    Syntax.ObjectFor (x :: xs, e1, e2, robjlocals, forspec, compspec)
+  }
+
+Objinside1 :
+  | x=Assert xs=separated_list2(COMMA, Member) {
+    (Syntax.MemberAssert x) :: xs
+  }
+  | x=Field xs=separated_list2(COMMA, Member) {
+    (Syntax.MemberField x) :: xs
+  }
+
+Objinside2 :
+  | LBRACKET e1=Expr RBRACKET COLON e2=Expr robjlocals=list(COMMA x=Objlocal { x }) option(COMMA) forspec=Forspec compspec=Compspec {
+    ([], e1, e2, robjlocals, forspec, compspec)
+  }
 
 Member :
   | x=Objlocal {
