@@ -130,6 +130,21 @@ let test_parse_array () =
   assert_expr (Array []) "[]";
   assert_expr (Array [ Number 1.0 ]) "[1]";
   assert_expr (Array [ Number 1.0; String "s" ]) {|[1, "s"]|};
+
+  assert_expr (ArrayFor (Var "x", ("x", Var "a"), [])) {|[x for x in a]|};
+  assert_expr
+    (ArrayFor
+       ( Array [ Var "x"; Var "y" ],
+         ("x", Var "a"),
+         [ Forspec ("y", Var "a"); Ifspec True ] ))
+    {|
+[
+  [x, y],
+  for x in a
+  for y in a
+  if true
+]|};
+
   ()
 
 let assert_token expected got_src =

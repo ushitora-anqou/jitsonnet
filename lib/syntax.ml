@@ -9,6 +9,7 @@ type expr =
   | String of string
   | Object of objinside
   | Array of expr list
+  | ArrayFor of (expr * forspec * compspec)
 
 and id = string
 

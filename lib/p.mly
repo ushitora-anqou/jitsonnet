@@ -109,14 +109,20 @@ Expr :
   | LBRACE x=Objinside RBRACE {
     Syntax.Object x
   }
-  | LBRACKET xs=separated_list1(COMMA, Expr) RBRACKET {
-    Syntax.Array xs
+  | LBRACKET
+      xs=separated_list1(COMMA, Expr)
+      spec=option(forspec=Forspec compspec=Compspec { (forspec, compspec) })
+    RBRACKET {
+    match xs, spec with
+    | [ x ], Some (forspec, compspec) ->
+      Syntax.ArrayFor (x, forspec, compspec)
+    | _, None ->
+      Syntax.Array xs
+    | _ ->
+      raise (Syntax.General_parse_error "invalid array")
   }
 
   (*
-  | LBRACKET Expr option(COMMA) Forspec Compspec {
-    Syntax.ArrayFor
-  }
   | Expr DOT ID {
     Syntax.Member
   }
