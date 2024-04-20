@@ -160,14 +160,14 @@ Expr :
   *)
 
 Objinside :
+  | x=Objinside0 {
+    x
+  }
   | x=Objinside1 {
     Syntax.ObjectMemberList x
   }
   | x=Objinside2 {
     Syntax.ObjectFor x
-  }
-  | x=Objinside0 {
-    x
   }
 
 Objinside0 :
@@ -204,7 +204,7 @@ Objinside1 :
   }
 
 Objinside2 :
-  | LBRACKET e1=Expr RBRACKET COLON e2=Expr robjlocals=list(COMMA x=Objlocal { x }) option(COMMA) forspec=Forspec compspec=Compspec {
+  | LBRACKET e1=Expr RBRACKET COLON e2=Expr robjlocals=separated_list2(COMMA, Objlocal) forspec=Forspec compspec=Compspec {
     ([], e1, e2, robjlocals, forspec, compspec)
   }
 
