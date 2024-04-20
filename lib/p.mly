@@ -164,10 +164,7 @@ Objinside :
     x
   }
   | x=Objinside1 {
-    Syntax.ObjectMemberList x
-  }
-  | x=Objinside2 {
-    Syntax.ObjectFor x
+    x
   }
 
 Objinside0 :
@@ -175,37 +172,44 @@ Objinside0 :
     Syntax.ObjectMemberList []
   }
   | x=Objlocal {
-    Syntax.ObjectMemberList [Syntax.MemberObjlocal x]
+    Syntax.ObjectMemberList [MemberObjlocal x]
   }
   | x=Objlocal COMMA y=Objinside0 {
     match y with
     | Syntax.ObjectMemberList xs ->
-      ObjectMemberList (MemberObjlocal x :: xs)
+      Syntax.ObjectMemberList (MemberObjlocal x :: xs)
     | Syntax.ObjectFor (xs, e1, e2, robjlocals, forspec, compspec) ->
-      ObjectFor (x :: xs, e1, e2, robjlocals, forspec, compspec)
+      Syntax.ObjectFor (x :: xs, e1, e2, robjlocals, forspec, compspec)
   }
-  | x=Objlocal COMMA y=Assert xs=separated_list2(COMMA, Member) {
-    Syntax.ObjectMemberList (MemberObjlocal x :: MemberAssert y :: xs)
-  }
-  | x=Objlocal COMMA y=Field xs=separated_list2(COMMA, Member) {
-    Syntax.ObjectMemberList (MemberObjlocal x :: MemberField y :: xs)
-  }
-  | x=Objlocal COMMA y=Objinside2 {
-    let (xs, e1, e2, robjlocals, forspec, compspec) = y in
-    Syntax.ObjectFor (x :: xs, e1, e2, robjlocals, forspec, compspec)
+  | x=Objlocal COMMA y=Objinside1 {
+    match y with
+    | Syntax.ObjectMemberList xs ->
+      Syntax.ObjectMemberList (MemberObjlocal x :: xs)
+    | Syntax.ObjectFor (xs, e1, e2, robjlocals, forspec, compspec) ->
+      Syntax.ObjectFor (x :: xs, e1, e2, robjlocals, forspec, compspec)
   }
 
 Objinside1 :
   | x=Assert xs=separated_list2(COMMA, Member) {
-    (Syntax.MemberAssert x) :: xs
+    Syntax.ObjectMemberList (MemberAssert x :: xs)
   }
-  | x=Field xs=separated_list2(COMMA, Member) {
-    (Syntax.MemberField x) :: xs
+  | LBRACKET e1=Expr RBRACKET plus=option(PLUS) h=H e2=Expr ys=separated_list2(COMMA, Objlocal) Objinside2 {
+    match e1, plus, h, e2, ys with
+    | _ -> assert false
+  }
+  | x=FieldExceptBracket xs=separated_list2(COMMA, Member) {
+    Syntax.ObjectMemberList (MemberField x :: xs)
   }
 
 Objinside2 :
-  | LBRACKET e1=Expr RBRACKET COLON e2=Expr robjlocals=separated_list2(COMMA, Objlocal) forspec=Forspec compspec=Compspec {
-    ([], e1, e2, robjlocals, forspec, compspec)
+  | x=Forspec y=Compspec {
+    `For (x, y)
+  }
+  | x=Assert xs=separated_list2(COMMA, Member) {
+    `MemberList (Syntax.MemberAssert x :: xs)
+  }
+  | x=Field xs=separated_list2(COMMA, Member) {
+    `MemberList (Syntax.MemberField x :: xs)
   }
 
 Member :
@@ -217,6 +221,14 @@ Member :
   }
   | x=Field {
     Syntax.MemberField x
+  }
+
+FieldExceptBracket :
+  | name=FieldnameExceptBracket option(PLUS) h=H e=Expr {
+    Syntax.Field (name, h, e)
+  }
+  | name=FieldnameExceptBracket LPAREN params=Params RPAREN h=H e=Expr {
+    Syntax.FieldFunc (name, params, h, e)
   }
 
 Field :
@@ -258,12 +270,17 @@ Ifspec :
     e
   }
 
-Fieldname :
+FieldnameExceptBracket :
   | id=ID {
     Syntax.FieldnameID id
   }
   | s=STRING {
     Syntax.FieldnameString s
+  }
+
+Fieldname :
+  | x=FieldnameExceptBracket {
+    x
   }
   | LBRACKET e=Expr RBRACKET {
     Syntax.FieldnameExpr e
