@@ -1,6 +1,6 @@
 type expr =
   | Number of float
-  | ID of id
+  | Var of id
   | Null
   | True
   | False
@@ -43,3 +43,5 @@ and params = param list
 and param = id * expr option [@@deriving show]
 
 type program = { expr : expr }
+
+exception General_parse_error of string

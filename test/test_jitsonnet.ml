@@ -28,7 +28,14 @@ let test_parse_object () =
   assert_expr
     (Object
        (ObjectMemberList
+          [ MemberField (Field (FieldnameID "x", H 1, Number 1.0)) ]))
+    "{x: 1}";
+  assert_expr
+    (Object
+       (ObjectMemberList
           [
+            MemberField
+              (Field (FieldnameExpr (String "foo"), H 1, String "bar"));
             MemberField (Field (FieldnameID "x", H 1, Number 1.0));
             MemberObjlocal (Bind ("a", String "b"));
             MemberField (FieldFunc (FieldnameID "y", [], H 2, String "a"));
@@ -44,6 +51,7 @@ let test_parse_object () =
           ]))
     {|
 {
+  ["foo"]: "bar",
   x: 1,
   local a = "b",
   y():: "a",
@@ -52,6 +60,28 @@ let test_parse_object () =
   assert true : "s",
   "w":::1.0,
 }|};
+  assert_expr
+    (Object (ObjectFor ([], Var "x", String "y", [], ("x", Var "a"), [])))
+    {|{[x]: "y" for x in a}|};
+  assert_expr
+    (Object
+       (ObjectFor
+          ( [ Bind ("v1", String "s") ],
+            Var "x",
+            String "y",
+            [ Bind ("v2", String "s") ],
+            ("x", Var "a"),
+            [ Forspec ("y", Var "a"); Ifspec True ] )))
+    {|
+{
+  local v1 = "s",
+  [x]: "y",
+  local v2 = "s",
+  for x in a
+  for y in a
+  if true
+}|};
+
   ()
 
 let assert_token expected got_src =

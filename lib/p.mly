@@ -118,9 +118,11 @@ Expr :
   | Expr LPAREN option(Args) RPAREN {
     Syntax.Call
   }
+  *)
   | id=ID {
     Syntax.Var id
   }
+  (*
   | LOCAL separated_nonempty_list(COMMA, Bind) SEMICOLON Expr {
     Syntax.Local
   }
@@ -186,12 +188,18 @@ Objinside1 :
   | x=Assert xs=separated_list2(COMMA, Member) {
     Syntax.ObjectMemberList (MemberAssert x :: xs)
   }
-  | LBRACKET e1=Expr RBRACKET plus=option(PLUS) h=H e2=Expr ys=separated_list2(COMMA, Objlocal) Objinside2 {
-    match e1, plus, h, e2, ys with
-    | _ -> assert false
-  }
   | x=FieldExceptBracket xs=separated_list2(COMMA, Member) {
     Syntax.ObjectMemberList (MemberField x :: xs)
+  }
+  | LBRACKET e1=Expr RBRACKET plus=option(PLUS) h=H e2=Expr ys=separated_list2(COMMA, Objlocal) post=Objinside2 {
+    match plus, h, post with
+    | None, Syntax.H 1, `For (forspec, compspec) ->
+      Syntax.ObjectFor ([], e1, e2, ys, forspec, compspec)
+    | _, _, `MemberList members ->
+      let a = Syntax.MemberField (Field (FieldnameExpr e1, h, e2)) in
+      let bs = List.map (fun y -> Syntax.MemberObjlocal y) ys in
+      Syntax.ObjectMemberList (a :: (bs @ members))
+    | _ -> raise (Syntax.General_parse_error "invalid brackets")
   }
 
 Objinside2 :

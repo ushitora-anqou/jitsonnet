@@ -49,6 +49,8 @@ let parse_lex lex =
   match P.toplevel L.main lex with
   | exception L.Unexpected_char c -> format_error "lexer: unexpected char: %c" c
   | exception P.Error -> format_error "parser: syntax error"
+  | exception Syntax.General_parse_error msg ->
+      format_error "parser: syntax error: %s" msg
   | None -> Error "failed to parse"
   | Some x -> Ok x
 
