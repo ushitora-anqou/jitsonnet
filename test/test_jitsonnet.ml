@@ -28,15 +28,56 @@ let test_parse_object () =
   assert_expr
     (Object
        (ObjectMemberList
-          [ MemberField (Field (FieldnameID "x", H 1, Number 1.0)) ]))
+          [ MemberField (Field (FieldnameID "x", false, H 1, Number 1.0)) ]))
     "{x: 1}";
   assert_expr
     (Object
        (ObjectMemberList
           [
+            MemberObjlocal (Bind ("a", String "b"));
             MemberField
-              (Field (FieldnameExpr (String "foo"), H 1, String "bar"));
-            MemberField (Field (FieldnameID "x", H 1, Number 1.0));
+              (Field (FieldnameExpr (String "foo"), false, H 1, String "bar"));
+          ]))
+    {|
+{
+  local a = "b",
+  ["foo"]: "bar",
+}|};
+  assert_expr
+    (Object
+       (ObjectMemberList
+          [
+            MemberObjlocal (Bind ("a", String "b"));
+            MemberField
+              (Field (FieldnameExpr (String "foo"), true, H 1, String "bar"));
+          ]))
+    {|
+{
+  local a = "b",
+  ["foo"]+: "bar",
+}|};
+  assert_expr
+    (Object
+       (ObjectMemberList
+          [
+            MemberObjlocal (Bind ("a", String "b"));
+            MemberField
+              (Field (FieldnameExpr (String "foo"), false, H 1, String "bar"));
+            MemberField (Field (FieldnameID "x", false, H 1, Number 1.0));
+          ]))
+    {|
+{
+  local a = "b",
+  ["foo"]: "bar",
+  x: 1.0,
+}|};
+  assert_expr
+    (Object
+       (ObjectMemberList
+          [
+            MemberField
+              (Field (FieldnameExpr (String "foo"), true, H 1, String "bar"));
+            MemberField (Field (FieldnameID "x", true, H 1, Number 1.0));
             MemberObjlocal (Bind ("a", String "b"));
             MemberField (FieldFunc (FieldnameID "y", [], H 2, String "a"));
             MemberAssert (True, None);
@@ -47,12 +88,12 @@ let test_parse_object () =
                    H 2,
                    String "s" ));
             MemberAssert (True, Some (String "s"));
-            MemberField (Field (FieldnameString "w", H 3, Number 1.0));
+            MemberField (Field (FieldnameString "w", false, H 3, Number 1.0));
           ]))
     {|
 {
-  ["foo"]: "bar",
-  x: 1,
+  ["foo"]+: "bar",
+  x+: 1,
   local a = "b",
   y():: "a",
   assert true,

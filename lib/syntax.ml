@@ -23,7 +23,7 @@ and member =
   | MemberField of field
 
 and field =
-  | Field of (fieldname * h * expr)
+  | Field of (fieldname * bool (* +? *) * h * expr)
   | FieldFunc of (fieldname * params * h * expr)
 
 and h = H of int

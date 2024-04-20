@@ -210,13 +210,16 @@ Objinside1 :
     | None, Syntax.H 1, `For (forspec, compspec) ->
       Syntax.ObjectFor ([], e1, e2, ys, forspec, compspec)
     | _, _, `MemberList members ->
-      let a = Syntax.MemberField (Field (FieldnameExpr e1, h, e2)) in
+      let a = Syntax.MemberField (Field (FieldnameExpr e1, Option.is_some plus, h, e2)) in
       let bs = List.map (fun y -> Syntax.MemberObjlocal y) ys in
       Syntax.ObjectMemberList (a :: (bs @ members))
     | _ -> raise (Syntax.General_parse_error "invalid brackets")
   }
 
 Objinside2 :
+  | /* nothing */ {
+    `MemberList []
+  }
   | x=Forspec y=Compspec {
     `For (x, y)
   }
@@ -239,16 +242,16 @@ Member :
   }
 
 FieldExceptBracket :
-  | name=FieldnameExceptBracket option(PLUS) h=H e=Expr {
-    Syntax.Field (name, h, e)
+  | name=FieldnameExceptBracket plus=option(PLUS) h=H e=Expr {
+    Syntax.Field (name, Option.is_some plus, h, e)
   }
   | name=FieldnameExceptBracket LPAREN params=Params RPAREN h=H e=Expr {
     Syntax.FieldFunc (name, params, h, e)
   }
 
 Field :
-  | name=Fieldname option(PLUS) h=H e=Expr {
-    Syntax.Field (name, h, e)
+  | name=Fieldname plus=option(PLUS) h=H e=Expr {
+    Syntax.Field (name, Option.is_some plus, h, e)
   }
   | name=Fieldname LPAREN params=Params RPAREN h=H e=Expr {
     Syntax.FieldFunc (name, params, h, e)
