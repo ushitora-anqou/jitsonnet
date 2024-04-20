@@ -60,6 +60,7 @@ let test_parse_object () =
   assert true : "s",
   "w":::1.0,
 }|};
+
   assert_expr
     (Object (ObjectFor ([], Var "x", String "y", [], ("x", Var "a"), [])))
     {|{[x]: "y" for x in a}|};
