@@ -174,6 +174,31 @@ let test_parse_select () =
     {|{y: {z: "a"}}.y.z|};
   ()
 
+let test_parse_array_index () =
+  assert_expr (ArrayIndex (Var "a", Number 0.0)) {|a[0]|};
+  assert_expr (ArrayIndex (Array [ String "a" ], Number 0.0)) {|["a"][0]|};
+  ()
+
+let test_parse_array_slice () =
+  assert_expr (ArraySlice (Var "x", None, None, None)) {|x[::]|};
+  assert_expr (ArraySlice (Var "x", None, None, Some (Number 0.0))) {|x[::0]|};
+  assert_expr (ArraySlice (Var "x", None, Some (Number 0.0), None)) {|x[:0:]|};
+  assert_expr
+    (ArraySlice (Var "x", None, Some (Number 0.0), Some (Number 0.0)))
+    {|x[:0:0]|};
+  assert_expr (ArraySlice (Var "x", Some (Number 0.0), None, None)) {|x[0::]|};
+  assert_expr
+    (ArraySlice (Var "x", Some (Number 0.0), None, Some (Number 0.0)))
+    {|x[0::0]|};
+  assert_expr
+    (ArraySlice (Var "x", Some (Number 0.0), Some (Number 0.0), None))
+    {|x[0:0:]|};
+  assert_expr
+    (ArraySlice
+       (Var "x", Some (Number 0.0), Some (Number 0.0), Some (Number 0.0)))
+    {|x[0:0:0]|};
+  ()
+
 let assert_token expected got_src =
   let got = L.main (Lexing.from_string got_src) in
   Logs.info (fun m ->
@@ -307,8 +332,10 @@ let () =
         [
           test_case "atoms" `Quick test_parse_atoms;
           test_case "object" `Quick test_parse_object;
-          test_case "array" `Quick test_parse_array;
           test_case "select" `Quick test_parse_select;
+          test_case "array" `Quick test_parse_array;
+          test_case "array index" `Quick test_parse_array_index;
+          test_case "array slice" `Quick test_parse_array_slice;
         ] );
       ( "lexer",
         [

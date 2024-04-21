@@ -8,9 +8,11 @@ type expr =
   | Dollar
   | String of string
   | Object of objinside
+  | Select of (expr * id)
   | Array of expr list
   | ArrayFor of (expr * forspec * compspec)
-  | Select of (expr * id)
+  | ArrayIndex of (expr * expr)
+  | ArraySlice of (expr * expr option * expr option * expr option)
 
 and id = string
 

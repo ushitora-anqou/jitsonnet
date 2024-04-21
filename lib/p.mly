@@ -96,11 +96,36 @@ Expr :
   | e=Expr DOT id=ID {
     Syntax.Select (e, id)
   }
+  | x=Expr
+    LBRACKET
+      a=option(Expr)
+      bc=option(
+        COLON
+        x=option(
+          x=Expr
+          y=option(
+            COLON
+            x=option(Expr) { x }
+          ) { (x, y) }
+        ) { x })
+    RBRACKET { (* x[a], x[a:], x[a:b], x[a:b:], x[a:b:c] *)
+    match a, bc with
+    | Some a, None -> (* x[a] *)
+      Syntax.ArrayIndex (x, a)
+    | None, None ->
+      raise (Syntax.General_parse_error "ast.Index requires an expression")
+    | _, Some None -> (* x[:], x[a:] *)
+      Syntax.ArraySlice (x, a, None, None)
+    | _, Some (Some (b, (None | Some None))) -> (* x[:b], x[:b], x[a:b], x[a:b:] *)
+      Syntax.ArraySlice (x, a, Some b, None)
+    | _, Some (Some (b, Some (Some c))) -> (* x[:b:c], x[a:b:c] *)
+      Syntax.ArraySlice (x, a, Some b, Some c)
+  }
+  | x=Expr LBRACKET a=option(Expr) DOUBLECOLONS c=option(Expr) RBRACKET { (* x[::], x[::c], x[a::], x[a::c] *)
+    Syntax.ArraySlice(x, a, None, c)
+  }
 
   (*
-  | Expr LBRACKET option(Expr) option(COLON option(Expr) option(COLON option(Expr))) RBRACKET {
-    Syntax.Index
-  }
   | SUPER DOT ID {
     Syntax.SuperMember
   }
@@ -183,11 +208,11 @@ Objinside1 :
   | x=FieldExceptBracket xs=separated_list2(COMMA, Member) {
     Syntax.ObjectMemberList (MemberField x :: xs)
   }
-  | LBRACKET e1=Expr RBRACKET plus=option(PLUS) h=H e2=Expr ys=separated_list2(COMMA, Objlocal) post=Objinside2 {
+  | LBRACKET e1=Expr RBRACKET plus=option(PLUS) h=H e2=Expr post=Objinside2 {
     match plus, h, post with
-    | None, Syntax.H 1, `For (forspec, compspec) ->
+    | None, Syntax.H 1, (ys, `For (forspec, compspec)) ->
       Syntax.ObjectFor ([], e1, e2, ys, forspec, compspec)
-    | _, _, `MemberList members ->
+    | _, _, (ys, `MemberList members) ->
       let a = Syntax.MemberField (Field (FieldnameExpr e1, Option.is_some plus, h, e2)) in
       let bs = List.map (fun y -> Syntax.MemberObjlocal y) ys in
       Syntax.ObjectMemberList (a :: (bs @ members))
@@ -196,16 +221,26 @@ Objinside1 :
 
 Objinside2 :
   | /* nothing */ {
-    `MemberList []
+    ([], `MemberList [])
+  }
+  | COMMA {
+    ([], `MemberList [])
+  }
+  | COMMA x=Objlocal y=Objinside2 {
+    let (xs, post) = y in
+    (x :: xs, post)
+  }
+  | COMMA x=Assert xs=separated_list2(COMMA, Member) {
+    ([], `MemberList (Syntax.MemberAssert x :: xs))
+  }
+  | COMMA x=Field xs=separated_list2(COMMA, Member) {
+    ([], `MemberList (Syntax.MemberField x :: xs))
+  }
+  | COMMA x=Forspec y=Compspec {
+    ([], `For (x, y))
   }
   | x=Forspec y=Compspec {
-    `For (x, y)
-  }
-  | x=Assert xs=separated_list2(COMMA, Member) {
-    `MemberList (Syntax.MemberAssert x :: xs)
-  }
-  | x=Field xs=separated_list2(COMMA, Member) {
-    `MemberList (Syntax.MemberField x :: xs)
+    ([], `For (x, y))
   }
 
 Member :
