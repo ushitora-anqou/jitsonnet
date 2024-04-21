@@ -17,6 +17,7 @@ type expr =
   | SuperIndex of expr
   | Call of (expr * args)
   | Local of (bind list * expr)
+  | If of (expr * expr * expr option)
 
 and id = string
 
