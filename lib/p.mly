@@ -21,8 +21,7 @@
 %left PLUS MINUS
 %left STAR SLASH PERCENT
 %left BANG TILDE
-%left LPAREN LBRACKET DOT
-%nonassoc LBRACE (* FIXME: correct? *)
+%left LPAREN LBRACKET DOT (* Probably correct until here*) LBRACE (* FIXME: correct? *)
 
 %start toplevel
 %type <Syntax.program> toplevel
