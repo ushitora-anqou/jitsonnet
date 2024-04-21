@@ -1,47 +1,20 @@
 %{
 %}
 
-%token ASSERT
-%token COLON
-%token COMMA
-%token DOLLAR
-%token DOT
-%token DOUBLECOLONS
-%token ELSE
-%token EOF
-%token EQUAL
-%token ERROR
-%token FALSE
-%token FOR
-%token FUNCTION
-%token IF
-%token IMPORT
-%token IMPORTBIN
-%token IMPORTSTR
-%token IN
-%token LBRACE
-%token LBRACKET
-%token LOCAL
-%token LPAREN
-%token NULL
-%token PLUS
-%token RBRACE
-%token RBRACKET
-%token RPAREN
-%token SELF
-%token SEMICOLON
-%token SUPER
-%token TAILSTRICT
-%token THEN
-%token TRIPLECOLONS
-%token TRUE
+%token ASSERT COLON COMMA DOLLAR DOT DOUBLECOLONS ELSE EOF EQUAL ERROR FALSE FOR FUNCTION IF IMPORT IMPORTBIN IMPORTSTR IN LBRACE LBRACKET LOCAL LPAREN NULL PLUS RBRACE RBRACKET RPAREN SELF SEMICOLON SUPER TAILSTRICT THEN TRIPLECOLONS TRUE
 
 %token <float> NUMBER
 %token <string> ID
 %token <string> STRING
 
+(*
+%nonassoc EOF
+%nonassoc ASSERT COLON COMMA DOLLAR DOUBLECOLONS ELSE EQUAL ERROR FALSE FOR FUNCTION IF IMPORT IMPORTBIN IMPORTSTR IN LBRACE LBRACKET LOCAL LPAREN NULL PLUS RBRACE RBRACKET RPAREN SELF SEMICOLON SUPER TAILSTRICT THEN TRIPLECOLONS TRUE NUMBER ID STRING
+%left DOT
+*)
+
 %start toplevel
-%type <Syntax.program option> toplevel
+%type <Syntax.program> toplevel
 %%
 
 (*
@@ -81,8 +54,7 @@ separated_list2(separator, X):
   }
 
 toplevel :
-  | EOF { None }
-  | e=Expr { Some Syntax.{ expr = e } }
+  | e=Expr EOF { Syntax.{ expr = e } }
 
 Expr :
   | NULL {
@@ -121,11 +93,11 @@ Expr :
     | _ ->
       raise (Syntax.General_parse_error "invalid array")
   }
+  | e=Expr DOT id=ID {
+    Syntax.Select (e, id)
+  }
 
   (*
-  | Expr DOT ID {
-    Syntax.Member
-  }
   | Expr LBRACKET option(Expr) option(COLON option(Expr) option(COLON option(Expr))) RBRACKET {
     Syntax.Index
   }

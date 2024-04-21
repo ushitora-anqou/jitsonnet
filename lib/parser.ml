@@ -51,8 +51,7 @@ let parse_lex lex =
   | exception P.Error -> format_error "parser: syntax error"
   | exception Syntax.General_parse_error msg ->
       format_error "parser: syntax error: %s" msg
-  | None -> Error "failed to parse"
-  | Some x -> Ok x
+  | x -> Ok x
 
 let parse_string str =
   let lex = Lexing.from_string ~with_positions:true str in

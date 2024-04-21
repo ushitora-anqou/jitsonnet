@@ -147,6 +147,33 @@ let test_parse_array () =
 
   ()
 
+let test_parse_select () =
+  assert_expr (Select (Var "x", "y")) {|x.y|};
+  assert_expr (Select (Select (Var "x", "y"), "z")) {|x.y.z|};
+  assert_expr
+    (Select
+       ( Select
+           ( Object
+               (ObjectMemberList
+                  [
+                    MemberField
+                      (Field
+                         ( FieldnameID "y",
+                           false,
+                           H 1,
+                           Object
+                             (ObjectMemberList
+                                [
+                                  MemberField
+                                    (Field
+                                       (FieldnameID "z", false, H 1, String "a"));
+                                ]) ));
+                  ]),
+             "y" ),
+         "z" ))
+    {|{y: {z: "a"}}.y.z|};
+  ()
+
 let assert_token expected got_src =
   let got = L.main (Lexing.from_string got_src) in
   Logs.info (fun m ->
@@ -281,6 +308,7 @@ let () =
           test_case "atoms" `Quick test_parse_atoms;
           test_case "object" `Quick test_parse_object;
           test_case "array" `Quick test_parse_array;
+          test_case "select" `Quick test_parse_select;
         ] );
       ( "lexer",
         [

@@ -10,6 +10,7 @@ type expr =
   | Object of objinside
   | Array of expr list
   | ArrayFor of (expr * forspec * compspec)
+  | Select of (expr * id)
 
 and id = string
 
