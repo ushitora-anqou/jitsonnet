@@ -301,6 +301,15 @@ let test_parse_unary () =
   assert_expr (Unary (Lnot, True)) {|~true|};
   ()
 
+let test_parse_objectseq () =
+  assert_expr
+    (ObjectSeq
+       ( Var "x",
+         ObjectMemberList
+           [ MemberField (Field (FieldnameID "x", false, H 1, Number 1.0)) ] ))
+    {|x { x: 1 }|};
+  ()
+
 let assert_token expected got_src =
   let got = L.main (Lexing.from_string got_src) in
   Logs.info (fun m ->
@@ -443,6 +452,7 @@ let () =
           test_case "if" `Quick test_parse_if;
           test_case "binary" `Quick test_parse_binary;
           test_case "unary" `Quick test_parse_unary;
+          test_case "object seq" `Quick test_parse_objectseq;
         ] );
       ( "lexer",
         [

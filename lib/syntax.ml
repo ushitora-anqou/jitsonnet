@@ -36,6 +36,7 @@ type expr =
   | Null
   | Number of float
   | Object of objinside
+  | ObjectSeq of (expr * objinside)
   | Select of (expr * id)
   | Self
   | String of string

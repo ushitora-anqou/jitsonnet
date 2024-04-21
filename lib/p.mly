@@ -157,11 +157,11 @@ Expr :
   | op=Unaryop e=Expr {
     Syntax.Unary (op, e)
   }
+  | e=Expr LBRACE o=Objinside RBRACE {
+    Syntax.ObjectSeq (e, o)
+  }
 
   (*
-  | Expr LBRACE Objinside RBRACE {
-    Syntax.ObjSeq
-  }
   | FUNCTION LPAREN Params RPAREN Expr {
     Syntax.Function
   }
