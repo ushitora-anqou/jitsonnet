@@ -7,8 +7,9 @@
 %token <string> ID
 %token <string> STRING
 
+%nonassoc THEN FUNCTION
+%nonassoc ELSE
 %nonassoc SEMICOLON
-%nonassoc IF THEN
 %left BARBAR
 %left ANDAND
 %left BAR
@@ -20,7 +21,8 @@
 %left PLUS MINUS
 %left STAR SLASH PERCENT
 %left BANG TILDE
-%nonassoc ASSERT COLON COMMA DOLLAR DOT DOUBLECOLONS ELSE EOF EQ ERROR FALSE FOR FUNCTION IMPORT IMPORTBIN IMPORTSTR LBRACE LBRACKET LOCAL LPAREN NULL RBRACE RBRACKET RPAREN SELF SUPER TAILSTRICT TRIPLECOLONS TRUE
+%left LPAREN LBRACKET DOT
+%nonassoc LBRACE (* FIXME: correct? *)
 
 %start toplevel
 %type <Syntax.program> toplevel
@@ -160,11 +162,11 @@ Expr :
   | e=Expr LBRACE o=Objinside RBRACE {
     Syntax.ObjectSeq (e, o)
   }
+  | FUNCTION LPAREN params=Params RPAREN e=Expr %prec FUNCTION {
+    Syntax.Function (params, e)
+  }
 
   (*
-  | FUNCTION LPAREN Params RPAREN Expr {
-    Syntax.Function
-  }
   | Assert SEMICOLON Expr {
     Syntax.Assert
   }
@@ -184,6 +186,10 @@ Expr :
     Syntax.InSuper
   }
   *)
+
+  | LPAREN e=Expr RPAREN {
+    e
+  }
 
 Objinside :
   | x=Objinside0 {

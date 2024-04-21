@@ -257,6 +257,12 @@ else
 
 let test_parse_binary () =
   assert_expr
+    (Binary (Number 1.0, Add, Binary (Number 1.0, Mult, Number 1.0)))
+    {|1+1*1|};
+  assert_expr
+    (Binary (Binary (Number 1.0, Add, Number 1.0), Mult, Number 1.0))
+    {|(1+1)*1|};
+  assert_expr
     (Binary
        ( Binary
            ( Binary
@@ -292,6 +298,15 @@ let test_parse_binary () =
          Or,
          False ))
     {|1++1--1*1/~1%1<<1>>1<1|true^true==!true&true&&true||false|};
+  ()
+
+let test_parse_function () =
+  assert_expr (Function ([], Number 1.0)) {|function() 1.0|};
+  assert_expr
+    (Function
+       ( [ ("x", None); ("y", Some (Number 1.0)) ],
+         Binary (Var "x", Add, Var "y") ))
+    {|function(x, y=1.0) x+y|};
   ()
 
 let test_parse_unary () =
@@ -453,6 +468,7 @@ let () =
           test_case "binary" `Quick test_parse_binary;
           test_case "unary" `Quick test_parse_unary;
           test_case "object seq" `Quick test_parse_objectseq;
+          test_case "function" `Quick test_parse_function;
         ] );
       ( "lexer",
         [
