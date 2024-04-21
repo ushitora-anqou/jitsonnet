@@ -233,6 +233,28 @@ let test_parse_local () =
     {|local a(v, w=1) = v; a(0)|};
   ()
 
+let test_parse_if () =
+  assert_expr (If (True, Number 1.0, None)) {|if true then 1.0|};
+  assert_expr
+    (If (True, Number 1.0, Some (Number 2.0)))
+    {|if true then 1.0 else 2|};
+  assert_expr
+    (If
+       ( If (True, True, Some False),
+         If (True, Number 1.0, Some (Number 1.0)),
+         Some (If (True, Number 1.0, Some (Number 1.0))) ))
+    {|
+if
+  if true then true
+  else false
+then
+  if true then 1.0
+  else 1.0
+else
+  if true then 1.0
+  else 1.0|};
+  ()
+
 let assert_token expected got_src =
   let got = L.main (Lexing.from_string got_src) in
   Logs.info (fun m ->
@@ -372,6 +394,7 @@ let () =
           test_case "array slice" `Quick test_parse_array_slice;
           test_case "call" `Quick test_parse_call;
           test_case "local" `Quick test_parse_local;
+          test_case "if" `Quick test_parse_if;
         ] );
       ( "lexer",
         [
