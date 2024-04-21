@@ -14,6 +14,7 @@ type expr =
   | ArrayIndex of (expr * expr)
   | ArraySlice of (expr * expr option * expr option * expr option)
   | SuperSelect of id
+  | SuperIndex of expr
 
 and id = string
 

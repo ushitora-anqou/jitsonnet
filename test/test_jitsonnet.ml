@@ -173,6 +173,7 @@ let test_parse_select () =
          "z" ))
     {|{y: {z: "a"}}.y.z|};
   assert_expr (SuperSelect "x") {|super.x|};
+  assert_expr (SuperIndex (String "x")) {|super["x"]|};
   ()
 
 let test_parse_array_index () =

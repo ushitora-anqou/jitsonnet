@@ -127,11 +127,11 @@ Expr :
   | SUPER DOT id=ID {
     Syntax.SuperSelect id
   }
+  | SUPER LBRACKET e=Expr RBRACKET {
+    Syntax.SuperIndex e
+  }
 
   (*
-  | SUPER LBRACKET Expr RBRACKET {
-    Syntax.SuperIndex
-  }
   | Expr LPAREN option(Args) RPAREN {
     Syntax.Call
   }
