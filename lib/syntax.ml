@@ -15,6 +15,7 @@ type expr =
   | ArraySlice of (expr * expr option * expr option * expr option)
   | SuperSelect of id
   | SuperIndex of expr
+  | Call of (expr * args)
 
 and id = string
 
@@ -46,6 +47,7 @@ and fieldname =
 
 and assert_ = expr * expr option
 and bind = Bind of (id * expr) | BindFunc of (id * params * expr)
+and args = expr list * (id * expr) list
 and params = param list
 and param = id * expr option [@@deriving show]
 

@@ -201,6 +201,26 @@ let test_parse_array_slice () =
     {|x[0:0:0]|};
   ()
 
+let test_parse_call () =
+  assert_expr (Call (Var "x", ([], []))) {|x()|};
+  assert_expr (Call (Var "x", ([ Var "a" ], []))) {|x(a)|};
+  assert_expr (Call (Var "x", ([ Var "a" ], []))) {|x(a,)|};
+  assert_expr (Call (Var "x", ([ Var "a"; Var "b" ], []))) {|x(a, b)|};
+  assert_expr (Call (Var "x", ([ Var "a"; Var "b" ], []))) {|x(a, b,)|};
+  assert_expr (Call (Var "x", ([], [ ("a", Var "b") ]))) {|x(a=b)|};
+  assert_expr (Call (Var "x", ([], [ ("a", Var "b") ]))) {|x(a=b,)|};
+  assert_expr
+    (Call (Var "x", ([], [ ("a", Var "b"); ("c", Var "d") ])))
+    {|x(a=b,c=d)|};
+  assert_expr
+    (Call (Var "x", ([], [ ("a", Var "b"); ("c", Var "d") ])))
+    {|x(a=b,c=d,)|};
+  assert_expr (Call (Var "x", ([ Var "a" ], [ ("b", Var "c") ]))) {|x(a, b=c)|};
+  assert_expr
+    (Call (Select (Var "std", "x"), ([ Var "a" ], [ ("b", Var "c") ])))
+    {|std.x(a, b=c)|};
+  ()
+
 let assert_token expected got_src =
   let got = L.main (Lexing.from_string got_src) in
   Logs.info (fun m ->
@@ -338,6 +358,7 @@ let () =
           test_case "array" `Quick test_parse_array;
           test_case "array index" `Quick test_parse_array_index;
           test_case "array slice" `Quick test_parse_array_slice;
+          test_case "call" `Quick test_parse_call;
         ] );
       ( "lexer",
         [

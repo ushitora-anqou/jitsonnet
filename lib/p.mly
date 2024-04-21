@@ -130,12 +130,9 @@ Expr :
   | SUPER LBRACKET e=Expr RBRACKET {
     Syntax.SuperIndex e
   }
-
-  (*
-  | Expr LPAREN option(Args) RPAREN {
-    Syntax.Call
+  | e=Expr LPAREN args=Args RPAREN {
+    Syntax.Call (e, args)
   }
-  *)
   | id=ID {
     Syntax.Var id
   }
@@ -330,15 +327,35 @@ Bind :
     Syntax.BindFunc (id, params, e)
   }
 
-  (*
 Args :
-  | pos=separated_nonempty_list(COMMA, Expr) named=list(COMMA id=ID EQUAL e=Expr { (id, e) }) option(COMMA) {
-    Syntax.Args (pos, named)
+  | /* nothing */ {
+    ([], [])
   }
-  | named=separated_nonempty_list(COMMA, id=ID EQUAL e=Expr { (id, e) }) option(COMMA) {
-    Syntax.Args ([], named)
+  | e=Expr args=Args1 {
+    (e :: (fst args), snd args)
   }
-*)
+  | id=ID EQUAL e=Expr args=Args2 {
+    (fst args, (id, e) :: (snd args))
+  }
+
+Args1 :
+  | option(COMMA) {
+    ([], [])
+  }
+  | COMMA e=Expr args=Args1 {
+    (e :: (fst args), snd args)
+  }
+  | COMMA id=ID EQUAL e=Expr args=Args2 {
+    (fst args, (id, e) :: (snd args))
+  }
+
+Args2 :
+  | option(COMMA) {
+    ([], [])
+  }
+  | COMMA id=ID EQUAL e=Expr args=Args2 {
+    (fst args, (id, e) :: (snd args))
+  }
 
 Params :
   | xs=separated_list1(COMMA, Param) {
