@@ -124,11 +124,11 @@ Expr :
   | x=Expr LBRACKET a=option(Expr) DOUBLECOLONS c=option(Expr) RBRACKET { (* x[::], x[::c], x[a::], x[a::c] *)
     Syntax.ArraySlice(x, a, None, c)
   }
+  | SUPER DOT id=ID {
+    Syntax.SuperSelect id
+  }
 
   (*
-  | SUPER DOT ID {
-    Syntax.SuperMember
-  }
   | SUPER LBRACKET Expr RBRACKET {
     Syntax.SuperIndex
   }
