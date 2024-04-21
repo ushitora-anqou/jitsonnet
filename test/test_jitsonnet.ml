@@ -221,6 +221,18 @@ let test_parse_call () =
     {|std.x(a, b=c)|};
   ()
 
+let test_parse_local () =
+  assert_expr (Local ([ Bind ("a", Number 0.0) ], Var "a")) {|local a = 0; a|};
+  assert_expr
+    (Local ([ BindFunc ("a", [], Number 0.0) ], Call (Var "a", ([], []))))
+    {|local a() = 0; a()|};
+  assert_expr
+    (Local
+       ( [ BindFunc ("a", [ ("v", None); ("w", Some (Number 1.0)) ], Var "v") ],
+         Call (Var "a", ([ Number 0.0 ], [])) ))
+    {|local a(v, w=1) = v; a(0)|};
+  ()
+
 let assert_token expected got_src =
   let got = L.main (Lexing.from_string got_src) in
   Logs.info (fun m ->
@@ -359,6 +371,7 @@ let () =
           test_case "array index" `Quick test_parse_array_index;
           test_case "array slice" `Quick test_parse_array_slice;
           test_case "call" `Quick test_parse_call;
+          test_case "local" `Quick test_parse_local;
         ] );
       ( "lexer",
         [

@@ -136,10 +136,10 @@ Expr :
   | id=ID {
     Syntax.Var id
   }
-  (*
-  | LOCAL separated_nonempty_list(COMMA, Bind) SEMICOLON Expr {
-    Syntax.Local
+  | LOCAL binds=separated_nonempty_list(COMMA, Bind) SEMICOLON e=Expr {
+    Syntax.Local (binds, e)
   }
+  (*
   | IF Expr THEN Expr option(ELSE Expr) {
     Syntax.If
   }
