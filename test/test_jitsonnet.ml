@@ -255,6 +255,52 @@ else
   else 1.0|};
   ()
 
+let test_parse_binary () =
+  assert_expr
+    (Binary
+       ( Binary
+           ( Binary
+               ( Binary
+                   ( Binary
+                       ( Binary
+                           ( Binary
+                               ( Binary (Number 1., Add, Unary (Pos, Number 1.)),
+                                 Sub,
+                                 Unary
+                                   ( Neg,
+                                     Binary
+                                       ( Binary
+                                           ( Binary (Number 1., Mult, Number 1.),
+                                             Div,
+                                             Unary (Lnot, Number 1.) ),
+                                         Mod,
+                                         Number 1. ) ) ),
+                             Lsl,
+                             Number 1. ),
+                         Lsr,
+                         Number 1. ),
+                     Lt,
+                     Number 1. ),
+                 Lor,
+                 Binary
+                   ( True,
+                     Xor,
+                     Binary (Binary (True, Equal, Unary (Not, True)), Land, True)
+                   ) ),
+             And,
+             True ),
+         Or,
+         False ))
+    {|1++1--1*1/~1%1<<1>>1<1|true^true==!true&true&&true||false|};
+  ()
+
+let test_parse_unary () =
+  assert_expr (Unary (Pos, Number 1.0)) {|+1|};
+  assert_expr (Unary (Neg, Number 1.0)) {|-1|};
+  assert_expr (Unary (Not, True)) {|!true|};
+  assert_expr (Unary (Lnot, True)) {|~true|};
+  ()
+
 let assert_token expected got_src =
   let got = L.main (Lexing.from_string got_src) in
   Logs.info (fun m ->
@@ -395,6 +441,8 @@ let () =
           test_case "call" `Quick test_parse_call;
           test_case "local" `Quick test_parse_local;
           test_case "if" `Quick test_parse_if;
+          test_case "binary" `Quick test_parse_binary;
+          test_case "unary" `Quick test_parse_unary;
         ] );
       ( "lexer",
         [

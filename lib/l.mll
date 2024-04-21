@@ -68,21 +68,40 @@ rule main = parse
   block_comment lexbuf;
   main lexbuf
 }
-| '$' { P.DOLLAR }
-| '(' { P.LPAREN }
-| ')' { P.RPAREN }
-| '+' { P.PLUS }
-| ',' { P.COMMA }
-| '.' { P.DOT }
-| ':' { P.COLON }
+| "!=" { P.BANGEQ }
+| "&&" { P.ANDAND }
 | "::" { P.DOUBLECOLONS }
 | ":::" { P.TRIPLECOLONS }
+| "<<" { P.LTLT }
+| "<=" { P.LE }
+| "==" { P.EQEQ }
+| ">=" { P.GE }
+| ">>" { P.GTGT }
+| "||" { P.BARBAR }
+| '!' { P.BANG }
+| '$' { P.DOLLAR }
+| '%' { P.PERCENT }
+| '&' { P.AND }
+| '(' { P.LPAREN }
+| ')' { P.RPAREN }
+| '*' { P.STAR }
+| '+' { P.PLUS }
+| ',' { P.COMMA }
+| '-' { P.MINUS }
+| '.' { P.DOT }
+| '/' { P.SLASH }
+| ':' { P.COLON }
 | ';' { P.SEMICOLON }
-| '=' { P.EQUAL }
+| '<' { P.LT }
+| '=' { P.EQ }
+| '>' { P.GT }
 | '[' { P.LBRACKET }
 | ']' { P.RBRACKET }
+| '^' { P.HAT }
 | '{' { P.LBRACE }
+| '|' { P.BAR }
 | '}' { P.RBRACE }
+| '~' { P.TILDE }
 | ('0' | ['1'-'9'] ['0'-'9']*) ('.' ['0'-'9']+)? (['e' 'E'] ['-' '+']? ['0'-'9']+)? {
   P.NUMBER (Lexing.lexeme lexbuf |> float_of_string)
 }

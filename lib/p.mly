@@ -1,7 +1,7 @@
 %{
 %}
 
-%token ASSERT COLON COMMA DOLLAR DOT DOUBLECOLONS ELSE EOF EQUAL ERROR FALSE FOR FUNCTION IF IMPORT IMPORTBIN IMPORTSTR IN LBRACE LBRACKET LOCAL LPAREN NULL PLUS RBRACE RBRACKET RPAREN SELF SEMICOLON SUPER TAILSTRICT THEN TRIPLECOLONS TRUE
+%token AND ANDAND ASSERT BANG BANGEQ BAR COLON COMMA DOLLAR DOT DOUBLECOLONS ELSE EOF EQ EQEQ ERROR FALSE FOR FUNCTION GE GT GTGT HAT IF IMPORT IMPORTBIN IMPORTSTR IN LBRACE LBRACKET LE LOCAL LPAREN LT LTLT MINUS NULL BARBAR PERCENT PLUS RBRACE RBRACKET RPAREN SELF SEMICOLON SLASH STAR SUPER TAILSTRICT THEN TILDE TRIPLECOLONS TRUE
 
 %token <float> NUMBER
 %token <string> ID
@@ -9,7 +9,18 @@
 
 %nonassoc SEMICOLON
 %nonassoc IF THEN
-%nonassoc ASSERT COLON COMMA DOLLAR DOT DOUBLECOLONS ELSE EOF EQUAL ERROR FALSE FOR FUNCTION IMPORT IMPORTBIN IMPORTSTR IN LBRACE LBRACKET LOCAL LPAREN NULL PLUS RBRACE RBRACKET RPAREN SELF SUPER TAILSTRICT TRIPLECOLONS TRUE
+%left BARBAR
+%left ANDAND
+%left BAR
+%left HAT
+%left AND
+%left EQEQ BANGEQ
+%left LT GT LE GE IN
+%left LTLT GTGT
+%left PLUS MINUS
+%left STAR SLASH PERCENT
+%left BANG TILDE
+%nonassoc ASSERT COLON COMMA DOLLAR DOT DOUBLECOLONS ELSE EOF EQ ERROR FALSE FOR FUNCTION IMPORT IMPORTBIN IMPORTSTR LBRACE LBRACKET LOCAL LPAREN NULL RBRACE RBRACKET RPAREN SELF SUPER TAILSTRICT TRIPLECOLONS TRUE
 
 %start toplevel
 %type <Syntax.program> toplevel
@@ -140,13 +151,14 @@ Expr :
   | IF e1=Expr THEN e2=Expr e3=ioption(ELSE x=Expr { x }) {
     Syntax.If (e1, e2, e3)
   }
+  | e1=Expr op=Binaryop e2=Expr {
+    Syntax.Binary (e1, op, e2)
+  }
+  | op=Unaryop e=Expr {
+    Syntax.Unary (op, e)
+  }
+
   (*
-  | Expr Binaryop Expr {
-    Syntax.Binary
-  }
-  | Unaryop Expr {
-    Syntax.Unary
-  }
   | Expr LBRACE Objinside RBRACE {
     Syntax.ObjSeq
   }
@@ -318,10 +330,10 @@ Assert :
   }
 
 Bind :
-  | id=ID EQUAL e=Expr {
+  | id=ID EQ e=Expr {
     Syntax.Bind (id, e)
   }
-  | id=ID LPAREN params=Params RPAREN EQUAL e=Expr {
+  | id=ID LPAREN params=Params RPAREN EQ e=Expr {
     Syntax.BindFunc (id, params, e)
   }
 
@@ -332,7 +344,7 @@ Args :
   | e=Expr args=Args1 {
     (e :: (fst args), snd args)
   }
-  | id=ID EQUAL e=Expr args=Args2 {
+  | id=ID EQ e=Expr args=Args2 {
     (fst args, (id, e) :: (snd args))
   }
 
@@ -343,7 +355,7 @@ Args1 :
   | COMMA e=Expr args=Args1 {
     (e :: (fst args), snd args)
   }
-  | COMMA id=ID EQUAL e=Expr args=Args2 {
+  | COMMA id=ID EQ e=Expr args=Args2 {
     (fst args, (id, e) :: (snd args))
   }
 
@@ -351,7 +363,7 @@ Args2 :
   | option(COMMA) {
     ([], [])
   }
-  | COMMA id=ID EQUAL e=Expr args=Args2 {
+  | COMMA id=ID EQ e=Expr args=Args2 {
     (fst args, (id, e) :: (snd args))
   }
 
@@ -361,6 +373,33 @@ Params :
   }
 
 Param :
-  | id=ID v=option(EQUAL e=Expr { e }) {
+  | id=ID v=option(EQ e=Expr { e }) {
     (id, v)
   }
+
+%inline Binaryop :
+  | AND { Syntax.Land }
+  | ANDAND { Syntax.And }
+  | BANGEQ { Syntax.NotEqual }
+  | BAR { Syntax.Lor }
+  | EQEQ { Syntax.Equal }
+  | GE { Syntax.Ge }
+  | GT { Syntax.Gt }
+  | GTGT { Syntax.Lsr }
+  | HAT { Syntax.Xor }
+  | IN { Syntax.In }
+  | LE { Syntax.Le }
+  | LT { Syntax.Lt }
+  | LTLT { Syntax.Lsl }
+  | MINUS { Syntax.Sub }
+  | BARBAR { Syntax.Or }
+  | PERCENT { Syntax.Mod }
+  | PLUS { Syntax.Add }
+  | SLASH { Syntax.Div }
+  | STAR { Syntax.Mult }
+
+%inline Unaryop :
+  | BANG { Syntax.Not }
+  | MINUS { Syntax.Neg }
+  | PLUS { Syntax.Pos }
+  | TILDE { Syntax.Lnot }

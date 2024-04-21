@@ -1,5 +1,11 @@
 let string_of_token = function
-  | P.ASSERT -> "assert"
+  | P.AND -> "&"
+  | ANDAND -> "&&"
+  | ASSERT -> "assert"
+  | BANG -> "!"
+  | BANGEQ -> "!="
+  | BAR -> "|"
+  | BARBAR -> "||"
   | COLON -> ":"
   | COMMA -> ","
   | DOLLAR -> "$"
@@ -7,11 +13,17 @@ let string_of_token = function
   | DOUBLECOLONS -> "::"
   | ELSE -> "else"
   | EOF -> "EOF"
-  | EQUAL -> "="
+  | EQ -> "="
+  | EQEQ -> "=="
   | ERROR -> "error"
   | FALSE -> "false"
   | FOR -> "for"
   | FUNCTION -> "function"
+  | GE -> ">="
+  | GT -> ">"
+  | GTGT -> ">>"
+  | HAT -> "^"
+  | ID s -> Printf.sprintf "%s" s
   | IF -> "if"
   | IMPORT -> "import"
   | IMPORTBIN -> "importbin"
@@ -19,23 +31,30 @@ let string_of_token = function
   | IN -> "in"
   | LBRACE -> "{"
   | LBRACKET -> "["
+  | LE -> "<="
   | LOCAL -> "local"
   | LPAREN -> "("
+  | LT -> "<"
+  | LTLT -> "<<"
+  | MINUS -> "-"
   | NULL -> "null"
+  | NUMBER f -> Printf.sprintf "%f" f
+  | PERCENT -> "%"
   | PLUS -> "+"
   | RBRACE -> "}"
   | RBRACKET -> "]"
   | RPAREN -> ")"
   | SELF -> "self"
   | SEMICOLON -> ":"
+  | SLASH -> "/"
+  | STAR -> "*"
+  | STRING s -> Printf.sprintf "\"%s\"" s
   | SUPER -> "super"
   | TAILSTRICT -> "tailstrict"
   | THEN -> "then"
+  | TILDE -> "~"
   | TRIPLECOLONS -> ":::"
   | TRUE -> "true"
-  | STRING s -> Printf.sprintf "\"%s\"" s
-  | ID s -> Printf.sprintf "%s" s
-  | NUMBER f -> Printf.sprintf "%f" f
 
 let parse_lex lex =
   let format_error fmt =
