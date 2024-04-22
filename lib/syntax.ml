@@ -38,6 +38,7 @@ type expr =
   | Import of string
   | Importbin of string
   | Importstr of string
+  | InSuper of expr
   | Local of (bind list * expr)
   | Null
   | Number of float

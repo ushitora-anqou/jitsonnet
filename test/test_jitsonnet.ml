@@ -298,6 +298,17 @@ let test_parse_binary () =
          Or,
          False ))
     {|1++1--1*1/~1%1<<1>>1<1|true^true==!true&true&&true||false|};
+  assert_expr
+    (ObjectSeq
+       ( Object
+           (ObjectMemberList
+              [ MemberField (Field (FieldnameID "x", false, H 1, String "a")) ]),
+         ObjectMemberList
+           [
+             MemberField
+               (Field (FieldnameID "y", false, H 1, InSuper (String "x")));
+           ] ))
+    {|{x: "a"} {y: "x" in super}|};
   ()
 
 let test_parse_function () =
