@@ -164,11 +164,11 @@ Expr :
   | FUNCTION LPAREN params=Params RPAREN e=Expr %prec FUNCTION {
     Syntax.Function (params, e)
   }
+  | a=Assert SEMICOLON e=Expr {
+    Syntax.Assert (a, e)
+  }
 
   (*
-  | Assert SEMICOLON Expr {
-    Syntax.Assert
-  }
   | IMPORT String {
     Syntax.Import
   }

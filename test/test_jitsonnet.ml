@@ -325,6 +325,24 @@ let test_parse_objectseq () =
     {|x { x: 1 }|};
   ()
 
+let test_parse_assert () =
+  assert_expr
+    (Assert ((Binary (Var "x", Equal, Number 3.0), None), Number 0.0))
+    {|assert x == 3.0; 0.0|};
+  assert_expr
+    (Assert
+       ((Binary (Var "x", Equal, Number 3.0), Some (String "s")), Number 0.0))
+    {|assert x == 3.0 : "s"; 0.0|};
+  assert_expr
+    (Assert
+       ( ( Assert
+             ( (Binary (Var "x", Equal, Number 3.0), Some (String "s1")),
+               Binary (Number 0.0, Equal, Number 0.0) ),
+           Some (String "s2") ),
+         Number 0.0 ))
+    {|assert assert x == 3.0 : "s1"; 0.0 == 0.0 : "s2"; 0.0|};
+  ()
+
 let assert_token expected got_src =
   let got = L.main (Lexing.from_string got_src) in
   Logs.info (fun m ->
@@ -469,6 +487,7 @@ let () =
           test_case "unary" `Quick test_parse_unary;
           test_case "object seq" `Quick test_parse_objectseq;
           test_case "function" `Quick test_parse_function;
+          test_case "assert" `Quick test_parse_assert;
         ] );
       ( "lexer",
         [

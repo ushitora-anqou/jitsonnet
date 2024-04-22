@@ -27,6 +27,7 @@ type expr =
   | ArrayFor of (expr * forspec * compspec)
   | ArrayIndex of (expr * expr)
   | ArraySlice of (expr * expr option * expr option * expr option)
+  | Assert of (assert_ * expr)
   | Binary of (expr * binop * expr)
   | Call of (expr * args)
   | Dollar
