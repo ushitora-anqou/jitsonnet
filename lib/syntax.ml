@@ -29,7 +29,7 @@ type expr =
   | ArraySlice of (expr * expr option * expr option * expr option)
   | Assert of (assert_ * expr)
   | Binary of (expr * binop * expr)
-  | Call of (expr * args)
+  | Call of (expr * args * bool (* tailstrict *))
   | Dollar
   | Error of expr
   | False

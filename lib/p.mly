@@ -140,8 +140,8 @@ Expr :
   | SUPER LBRACKET e=Expr RBRACKET {
     Syntax.SuperIndex e
   }
-  | e=Expr LPAREN args=Args RPAREN option(TAILSTRICT) {
-    Syntax.Call (e, args)
+  | e=Expr LPAREN args=Args RPAREN tailstrict=option(TAILSTRICT) {
+    Syntax.Call (e, args, Option.is_some tailstrict)
   }
   | id=ID {
     Syntax.Var id

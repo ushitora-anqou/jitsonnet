@@ -1,5 +1,13 @@
 # JITsonnet
 
+## How to update `test/std_ast.ml`
+
+```
+let oc = open_out "test/std_ast.ml" in (Jitsonnet.Parser.parse_file "test/std.jsonnet" |> Result.get_ok).expr |> Jitsonnet.Syntax.show_expr |> Printf.fprintf oc "open Jitsonnet\n\nlet expected =\n%s\n"; close_out oc;;
+
+ocamlformat -i test/std_ast.ml
+```
+
 ## License
 
 ### `test/std.jsonnet`

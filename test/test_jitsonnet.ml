@@ -202,34 +202,36 @@ let test_parse_array_slice () =
   ()
 
 let test_parse_call () =
-  assert_expr (Call (Var "x", ([], []))) {|x()|};
-  assert_expr (Call (Var "x", ([ Var "a" ], []))) {|x(a)|};
-  assert_expr (Call (Var "x", ([ Var "a" ], []))) {|x(a,)|};
-  assert_expr (Call (Var "x", ([ Var "a"; Var "b" ], []))) {|x(a, b)|};
-  assert_expr (Call (Var "x", ([ Var "a"; Var "b" ], []))) {|x(a, b,)|};
-  assert_expr (Call (Var "x", ([], [ ("a", Var "b") ]))) {|x(a=b)|};
-  assert_expr (Call (Var "x", ([], [ ("a", Var "b") ]))) {|x(a=b,)|};
+  assert_expr (Call (Var "x", ([], []), false)) {|x()|};
+  assert_expr (Call (Var "x", ([ Var "a" ], []), false)) {|x(a)|};
+  assert_expr (Call (Var "x", ([ Var "a" ], []), false)) {|x(a,)|};
+  assert_expr (Call (Var "x", ([ Var "a"; Var "b" ], []), false)) {|x(a, b)|};
+  assert_expr (Call (Var "x", ([ Var "a"; Var "b" ], []), false)) {|x(a, b,)|};
+  assert_expr (Call (Var "x", ([], [ ("a", Var "b") ]), false)) {|x(a=b)|};
+  assert_expr (Call (Var "x", ([], [ ("a", Var "b") ]), false)) {|x(a=b,)|};
   assert_expr
-    (Call (Var "x", ([], [ ("a", Var "b"); ("c", Var "d") ])))
+    (Call (Var "x", ([], [ ("a", Var "b"); ("c", Var "d") ]), false))
     {|x(a=b,c=d)|};
   assert_expr
-    (Call (Var "x", ([], [ ("a", Var "b"); ("c", Var "d") ])))
+    (Call (Var "x", ([], [ ("a", Var "b"); ("c", Var "d") ]), false))
     {|x(a=b,c=d,)|};
-  assert_expr (Call (Var "x", ([ Var "a" ], [ ("b", Var "c") ]))) {|x(a, b=c)|};
   assert_expr
-    (Call (Select (Var "std", "x"), ([ Var "a" ], [ ("b", Var "c") ])))
+    (Call (Var "x", ([ Var "a" ], [ ("b", Var "c") ]), false))
+    {|x(a, b=c)|};
+  assert_expr
+    (Call (Select (Var "std", "x"), ([ Var "a" ], [ ("b", Var "c") ]), false))
     {|std.x(a, b=c)|};
   ()
 
 let test_parse_local () =
   assert_expr (Local ([ Bind ("a", Number 0.0) ], Var "a")) {|local a = 0; a|};
   assert_expr
-    (Local ([ BindFunc ("a", [], Number 0.0) ], Call (Var "a", ([], []))))
+    (Local ([ BindFunc ("a", [], Number 0.0) ], Call (Var "a", ([], []), false)))
     {|local a() = 0; a()|};
   assert_expr
     (Local
        ( [ BindFunc ("a", [ ("v", None); ("w", Some (Number 1.0)) ], Var "v") ],
-         Call (Var "a", ([ Number 0.0 ], [])) ))
+         Call (Var "a", ([ Number 0.0 ], []), false) ))
     {|local a(v, w=1) = v; a(0)|};
   ()
 

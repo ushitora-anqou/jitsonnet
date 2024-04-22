@@ -22,7 +22,8 @@ let expected =
                 Syntax.Binary
                   ( Syntax.Call
                       ( Syntax.Select (Syntax.Var "std", "type"),
-                        ([ Syntax.Var "v" ], []) ),
+                        ([ Syntax.Var "v" ], []),
+                        false ),
                     Syntax.Equal,
                     Syntax.String "string" ) ));
          Syntax.MemberField
@@ -33,7 +34,8 @@ let expected =
                 Syntax.Binary
                   ( Syntax.Call
                       ( Syntax.Select (Syntax.Var "std", "type"),
-                        ([ Syntax.Var "v" ], []) ),
+                        ([ Syntax.Var "v" ], []),
+                        false ),
                     Syntax.Equal,
                     Syntax.String "number" ) ));
          Syntax.MemberField
@@ -44,7 +46,8 @@ let expected =
                 Syntax.Binary
                   ( Syntax.Call
                       ( Syntax.Select (Syntax.Var "std", "type"),
-                        ([ Syntax.Var "v" ], []) ),
+                        ([ Syntax.Var "v" ], []),
+                        false ),
                     Syntax.Equal,
                     Syntax.String "boolean" ) ));
          Syntax.MemberField
@@ -55,7 +58,8 @@ let expected =
                 Syntax.Binary
                   ( Syntax.Call
                       ( Syntax.Select (Syntax.Var "std", "type"),
-                        ([ Syntax.Var "v" ], []) ),
+                        ([ Syntax.Var "v" ], []),
+                        false ),
                     Syntax.Equal,
                     Syntax.String "object" ) ));
          Syntax.MemberField
@@ -66,7 +70,8 @@ let expected =
                 Syntax.Binary
                   ( Syntax.Call
                       ( Syntax.Select (Syntax.Var "std", "type"),
-                        ([ Syntax.Var "v" ], []) ),
+                        ([ Syntax.Var "v" ], []),
+                        false ),
                     Syntax.Equal,
                     Syntax.String "array" ) ));
          Syntax.MemberField
@@ -77,7 +82,8 @@ let expected =
                 Syntax.Binary
                   ( Syntax.Call
                       ( Syntax.Select (Syntax.Var "std", "type"),
-                        ([ Syntax.Var "v" ], []) ),
+                        ([ Syntax.Var "v" ], []),
+                        false ),
                     Syntax.Equal,
                     Syntax.String "function" ) ));
          Syntax.MemberField
@@ -89,7 +95,8 @@ let expected =
                   ( Syntax.Binary
                       ( Syntax.Call
                           ( Syntax.Select (Syntax.Var "std", "type"),
-                            ([ Syntax.Var "a" ], []) ),
+                            ([ Syntax.Var "a" ], []),
+                            false ),
                         Syntax.Equal,
                         Syntax.String "string" ),
                     Syntax.Var "a",
@@ -104,7 +111,8 @@ let expected =
                 Syntax.Assert
                   ( ( Syntax.Call
                         ( Syntax.Select (Syntax.Var "std", "isString"),
-                          ([ Syntax.Var "str" ], []) ),
+                          ([ Syntax.Var "str" ], []),
+                          false ),
                       Some
                         (Syntax.Binary
                            ( Syntax.String
@@ -112,11 +120,13 @@ let expected =
                              Syntax.Add,
                              Syntax.Call
                                ( Syntax.Select (Syntax.Var "std", "type"),
-                                 ([ Syntax.Var "str" ], []) ) )) ),
+                                 ([ Syntax.Var "str" ], []),
+                                 false ) )) ),
                     Syntax.Assert
                       ( ( Syntax.Call
                             ( Syntax.Select (Syntax.Var "std", "isNumber"),
-                              ([ Syntax.Var "from" ], []) ),
+                              ([ Syntax.Var "from" ], []),
+                              false ),
                           Some
                             (Syntax.Binary
                                ( Syntax.String
@@ -125,11 +135,13 @@ let expected =
                                  Syntax.Add,
                                  Syntax.Call
                                    ( Syntax.Select (Syntax.Var "std", "type"),
-                                     ([ Syntax.Var "from" ], []) ) )) ),
+                                     ([ Syntax.Var "from" ], []),
+                                     false ) )) ),
                         Syntax.Assert
                           ( ( Syntax.Call
                                 ( Syntax.Select (Syntax.Var "std", "isNumber"),
-                                  ([ Syntax.Var "len" ], []) ),
+                                  ([ Syntax.Var "len" ], []),
+                                  false ),
                               Some
                                 (Syntax.Binary
                                    ( Syntax.String
@@ -138,7 +150,8 @@ let expected =
                                      Syntax.Add,
                                      Syntax.Call
                                        ( Syntax.Select (Syntax.Var "std", "type"),
-                                         ([ Syntax.Var "len" ], []) ) )) ),
+                                         ([ Syntax.Var "len" ], []),
+                                         false ) )) ),
                             Syntax.Assert
                               ( ( Syntax.Binary
                                     ( Syntax.Var "len",
@@ -184,15 +197,17 @@ let expected =
                                                                             .Var
                                                                               "str";
                                                                           ],
-                                                                          [] )
-                                                                      ),
+                                                                          [] ),
+                                                                        false ),
                                                                     Syntax.Sub,
                                                                     Syntax.Var
                                                                       "from" );
                                                               ],
-                                                              [] ) );
+                                                              [] ),
+                                                            false );
                                                       ],
-                                                      [] ) );
+                                                      [] ),
+                                                    false );
                                                 Syntax.Function
                                                   ( [ ("i", None) ],
                                                     Syntax.ArrayIndex
@@ -203,9 +218,11 @@ let expected =
                                                             Syntax.Var "from" )
                                                       ) );
                                               ],
-                                              [] ) );
+                                              [] ),
+                                            false );
                                       ],
-                                      [] ) ) ) ) ) ) ));
+                                      [] ),
+                                    false ) ) ) ) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "startsWith",
@@ -215,11 +232,13 @@ let expected =
                   ( Syntax.Binary
                       ( Syntax.Call
                           ( Syntax.Select (Syntax.Var "std", "length"),
-                            ([ Syntax.Var "a" ], []) ),
+                            ([ Syntax.Var "a" ], []),
+                            false ),
                         Syntax.Lt,
                         Syntax.Call
                           ( Syntax.Select (Syntax.Var "std", "length"),
-                            ([ Syntax.Var "b" ], []) ) ),
+                            ([ Syntax.Var "b" ], []),
+                            false ) ),
                     Syntax.False,
                     Some
                       (Syntax.Binary
@@ -230,9 +249,11 @@ let expected =
                                    Syntax.Number 0.;
                                    Syntax.Call
                                      ( Syntax.Select (Syntax.Var "std", "length"),
-                                       ([ Syntax.Var "b" ], []) );
+                                       ([ Syntax.Var "b" ], []),
+                                       false );
                                  ],
-                                 [] ) ),
+                                 [] ),
+                               false ),
                            Syntax.Equal,
                            Syntax.Var "b" )) ) ));
          Syntax.MemberField
@@ -244,11 +265,13 @@ let expected =
                   ( Syntax.Binary
                       ( Syntax.Call
                           ( Syntax.Select (Syntax.Var "std", "length"),
-                            ([ Syntax.Var "a" ], []) ),
+                            ([ Syntax.Var "a" ], []),
+                            false ),
                         Syntax.Lt,
                         Syntax.Call
                           ( Syntax.Select (Syntax.Var "std", "length"),
-                            ([ Syntax.Var "b" ], []) ) ),
+                            ([ Syntax.Var "b" ], []),
+                            false ) ),
                     Syntax.False,
                     Some
                       (Syntax.Binary
@@ -260,17 +283,21 @@ let expected =
                                      ( Syntax.Call
                                          ( Syntax.Select
                                              (Syntax.Var "std", "length"),
-                                           ([ Syntax.Var "a" ], []) ),
+                                           ([ Syntax.Var "a" ], []),
+                                           false ),
                                        Syntax.Sub,
                                        Syntax.Call
                                          ( Syntax.Select
                                              (Syntax.Var "std", "length"),
-                                           ([ Syntax.Var "b" ], []) ) );
+                                           ([ Syntax.Var "b" ], []),
+                                           false ) );
                                    Syntax.Call
                                      ( Syntax.Select (Syntax.Var "std", "length"),
-                                       ([ Syntax.Var "b" ], []) );
+                                       ([ Syntax.Var "b" ], []),
+                                       false );
                                  ],
-                                 [] ) ),
+                                 [] ),
+                               false ),
                            Syntax.Equal,
                            Syntax.Var "b" )) ) ));
          Syntax.MemberField
@@ -283,7 +310,8 @@ let expected =
                       ( Syntax.Binary
                           ( Syntax.Call
                               ( Syntax.Select (Syntax.Var "std", "length"),
-                                ([ Syntax.Var "str" ], []) ),
+                                ([ Syntax.Var "str" ], []),
+                                false ),
                             Syntax.Gt,
                             Syntax.Number 0. ),
                         Syntax.And,
@@ -294,7 +322,8 @@ let expected =
                                 Syntax.ArrayIndex
                                   (Syntax.Var "str", Syntax.Number 0.);
                               ],
-                              [] ) ) ),
+                              [] ),
+                            false ) ),
                     Syntax.Call
                       ( Syntax.Select (Syntax.Var "std", "lstripChars"),
                         ( [
@@ -305,7 +334,8 @@ let expected =
                                 None );
                             Syntax.Var "chars";
                           ],
-                          [] ) ),
+                          [] ),
+                        true ),
                     Some (Syntax.Var "str") ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
@@ -318,7 +348,8 @@ let expected =
                         ( "len",
                           Syntax.Call
                             ( Syntax.Select (Syntax.Var "std", "length"),
-                              ([ Syntax.Var "str" ], []) ) );
+                              ([ Syntax.Var "str" ], []),
+                              false ) );
                     ],
                     Syntax.If
                       ( Syntax.Binary
@@ -336,7 +367,8 @@ let expected =
                                             Syntax.Sub,
                                             Syntax.Number 1. ) );
                                   ],
-                                  [] ) ) ),
+                                  [] ),
+                                false ) ),
                         Syntax.Call
                           ( Syntax.Select (Syntax.Var "std", "rstripChars"),
                             ( [
@@ -351,7 +383,8 @@ let expected =
                                     None );
                                 Syntax.Var "chars";
                               ],
-                              [] ) ),
+                              [] ),
+                            true ),
                         Some (Syntax.Var "str") ) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
@@ -363,10 +396,12 @@ let expected =
                     ( [
                         Syntax.Call
                           ( Syntax.Select (Syntax.Var "std", "rstripChars"),
-                            ([ Syntax.Var "str"; Syntax.Var "chars" ], []) );
+                            ([ Syntax.Var "str"; Syntax.Var "chars" ], []),
+                            false );
                         Syntax.Var "chars";
                       ],
-                      [] ) ) ));
+                      [] ),
+                    false ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "stringChars",
@@ -377,13 +412,15 @@ let expected =
                     ( [
                         Syntax.Call
                           ( Syntax.Select (Syntax.Var "std", "length"),
-                            ([ Syntax.Var "str" ], []) );
+                            ([ Syntax.Var "str" ], []),
+                            false );
                         Syntax.Function
                           ( [ ("i", None) ],
                             Syntax.ArrayIndex (Syntax.Var "str", Syntax.Var "i")
                           );
                       ],
-                      [] ) ) ));
+                      [] ),
+                    false ) ));
          Syntax.MemberObjlocal
            (Syntax.BindFunc
               ( "parse_nat",
@@ -406,7 +443,8 @@ let expected =
                             ( "zero_code",
                               Syntax.Call
                                 ( Syntax.Select (Syntax.Var "std", "codepoint"),
-                                  ([ Syntax.String "0" ], []) ) );
+                                  ([ Syntax.String "0" ], []),
+                                  false ) );
                         ],
                         Syntax.Local
                           ( [
@@ -415,7 +453,8 @@ let expected =
                                   Syntax.Call
                                     ( Syntax.Select
                                         (Syntax.Var "std", "codepoint"),
-                                      ([ Syntax.String "A" ], []) ) );
+                                      ([ Syntax.String "A" ], []),
+                                      false ) );
                             ],
                             Syntax.Local
                               ( [
@@ -424,7 +463,8 @@ let expected =
                                       Syntax.Call
                                         ( Syntax.Select
                                             (Syntax.Var "std", "codepoint"),
-                                          ([ Syntax.String "a" ], []) ) );
+                                          ([ Syntax.String "a" ], []),
+                                          false ) );
                                 ],
                                 Syntax.Local
                                   ( [
@@ -442,7 +482,8 @@ let expected =
                                                           ( Syntax.Var "std",
                                                             "codepoint" ),
                                                         ( [ Syntax.Var "char" ],
-                                                          [] ) ) );
+                                                          [] ),
+                                                        false ) );
                                               ],
                                               Syntax.Local
                                                 ( [
@@ -554,10 +595,12 @@ let expected =
                                               ( Syntax.Select
                                                   ( Syntax.Var "std",
                                                     "stringChars" ),
-                                                ([ Syntax.Var "str" ], []) );
+                                                ([ Syntax.Var "str" ], []),
+                                                false );
                                             Syntax.Number 0.;
                                           ],
-                                          [] ) ) ) ) ) ) ) ));
+                                          [] ),
+                                        false ) ) ) ) ) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "parseInt",
@@ -566,20 +609,23 @@ let expected =
                 Syntax.Assert
                   ( ( Syntax.Call
                         ( Syntax.Select (Syntax.Var "std", "isString"),
-                          ([ Syntax.Var "str" ], []) ),
+                          ([ Syntax.Var "str" ], []),
+                          false ),
                       Some
                         (Syntax.Binary
                            ( Syntax.String "Expected string, got ",
                              Syntax.Add,
                              Syntax.Call
                                ( Syntax.Select (Syntax.Var "std", "type"),
-                                 ([ Syntax.Var "str" ], []) ) )) ),
+                                 ([ Syntax.Var "str" ], []),
+                                 false ) )) ),
                     Syntax.Assert
                       ( ( Syntax.Binary
                             ( Syntax.Binary
                                 ( Syntax.Call
                                     ( Syntax.Select (Syntax.Var "std", "length"),
-                                      ([ Syntax.Var "str" ], []) ),
+                                      ([ Syntax.Var "str" ], []),
+                                      false ),
                                   Syntax.Gt,
                                   Syntax.Number 0. ),
                               Syntax.And,
@@ -610,12 +656,13 @@ let expected =
                                             None );
                                         Syntax.Number 10.;
                                       ],
-                                      [] ) ) ),
+                                      [] ),
+                                    false ) ),
                             Some
                               (Syntax.Call
                                  ( Syntax.Var "parse_nat",
-                                   ([ Syntax.Var "str"; Syntax.Number 10. ], [])
-                                 )) ) ) ) ));
+                                   ([ Syntax.Var "str"; Syntax.Number 10. ], []),
+                                   false )) ) ) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "parseOctal",
@@ -624,26 +671,29 @@ let expected =
                 Syntax.Assert
                   ( ( Syntax.Call
                         ( Syntax.Select (Syntax.Var "std", "isString"),
-                          ([ Syntax.Var "str" ], []) ),
+                          ([ Syntax.Var "str" ], []),
+                          false ),
                       Some
                         (Syntax.Binary
                            ( Syntax.String "Expected string, got ",
                              Syntax.Add,
                              Syntax.Call
                                ( Syntax.Select (Syntax.Var "std", "type"),
-                                 ([ Syntax.Var "str" ], []) ) )) ),
+                                 ([ Syntax.Var "str" ], []),
+                                 false ) )) ),
                     Syntax.Assert
                       ( ( Syntax.Binary
                             ( Syntax.Call
                                 ( Syntax.Select (Syntax.Var "std", "length"),
-                                  ([ Syntax.Var "str" ], []) ),
+                                  ([ Syntax.Var "str" ], []),
+                                  false ),
                               Syntax.Gt,
                               Syntax.Number 0. ),
                           Some (Syntax.String "Not an octal number: \"\"") ),
                         Syntax.Call
                           ( Syntax.Var "parse_nat",
-                            ([ Syntax.Var "str"; Syntax.Number 8. ], []) ) ) )
-              ));
+                            ([ Syntax.Var "str"; Syntax.Number 8. ], []),
+                            false ) ) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "parseHex",
@@ -652,26 +702,29 @@ let expected =
                 Syntax.Assert
                   ( ( Syntax.Call
                         ( Syntax.Select (Syntax.Var "std", "isString"),
-                          ([ Syntax.Var "str" ], []) ),
+                          ([ Syntax.Var "str" ], []),
+                          false ),
                       Some
                         (Syntax.Binary
                            ( Syntax.String "Expected string, got ",
                              Syntax.Add,
                              Syntax.Call
                                ( Syntax.Select (Syntax.Var "std", "type"),
-                                 ([ Syntax.Var "str" ], []) ) )) ),
+                                 ([ Syntax.Var "str" ], []),
+                                 false ) )) ),
                     Syntax.Assert
                       ( ( Syntax.Binary
                             ( Syntax.Call
                                 ( Syntax.Select (Syntax.Var "std", "length"),
-                                  ([ Syntax.Var "str" ], []) ),
+                                  ([ Syntax.Var "str" ], []),
+                                  false ),
                               Syntax.Gt,
                               Syntax.Number 0. ),
                           Some (Syntax.String "Not hexadecimal: \"\"") ),
                         Syntax.Call
                           ( Syntax.Var "parse_nat",
-                            ([ Syntax.Var "str"; Syntax.Number 16. ], []) ) ) )
-              ));
+                            ([ Syntax.Var "str"; Syntax.Number 16. ], []),
+                            false ) ) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "split",
@@ -680,7 +733,8 @@ let expected =
                 Syntax.Assert
                   ( ( Syntax.Call
                         ( Syntax.Select (Syntax.Var "std", "isString"),
-                          ([ Syntax.Var "str" ], []) ),
+                          ([ Syntax.Var "str" ], []),
+                          false ),
                       Some
                         (Syntax.Binary
                            ( Syntax.String
@@ -689,11 +743,13 @@ let expected =
                              Syntax.Add,
                              Syntax.Call
                                ( Syntax.Select (Syntax.Var "std", "type"),
-                                 ([ Syntax.Var "str" ], []) ) )) ),
+                                 ([ Syntax.Var "str" ], []),
+                                 false ) )) ),
                     Syntax.Assert
                       ( ( Syntax.Call
                             ( Syntax.Select (Syntax.Var "std", "isString"),
-                              ([ Syntax.Var "c" ], []) ),
+                              ([ Syntax.Var "c" ], []),
+                              false ),
                           Some
                             (Syntax.Binary
                                ( Syntax.String
@@ -702,12 +758,14 @@ let expected =
                                  Syntax.Add,
                                  Syntax.Call
                                    ( Syntax.Select (Syntax.Var "std", "type"),
-                                     ([ Syntax.Var "c" ], []) ) )) ),
+                                     ([ Syntax.Var "c" ], []),
+                                     false ) )) ),
                         Syntax.Assert
                           ( ( Syntax.Binary
                                 ( Syntax.Call
                                     ( Syntax.Select (Syntax.Var "std", "length"),
-                                      ([ Syntax.Var "c" ], []) ),
+                                      ([ Syntax.Var "c" ], []),
+                                      false ),
                                   Syntax.Ge,
                                   Syntax.Number 1. ),
                               Some
@@ -719,7 +777,8 @@ let expected =
                                      Syntax.Call
                                        ( Syntax.Select
                                            (Syntax.Var "std", "length"),
-                                         ([ Syntax.Var "c" ], []) ) )) ),
+                                         ([ Syntax.Var "c" ], []),
+                                         false ) )) ),
                             Syntax.Call
                               ( Syntax.Select (Syntax.Var "std", "splitLimit"),
                                 ( [
@@ -727,7 +786,8 @@ let expected =
                                     Syntax.Var "c";
                                     Syntax.Unary (Syntax.Neg, Syntax.Number 1.);
                                   ],
-                                  [] ) ) ) ) ) ));
+                                  [] ),
+                                false ) ) ) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "splitLimit",
@@ -736,7 +796,8 @@ let expected =
                 Syntax.Assert
                   ( ( Syntax.Call
                         ( Syntax.Select (Syntax.Var "std", "isString"),
-                          ([ Syntax.Var "str" ], []) ),
+                          ([ Syntax.Var "str" ], []),
+                          false ),
                       Some
                         (Syntax.Binary
                            ( Syntax.String
@@ -745,11 +806,13 @@ let expected =
                              Syntax.Add,
                              Syntax.Call
                                ( Syntax.Select (Syntax.Var "std", "type"),
-                                 ([ Syntax.Var "str" ], []) ) )) ),
+                                 ([ Syntax.Var "str" ], []),
+                                 false ) )) ),
                     Syntax.Assert
                       ( ( Syntax.Call
                             ( Syntax.Select (Syntax.Var "std", "isString"),
-                              ([ Syntax.Var "c" ], []) ),
+                              ([ Syntax.Var "c" ], []),
+                              false ),
                           Some
                             (Syntax.Binary
                                ( Syntax.String
@@ -758,12 +821,14 @@ let expected =
                                  Syntax.Add,
                                  Syntax.Call
                                    ( Syntax.Select (Syntax.Var "std", "type"),
-                                     ([ Syntax.Var "c" ], []) ) )) ),
+                                     ([ Syntax.Var "c" ], []),
+                                     false ) )) ),
                         Syntax.Assert
                           ( ( Syntax.Binary
                                 ( Syntax.Call
                                     ( Syntax.Select (Syntax.Var "std", "length"),
-                                      ([ Syntax.Var "c" ], []) ),
+                                      ([ Syntax.Var "c" ], []),
+                                      false ),
                                   Syntax.Ge,
                                   Syntax.Number 1. ),
                               Some
@@ -775,12 +840,14 @@ let expected =
                                      Syntax.Call
                                        ( Syntax.Select
                                            (Syntax.Var "std", "length"),
-                                         ([ Syntax.Var "c" ], []) ) )) ),
+                                         ([ Syntax.Var "c" ], []),
+                                         false ) )) ),
                             Syntax.Assert
                               ( ( Syntax.Call
                                     ( Syntax.Select
                                         (Syntax.Var "std", "isNumber"),
-                                      ([ Syntax.Var "maxsplits" ], []) ),
+                                      ([ Syntax.Var "maxsplits" ], []),
+                                      false ),
                                   Some
                                     (Syntax.Binary
                                        ( Syntax.String
@@ -790,8 +857,8 @@ let expected =
                                          Syntax.Call
                                            ( Syntax.Select
                                                (Syntax.Var "std", "type"),
-                                             ([ Syntax.Var "maxsplits" ], []) )
-                                       )) ),
+                                             ([ Syntax.Var "maxsplits" ], []),
+                                             false ) )) ),
                                 Syntax.Local
                                   ( [
                                       Syntax.Bind
@@ -799,7 +866,8 @@ let expected =
                                           Syntax.Call
                                             ( Syntax.Select
                                                 (Syntax.Var "std", "length"),
-                                              ([ Syntax.Var "str" ], []) ) );
+                                              ([ Syntax.Var "str" ], []),
+                                              false ) );
                                     ],
                                     Syntax.Local
                                       ( [
@@ -808,7 +876,8 @@ let expected =
                                               Syntax.Call
                                                 ( Syntax.Select
                                                     (Syntax.Var "std", "length"),
-                                                  ([ Syntax.Var "c" ], []) ) );
+                                                  ([ Syntax.Var "c" ], []),
+                                                  false ) );
                                         ],
                                         Syntax.Local
                                           ( [
@@ -900,7 +969,8 @@ let expected =
                                                                                 "ret";
                                                                                ],
                                                                                []
-                                                                             )
+                                                                             ),
+                                                                             false
                                                                            ),
                                                                          Syntax
                                                                          .Lt,
@@ -940,7 +1010,8 @@ let expected =
                                                                      .String
                                                                        "";
                                                                    ],
-                                                                   [] ) ),
+                                                                   [] ),
+                                                                 false ),
                                                              Some
                                                                (Syntax.Call
                                                                   ( Syntax.Var
@@ -978,7 +1049,8 @@ let expected =
                                                                               )
                                                                           );
                                                                       ],
-                                                                      [] ) )) ))
+                                                                      [] ),
+                                                                    false )) ))
                                                     ) );
                                             ],
                                             Syntax.Call
@@ -988,7 +1060,8 @@ let expected =
                                                     Syntax.Array [];
                                                     Syntax.String "";
                                                   ],
-                                                  [] ) ) ) ) ) ) ) ) ) ));
+                                                  [] ),
+                                                false ) ) ) ) ) ) ) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "splitLimitR",
@@ -997,7 +1070,8 @@ let expected =
                 Syntax.Assert
                   ( ( Syntax.Call
                         ( Syntax.Select (Syntax.Var "std", "isString"),
-                          ([ Syntax.Var "str" ], []) ),
+                          ([ Syntax.Var "str" ], []),
+                          false ),
                       Some
                         (Syntax.Binary
                            ( Syntax.String
@@ -1006,11 +1080,13 @@ let expected =
                              Syntax.Add,
                              Syntax.Call
                                ( Syntax.Select (Syntax.Var "std", "type"),
-                                 ([ Syntax.Var "str" ], []) ) )) ),
+                                 ([ Syntax.Var "str" ], []),
+                                 false ) )) ),
                     Syntax.Assert
                       ( ( Syntax.Call
                             ( Syntax.Select (Syntax.Var "std", "isString"),
-                              ([ Syntax.Var "c" ], []) ),
+                              ([ Syntax.Var "c" ], []),
+                              false ),
                           Some
                             (Syntax.Binary
                                ( Syntax.String
@@ -1019,12 +1095,14 @@ let expected =
                                  Syntax.Add,
                                  Syntax.Call
                                    ( Syntax.Select (Syntax.Var "std", "type"),
-                                     ([ Syntax.Var "c" ], []) ) )) ),
+                                     ([ Syntax.Var "c" ], []),
+                                     false ) )) ),
                         Syntax.Assert
                           ( ( Syntax.Binary
                                 ( Syntax.Call
                                     ( Syntax.Select (Syntax.Var "std", "length"),
-                                      ([ Syntax.Var "c" ], []) ),
+                                      ([ Syntax.Var "c" ], []),
+                                      false ),
                                   Syntax.Ge,
                                   Syntax.Number 1. ),
                               Some
@@ -1036,12 +1114,14 @@ let expected =
                                      Syntax.Call
                                        ( Syntax.Select
                                            (Syntax.Var "std", "length"),
-                                         ([ Syntax.Var "c" ], []) ) )) ),
+                                         ([ Syntax.Var "c" ], []),
+                                         false ) )) ),
                             Syntax.Assert
                               ( ( Syntax.Call
                                     ( Syntax.Select
                                         (Syntax.Var "std", "isNumber"),
-                                      ([ Syntax.Var "maxsplits" ], []) ),
+                                      ([ Syntax.Var "maxsplits" ], []),
+                                      false ),
                                   Some
                                     (Syntax.Binary
                                        ( Syntax.String
@@ -1051,8 +1131,8 @@ let expected =
                                          Syntax.Call
                                            ( Syntax.Select
                                                (Syntax.Var "std", "type"),
-                                             ([ Syntax.Var "maxsplits" ], []) )
-                                       )) ),
+                                             ([ Syntax.Var "maxsplits" ], []),
+                                             false ) )) ),
                                 Syntax.If
                                   ( Syntax.Binary
                                       ( Syntax.Var "maxsplits",
@@ -1068,7 +1148,8 @@ let expected =
                                             Syntax.Unary
                                               (Syntax.Neg, Syntax.Number 1.);
                                           ],
-                                          [] ) ),
+                                          [] ),
+                                        false ),
                                     Some
                                       (Syntax.Local
                                          ( [
@@ -1098,11 +1179,14 @@ let expected =
                                                                          .Var
                                                                            "str";
                                                                        ],
-                                                                       [] ) );
+                                                                       [] ),
+                                                                     false );
                                                                ],
-                                                               [] ) );
+                                                               [] ),
+                                                             false );
                                                        ],
-                                                       [] ) ) );
+                                                       [] ),
+                                                     false ) );
                                            ],
                                            Syntax.Call
                                              ( Syntax.Select
@@ -1113,7 +1197,8 @@ let expected =
                                                        Syntax.Call
                                                          ( Syntax.Var "revStr",
                                                            ( [ Syntax.Var "e" ],
-                                                             [] ) ) );
+                                                             [] ),
+                                                           false ) );
                                                    Syntax.Call
                                                      ( Syntax.Select
                                                          ( Syntax.Var "std",
@@ -1134,7 +1219,8 @@ let expected =
                                                                            .Var
                                                                              "str";
                                                                          ],
-                                                                         [] ) );
+                                                                         [] ),
+                                                                       false );
                                                                    Syntax.Call
                                                                      ( Syntax.Var
                                                                          "revStr",
@@ -1143,15 +1229,19 @@ let expected =
                                                                            .Var
                                                                              "c";
                                                                          ],
-                                                                         [] ) );
+                                                                         [] ),
+                                                                       false );
                                                                    Syntax.Var
                                                                      "maxsplits";
                                                                  ],
-                                                                 [] ) );
+                                                                 [] ),
+                                                               false );
                                                          ],
-                                                         [] ) );
+                                                         [] ),
+                                                       false );
                                                  ],
-                                                 [] ) ) )) ) ) ) ) ) ));
+                                                 [] ),
+                                               false ) )) ) ) ) ) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "strReplace",
@@ -1160,17 +1250,20 @@ let expected =
                 Syntax.Assert
                   ( ( Syntax.Call
                         ( Syntax.Select (Syntax.Var "std", "isString"),
-                          ([ Syntax.Var "str" ], []) ),
+                          ([ Syntax.Var "str" ], []),
+                          false ),
                       None ),
                     Syntax.Assert
                       ( ( Syntax.Call
                             ( Syntax.Select (Syntax.Var "std", "isString"),
-                              ([ Syntax.Var "from" ], []) ),
+                              ([ Syntax.Var "from" ], []),
+                              false ),
                           None ),
                         Syntax.Assert
                           ( ( Syntax.Call
                                 ( Syntax.Select (Syntax.Var "std", "isString"),
-                                  ([ Syntax.Var "to" ], []) ),
+                                  ([ Syntax.Var "to" ], []),
+                                  false ),
                               None ),
                             Syntax.Assert
                               ( ( Syntax.Binary
@@ -1188,7 +1281,8 @@ let expected =
                                           Syntax.Call
                                             ( Syntax.Select
                                                 (Syntax.Var "std", "length"),
-                                              ([ Syntax.Var "str" ], []) ) );
+                                              ([ Syntax.Var "str" ], []),
+                                              false ) );
                                     ],
                                     Syntax.Local
                                       ( [
@@ -1197,8 +1291,8 @@ let expected =
                                               Syntax.Call
                                                 ( Syntax.Select
                                                     (Syntax.Var "std", "length"),
-                                                  ([ Syntax.Var "from" ], []) )
-                                            );
+                                                  ([ Syntax.Var "from" ], []),
+                                                  false ) );
                                         ],
                                         Syntax.Local
                                           ( [
@@ -1258,7 +1352,8 @@ let expected =
                                                                          .Var
                                                                            "curr_index";
                                                                        ],
-                                                                       [] ) ),
+                                                                       [] ),
+                                                                     false ),
                                                                  Syntax.Local
                                                                    ( [
                                                                        Syntax
@@ -1289,7 +1384,8 @@ let expected =
                                                                                 "from";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                              )
                                                                          );
@@ -1342,8 +1438,9 @@ let expected =
                                                                                 "to"
                                                                                );
                                                                            ],
-                                                                           [] )
-                                                                       ) ),
+                                                                           [] ),
+                                                                         true )
+                                                                   ),
                                                                  Some
                                                                    (Syntax.Call
                                                                       ( Syntax
@@ -1368,8 +1465,9 @@ let expected =
                                                                             .Var
                                                                               "acc";
                                                                           ],
-                                                                          [] )
-                                                                      )) )) ) );
+                                                                          [] ),
+                                                                        true ))
+                                                               )) ) );
                                                 ],
                                                 Syntax.If
                                                   ( Syntax.Binary
@@ -1393,9 +1491,11 @@ let expected =
                                                                     Syntax.Var
                                                                       "from";
                                                                   ],
-                                                                  [] ) );
+                                                                  [] ),
+                                                                false );
                                                           ],
-                                                          [] ) ),
+                                                          [] ),
+                                                        false ),
                                                     Some
                                                       (Syntax.Call
                                                          ( Syntax.Var
@@ -1405,8 +1505,9 @@ let expected =
                                                                Syntax.Number 0.;
                                                                Syntax.String "";
                                                              ],
-                                                             [] ) )) ) ) ) ) )
-                              ) ) ) ) ));
+                                                             [] ),
+                                                           false )) ) ) ) ) ) )
+                          ) ) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "asciiUpper",
@@ -1427,14 +1528,16 @@ let expected =
                                     ( Syntax.Binary
                                         ( Syntax.Call
                                             ( Syntax.Var "cp",
-                                              ([ Syntax.Var "c" ], []) ),
+                                              ([ Syntax.Var "c" ], []),
+                                              false ),
                                           Syntax.Ge,
                                           Syntax.Number 97. ),
                                       Syntax.And,
                                       Syntax.Binary
                                         ( Syntax.Call
                                             ( Syntax.Var "cp",
-                                              ([ Syntax.Var "c" ], []) ),
+                                              ([ Syntax.Var "c" ], []),
+                                              false ),
                                           Syntax.Lt,
                                           Syntax.Number 123. ) ),
                                   Syntax.Call
@@ -1443,11 +1546,13 @@ let expected =
                                           Syntax.Binary
                                             ( Syntax.Call
                                                 ( Syntax.Var "cp",
-                                                  ([ Syntax.Var "c" ], []) ),
+                                                  ([ Syntax.Var "c" ], []),
+                                                  false ),
                                               Syntax.Sub,
                                               Syntax.Number 32. );
                                         ],
-                                        [] ) ),
+                                        [] ),
+                                      false ),
                                   Some (Syntax.Var "c") ) );
                         ],
                         Syntax.Call
@@ -1461,11 +1566,14 @@ let expected =
                                         Syntax.Call
                                           ( Syntax.Select
                                               (Syntax.Var "std", "stringChars"),
-                                            ([ Syntax.Var "str" ], []) );
+                                            ([ Syntax.Var "str" ], []),
+                                            false );
                                       ],
-                                      [] ) );
+                                      [] ),
+                                    false );
                               ],
-                              [] ) ) ) ) ));
+                              [] ),
+                            false ) ) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "asciiLower",
@@ -1486,14 +1594,16 @@ let expected =
                                     ( Syntax.Binary
                                         ( Syntax.Call
                                             ( Syntax.Var "cp",
-                                              ([ Syntax.Var "c" ], []) ),
+                                              ([ Syntax.Var "c" ], []),
+                                              false ),
                                           Syntax.Ge,
                                           Syntax.Number 65. ),
                                       Syntax.And,
                                       Syntax.Binary
                                         ( Syntax.Call
                                             ( Syntax.Var "cp",
-                                              ([ Syntax.Var "c" ], []) ),
+                                              ([ Syntax.Var "c" ], []),
+                                              false ),
                                           Syntax.Lt,
                                           Syntax.Number 91. ) ),
                                   Syntax.Call
@@ -1502,11 +1612,13 @@ let expected =
                                           Syntax.Binary
                                             ( Syntax.Call
                                                 ( Syntax.Var "cp",
-                                                  ([ Syntax.Var "c" ], []) ),
+                                                  ([ Syntax.Var "c" ], []),
+                                                  false ),
                                               Syntax.Add,
                                               Syntax.Number 32. );
                                         ],
-                                        [] ) ),
+                                        [] ),
+                                      false ),
                                   Some (Syntax.Var "c") ) );
                         ],
                         Syntax.Call
@@ -1520,11 +1632,14 @@ let expected =
                                         Syntax.Call
                                           ( Syntax.Select
                                               (Syntax.Var "std", "stringChars"),
-                                            ([ Syntax.Var "str" ], []) );
+                                            ([ Syntax.Var "str" ], []),
+                                            false );
                                       ],
-                                      [] ) );
+                                      [] ),
+                                    false );
                               ],
-                              [] ) ) ) ) ));
+                              [] ),
+                            false ) ) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "range",
@@ -1543,7 +1658,8 @@ let expected =
                             Syntax.Binary
                               (Syntax.Var "i", Syntax.Add, Syntax.Var "from") );
                       ],
-                      [] ) ) ));
+                      [] ),
+                    false ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "repeat",
@@ -1556,14 +1672,16 @@ let expected =
                           Syntax.If
                             ( Syntax.Call
                                 ( Syntax.Select (Syntax.Var "std", "isString"),
-                                  ([ Syntax.Var "what" ], []) ),
+                                  ([ Syntax.Var "what" ], []),
+                                  false ),
                               Syntax.String "",
                               Some
                                 (Syntax.If
                                    ( Syntax.Call
                                        ( Syntax.Select
                                            (Syntax.Var "std", "isArray"),
-                                         ([ Syntax.Var "what" ], []) ),
+                                         ([ Syntax.Var "what" ], []),
+                                         false ),
                                      Syntax.Array [],
                                      Some
                                        (Syntax.Error
@@ -1582,9 +1700,11 @@ let expected =
                                     Syntax.Function
                                       ([ ("i", None) ], Syntax.Var "what");
                                   ],
-                                  [] ) );
+                                  [] ),
+                                false );
                           ],
-                          [] ) ) ) ));
+                          [] ),
+                        false ) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "slice",
@@ -1642,12 +1762,14 @@ let expected =
                                                                        Syntax.Var
                                                                          "indexable";
                                                                      ],
-                                                                     [] ) ),
+                                                                     [] ),
+                                                                   false ),
                                                                Syntax.Add,
                                                                Syntax.Var
                                                                  "index" );
                                                          ],
-                                                         [] ) ),
+                                                         [] ),
+                                                       false ),
                                                    Some (Syntax.Var "index") ))
                                           ) ));
                                  Syntax.MemberField
@@ -1663,8 +1785,8 @@ let expected =
                                             Syntax.Call
                                               ( Syntax.Select
                                                   (Syntax.Var "std", "length"),
-                                                ([ Syntax.Var "indexable" ], [])
-                                              ),
+                                                ([ Syntax.Var "indexable" ], []),
+                                                false ),
                                             Some
                                               (Syntax.If
                                                  ( Syntax.Binary
@@ -1680,7 +1802,8 @@ let expected =
                                                                Syntax.Var
                                                                  "indexable";
                                                              ],
-                                                             [] ) ),
+                                                             [] ),
+                                                           false ),
                                                        Syntax.Add,
                                                        Syntax.Var "end" ),
                                                    Some (Syntax.Var "end") )) )
@@ -1705,8 +1828,8 @@ let expected =
                                         Syntax.Call
                                           ( Syntax.Select
                                               (Syntax.Var "std", "length"),
-                                            ([ Syntax.Var "indexable" ], []) )
-                                      ));
+                                            ([ Syntax.Var "indexable" ], []),
+                                            false ) ));
                                  Syntax.MemberField
                                    (Syntax.Field
                                       ( Syntax.FieldnameID "type",
@@ -1715,8 +1838,8 @@ let expected =
                                         Syntax.Call
                                           ( Syntax.Select
                                               (Syntax.Var "std", "type"),
-                                            ([ Syntax.Var "indexable" ], []) )
-                                      ));
+                                            ([ Syntax.Var "indexable" ], []),
+                                            false ) ));
                                ]) );
                     ],
                     Syntax.Assert
@@ -1752,12 +1875,14 @@ let expected =
                                     ( Syntax.Call
                                         ( Syntax.Select
                                             (Syntax.Var "std", "isString"),
-                                          ([ Syntax.Var "indexable" ], []) ),
+                                          ([ Syntax.Var "indexable" ], []),
+                                          false ),
                                       Syntax.Or,
                                       Syntax.Call
                                         ( Syntax.Select
                                             (Syntax.Var "std", "isArray"),
-                                          ([ Syntax.Var "indexable" ], []) ) ),
+                                          ([ Syntax.Var "indexable" ], []),
+                                          false ) ),
                                   Some
                                     (Syntax.Binary
                                        ( Syntax.String
@@ -1767,8 +1892,8 @@ let expected =
                                          Syntax.Call
                                            ( Syntax.Select
                                                (Syntax.Var "std", "type"),
-                                             ([ Syntax.Var "indexable" ], []) )
-                                       )) ),
+                                             ([ Syntax.Var "indexable" ], []),
+                                             false ) )) ),
                                 Syntax.Local
                                   ( [
                                       Syntax.BindFunc
@@ -1848,7 +1973,8 @@ let expected =
                                                                    "invar",
                                                                  "step" ) );
                                                        ],
-                                                       [] ) )) ) );
+                                                       [] ),
+                                                     true )) ) );
                                     ],
                                     Syntax.Call
                                       ( Syntax.Var "build",
@@ -1865,7 +1991,8 @@ let expected =
                                             Syntax.Select
                                               (Syntax.Var "invar", "index");
                                           ],
-                                          [] ) ) ) ) ) ) ) ));
+                                          [] ),
+                                        false ) ) ) ) ) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "member",
@@ -1874,18 +2001,21 @@ let expected =
                 Syntax.If
                   ( Syntax.Call
                       ( Syntax.Select (Syntax.Var "std", "isArray"),
-                        ([ Syntax.Var "arr" ], []) ),
+                        ([ Syntax.Var "arr" ], []),
+                        false ),
                     Syntax.Binary
                       ( Syntax.Call
                           ( Syntax.Select (Syntax.Var "std", "count"),
-                            ([ Syntax.Var "arr"; Syntax.Var "x" ], []) ),
+                            ([ Syntax.Var "arr"; Syntax.Var "x" ], []),
+                            false ),
                         Syntax.Gt,
                         Syntax.Number 0. ),
                     Some
                       (Syntax.If
                          ( Syntax.Call
                              ( Syntax.Select (Syntax.Var "std", "isString"),
-                               ([ Syntax.Var "arr" ], []) ),
+                               ([ Syntax.Var "arr" ], []),
+                               false ),
                            Syntax.Binary
                              ( Syntax.Call
                                  ( Syntax.Select (Syntax.Var "std", "length"),
@@ -1894,9 +2024,11 @@ let expected =
                                          ( Syntax.Select
                                              (Syntax.Var "std", "findSubstr"),
                                            ( [ Syntax.Var "x"; Syntax.Var "arr" ],
-                                             [] ) );
+                                             [] ),
+                                           false );
                                      ],
-                                     [] ) ),
+                                     [] ),
+                                   false ),
                                Syntax.Gt,
                                Syntax.Number 0. ),
                            Some
@@ -1923,9 +2055,11 @@ let expected =
                                         Syntax.Var "x" ) );
                                 Syntax.Var "arr";
                               ],
-                              [] ) );
+                              [] ),
+                            false );
                       ],
-                      [] ) ) ));
+                      [] ),
+                    false ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "mod",
@@ -1935,22 +2069,27 @@ let expected =
                   ( Syntax.Binary
                       ( Syntax.Call
                           ( Syntax.Select (Syntax.Var "std", "isNumber"),
-                            ([ Syntax.Var "a" ], []) ),
+                            ([ Syntax.Var "a" ], []),
+                            false ),
                         Syntax.And,
                         Syntax.Call
                           ( Syntax.Select (Syntax.Var "std", "isNumber"),
-                            ([ Syntax.Var "b" ], []) ) ),
+                            ([ Syntax.Var "b" ], []),
+                            false ) ),
                     Syntax.Call
                       ( Syntax.Select (Syntax.Var "std", "modulo"),
-                        ([ Syntax.Var "a"; Syntax.Var "b" ], []) ),
+                        ([ Syntax.Var "a"; Syntax.Var "b" ], []),
+                        false ),
                     Some
                       (Syntax.If
                          ( Syntax.Call
                              ( Syntax.Select (Syntax.Var "std", "isString"),
-                               ([ Syntax.Var "a" ], []) ),
+                               ([ Syntax.Var "a" ], []),
+                               false ),
                            Syntax.Call
                              ( Syntax.Select (Syntax.Var "std", "format"),
-                               ([ Syntax.Var "a"; Syntax.Var "b" ], []) ),
+                               ([ Syntax.Var "a"; Syntax.Var "b" ], []),
+                               false ),
                            Some
                              (Syntax.Error
                                 (Syntax.Binary
@@ -1964,15 +2103,16 @@ let expected =
                                                  Syntax.Call
                                                    ( Syntax.Select
                                                        (Syntax.Var "std", "type"),
-                                                     ([ Syntax.Var "a" ], []) )
-                                               ),
+                                                     ([ Syntax.Var "a" ], []),
+                                                     false ) ),
                                              Syntax.Add,
                                              Syntax.String " and " ),
                                          Syntax.Add,
                                          Syntax.Call
                                            ( Syntax.Select
                                                (Syntax.Var "std", "type"),
-                                             ([ Syntax.Var "b" ], []) ) ),
+                                             ([ Syntax.Var "b" ], []),
+                                             false ) ),
                                      Syntax.Add,
                                      Syntax.String "." ))) )) ) ));
          Syntax.MemberField
@@ -1985,7 +2125,8 @@ let expected =
                       ( Syntax.Not,
                         Syntax.Call
                           ( Syntax.Select (Syntax.Var "std", "isFunction"),
-                            ([ Syntax.Var "func" ], []) ) ),
+                            ([ Syntax.Var "func" ], []),
+                            false ) ),
                     Syntax.Error
                       (Syntax.Binary
                          ( Syntax.String
@@ -1993,7 +2134,8 @@ let expected =
                            Syntax.Add,
                            Syntax.Call
                              ( Syntax.Select (Syntax.Var "std", "type"),
-                               ([ Syntax.Var "func" ], []) ) )),
+                               ([ Syntax.Var "func" ], []),
+                               false ) )),
                     Some
                       (Syntax.If
                          ( Syntax.Binary
@@ -2002,14 +2144,16 @@ let expected =
                                    Syntax.Call
                                      ( Syntax.Select
                                          (Syntax.Var "std", "isArray"),
-                                       ([ Syntax.Var "arr" ], []) ) ),
+                                       ([ Syntax.Var "arr" ], []),
+                                       false ) ),
                                Syntax.And,
                                Syntax.Unary
                                  ( Syntax.Not,
                                    Syntax.Call
                                      ( Syntax.Select
                                          (Syntax.Var "std", "isString"),
-                                       ([ Syntax.Var "arr" ], []) ) ) ),
+                                       ([ Syntax.Var "arr" ], []),
+                                       false ) ) ),
                            Syntax.Error
                              (Syntax.Binary
                                 ( Syntax.String
@@ -2018,7 +2162,8 @@ let expected =
                                   Syntax.Add,
                                   Syntax.Call
                                     ( Syntax.Select (Syntax.Var "std", "type"),
-                                      ([ Syntax.Var "arr" ], []) ) )),
+                                      ([ Syntax.Var "arr" ], []),
+                                      false ) )),
                            Some
                              (Syntax.Call
                                 ( Syntax.Select (Syntax.Var "std", "makeArray"),
@@ -2026,7 +2171,8 @@ let expected =
                                       Syntax.Call
                                         ( Syntax.Select
                                             (Syntax.Var "std", "length"),
-                                          ([ Syntax.Var "arr" ], []) );
+                                          ([ Syntax.Var "arr" ], []),
+                                          false );
                                       Syntax.Function
                                         ( [ ("i", None) ],
                                           Syntax.Call
@@ -2036,9 +2182,11 @@ let expected =
                                                     ( Syntax.Var "arr",
                                                       Syntax.Var "i" );
                                                 ],
-                                                [] ) ) );
+                                                [] ),
+                                              false ) );
                                     ],
-                                    [] ) )) )) ) ));
+                                    [] ),
+                                  false )) )) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "mapWithIndex",
@@ -2049,7 +2197,8 @@ let expected =
                       ( Syntax.Not,
                         Syntax.Call
                           ( Syntax.Select (Syntax.Var "std", "isFunction"),
-                            ([ Syntax.Var "func" ], []) ) ),
+                            ([ Syntax.Var "func" ], []),
+                            false ) ),
                     Syntax.Error
                       (Syntax.Binary
                          ( Syntax.String
@@ -2058,7 +2207,8 @@ let expected =
                            Syntax.Add,
                            Syntax.Call
                              ( Syntax.Select (Syntax.Var "std", "type"),
-                               ([ Syntax.Var "func" ], []) ) )),
+                               ([ Syntax.Var "func" ], []),
+                               false ) )),
                     Some
                       (Syntax.If
                          ( Syntax.Binary
@@ -2067,14 +2217,16 @@ let expected =
                                    Syntax.Call
                                      ( Syntax.Select
                                          (Syntax.Var "std", "isArray"),
-                                       ([ Syntax.Var "arr" ], []) ) ),
+                                       ([ Syntax.Var "arr" ], []),
+                                       false ) ),
                                Syntax.And,
                                Syntax.Unary
                                  ( Syntax.Not,
                                    Syntax.Call
                                      ( Syntax.Select
                                          (Syntax.Var "std", "isString"),
-                                       ([ Syntax.Var "arr" ], []) ) ) ),
+                                       ([ Syntax.Var "arr" ], []),
+                                       false ) ) ),
                            Syntax.Error
                              (Syntax.Binary
                                 ( Syntax.String
@@ -2083,7 +2235,8 @@ let expected =
                                   Syntax.Add,
                                   Syntax.Call
                                     ( Syntax.Select (Syntax.Var "std", "type"),
-                                      ([ Syntax.Var "arr" ], []) ) )),
+                                      ([ Syntax.Var "arr" ], []),
+                                      false ) )),
                            Some
                              (Syntax.Call
                                 ( Syntax.Select (Syntax.Var "std", "makeArray"),
@@ -2091,7 +2244,8 @@ let expected =
                                       Syntax.Call
                                         ( Syntax.Select
                                             (Syntax.Var "std", "length"),
-                                          ([ Syntax.Var "arr" ], []) );
+                                          ([ Syntax.Var "arr" ], []),
+                                          false );
                                       Syntax.Function
                                         ( [ ("i", None) ],
                                           Syntax.Call
@@ -2102,9 +2256,11 @@ let expected =
                                                     ( Syntax.Var "arr",
                                                       Syntax.Var "i" );
                                                 ],
-                                                [] ) ) );
+                                                [] ),
+                                              false ) );
                                     ],
-                                    [] ) )) )) ) ));
+                                    [] ),
+                                  false )) )) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "mapWithKey",
@@ -2115,7 +2271,8 @@ let expected =
                       ( Syntax.Not,
                         Syntax.Call
                           ( Syntax.Select (Syntax.Var "std", "isFunction"),
-                            ([ Syntax.Var "func" ], []) ) ),
+                            ([ Syntax.Var "func" ], []),
+                            false ) ),
                     Syntax.Error
                       (Syntax.Binary
                          ( Syntax.String
@@ -2123,14 +2280,16 @@ let expected =
                            Syntax.Add,
                            Syntax.Call
                              ( Syntax.Select (Syntax.Var "std", "type"),
-                               ([ Syntax.Var "func" ], []) ) )),
+                               ([ Syntax.Var "func" ], []),
+                               false ) )),
                     Some
                       (Syntax.If
                          ( Syntax.Unary
                              ( Syntax.Not,
                                Syntax.Call
                                  ( Syntax.Select (Syntax.Var "std", "isObject"),
-                                   ([ Syntax.Var "obj" ], []) ) ),
+                                   ([ Syntax.Var "obj" ], []),
+                                   false ) ),
                            Syntax.Error
                              (Syntax.Binary
                                 ( Syntax.String
@@ -2139,7 +2298,8 @@ let expected =
                                   Syntax.Add,
                                   Syntax.Call
                                     ( Syntax.Select (Syntax.Var "std", "type"),
-                                      ([ Syntax.Var "obj" ], []) ) )),
+                                      ([ Syntax.Var "obj" ], []),
+                                      false ) )),
                            Some
                              (Syntax.Object
                                 (Syntax.ObjectFor
@@ -2152,13 +2312,15 @@ let expected =
                                              Syntax.ArrayIndex
                                                (Syntax.Var "obj", Syntax.Var "k");
                                            ],
-                                           [] ) ),
+                                           [] ),
+                                         false ),
                                      [],
                                      ( "k",
                                        Syntax.Call
                                          ( Syntax.Select
                                              (Syntax.Var "std", "objectFields"),
-                                           ([ Syntax.Var "obj" ], []) ) ),
+                                           ([ Syntax.Var "obj" ], []),
+                                           false ) ),
                                      [] ))) )) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
@@ -2170,7 +2332,8 @@ let expected =
                       ( Syntax.Not,
                         Syntax.Call
                           ( Syntax.Select (Syntax.Var "std", "isFunction"),
-                            ([ Syntax.Var "func" ], []) ) ),
+                            ([ Syntax.Var "func" ], []),
+                            false ) ),
                     Syntax.Error
                       (Syntax.Binary
                          ( Syntax.String
@@ -2178,12 +2341,14 @@ let expected =
                            Syntax.Add,
                            Syntax.Call
                              ( Syntax.Select (Syntax.Var "std", "type"),
-                               ([ Syntax.Var "func" ], []) ) )),
+                               ([ Syntax.Var "func" ], []),
+                               false ) )),
                     Some
                       (Syntax.If
                          ( Syntax.Call
                              ( Syntax.Select (Syntax.Var "std", "isArray"),
-                               ([ Syntax.Var "arr" ], []) ),
+                               ([ Syntax.Var "arr" ], []),
+                               false ),
                            Syntax.Call
                              ( Syntax.Select (Syntax.Var "std", "flattenArrays"),
                                ( [
@@ -2194,7 +2359,8 @@ let expected =
                                            Syntax.Call
                                              ( Syntax.Select
                                                  (Syntax.Var "std", "length"),
-                                               ([ Syntax.Var "arr" ], []) );
+                                               ([ Syntax.Var "arr" ], []),
+                                               false );
                                            Syntax.Function
                                              ( [ ("i", None) ],
                                                Syntax.Call
@@ -2204,17 +2370,21 @@ let expected =
                                                          ( Syntax.Var "arr",
                                                            Syntax.Var "i" );
                                                      ],
-                                                     [] ) ) );
+                                                     [] ),
+                                                   false ) );
                                          ],
-                                         [] ) );
+                                         [] ),
+                                       false );
                                  ],
-                                 [] ) ),
+                                 [] ),
+                               false ),
                            Some
                              (Syntax.If
                                 ( Syntax.Call
                                     ( Syntax.Select
                                         (Syntax.Var "std", "isString"),
-                                      ([ Syntax.Var "arr" ], []) ),
+                                      ([ Syntax.Var "arr" ], []),
+                                      false ),
                                   Syntax.Call
                                     ( Syntax.Select (Syntax.Var "std", "join"),
                                       ( [
@@ -2227,8 +2397,8 @@ let expected =
                                                     ( Syntax.Select
                                                         ( Syntax.Var "std",
                                                           "length" ),
-                                                      ([ Syntax.Var "arr" ], [])
-                                                    );
+                                                      ([ Syntax.Var "arr" ], []),
+                                                      false );
                                                   Syntax.Function
                                                     ( [ ("i", None) ],
                                                       Syntax.Call
@@ -2240,11 +2410,14 @@ let expected =
                                                                   Syntax.Var "i"
                                                                 );
                                                             ],
-                                                            [] ) ) );
+                                                            [] ),
+                                                          false ) );
                                                 ],
-                                                [] ) );
+                                                [] ),
+                                              false );
                                         ],
-                                        [] ) ),
+                                        [] ),
+                                      false ),
                                   Some
                                     (Syntax.Error
                                        (Syntax.Binary
@@ -2255,8 +2428,8 @@ let expected =
                                             Syntax.Call
                                               ( Syntax.Select
                                                   (Syntax.Var "std", "type"),
-                                                ([ Syntax.Var "arr" ], []) ) )))
-                                )) )) ) ));
+                                                ([ Syntax.Var "arr" ], []),
+                                                false ) ))) )) )) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "join",
@@ -2278,7 +2451,8 @@ let expected =
                                   Syntax.Ge,
                                   Syntax.Call
                                     ( Syntax.Select (Syntax.Var "std", "length"),
-                                      ([ Syntax.Var "arr" ], []) ) ),
+                                      ([ Syntax.Var "arr" ], []),
+                                      false ) ),
                               Syntax.Var "running",
                               Some
                                 (Syntax.If
@@ -2298,7 +2472,8 @@ let expected =
                                              Syntax.Var "first";
                                              Syntax.Var "running";
                                            ],
-                                           [] ) ),
+                                           [] ),
+                                         true ),
                                      Some
                                        (Syntax.If
                                           ( Syntax.Binary
@@ -2310,13 +2485,14 @@ let expected =
                                                           ( Syntax.Var "arr",
                                                             Syntax.Var "i" );
                                                       ],
-                                                      [] ) ),
+                                                      [] ),
+                                                    false ),
                                                 Syntax.NotEqual,
                                                 Syntax.Call
                                                   ( Syntax.Select
                                                       (Syntax.Var "std", "type"),
-                                                    ([ Syntax.Var "sep" ], [])
-                                                  ) ),
+                                                    ([ Syntax.Var "sep" ], []),
+                                                    false ) ),
                                             Syntax.Error
                                               (Syntax.Binary
                                                  ( Syntax.String
@@ -2330,7 +2506,8 @@ let expected =
                                                              ( Syntax.Var "std",
                                                                "type" ),
                                                            ( [ Syntax.Var "sep" ],
-                                                             [] ) );
+                                                             [] ),
+                                                           false );
                                                        Syntax.Var "i";
                                                        Syntax.Call
                                                          ( Syntax.Select
@@ -2343,7 +2520,8 @@ let expected =
                                                                    Syntax.Var
                                                                      "i" );
                                                              ],
-                                                             [] ) );
+                                                             [] ),
+                                                           false );
                                                      ] )),
                                             Some
                                               (Syntax.If
@@ -2368,7 +2546,8 @@ let expected =
                                                                    Syntax.Var
                                                                      "i" ) );
                                                          ],
-                                                         [] ) ),
+                                                         [] ),
+                                                       true ),
                                                    Some
                                                      (Syntax.Call
                                                         ( Syntax.Var "aux",
@@ -2395,15 +2574,16 @@ let expected =
                                                                       Syntax.Var
                                                                         "i" ) );
                                                             ],
-                                                            [] ) )) )) )) )) )
-                        );
+                                                            [] ),
+                                                          true )) )) )) )) ) );
                     ],
                     Syntax.If
                       ( Syntax.Unary
                           ( Syntax.Not,
                             Syntax.Call
                               ( Syntax.Select (Syntax.Var "std", "isArray"),
-                                ([ Syntax.Var "arr" ], []) ) ),
+                                ([ Syntax.Var "arr" ], []),
+                                false ) ),
                         Syntax.Error
                           (Syntax.Binary
                              ( Syntax.String
@@ -2411,12 +2591,14 @@ let expected =
                                Syntax.Add,
                                Syntax.Call
                                  ( Syntax.Select (Syntax.Var "std", "type"),
-                                   ([ Syntax.Var "arr" ], []) ) )),
+                                   ([ Syntax.Var "arr" ], []),
+                                   false ) )),
                         Some
                           (Syntax.If
                              ( Syntax.Call
                                  ( Syntax.Select (Syntax.Var "std", "isString"),
-                                   ([ Syntax.Var "sep" ], []) ),
+                                   ([ Syntax.Var "sep" ], []),
+                                   false ),
                                Syntax.Call
                                  ( Syntax.Var "aux",
                                    ( [
@@ -2425,13 +2607,15 @@ let expected =
                                        Syntax.True;
                                        Syntax.String "";
                                      ],
-                                     [] ) ),
+                                     [] ),
+                                   false ),
                                Some
                                  (Syntax.If
                                     ( Syntax.Call
                                         ( Syntax.Select
                                             (Syntax.Var "std", "isArray"),
-                                          ([ Syntax.Var "sep" ], []) ),
+                                          ([ Syntax.Var "sep" ], []),
+                                          false ),
                                       Syntax.Call
                                         ( Syntax.Var "aux",
                                           ( [
@@ -2440,7 +2624,8 @@ let expected =
                                               Syntax.True;
                                               Syntax.Array [];
                                             ],
-                                            [] ) ),
+                                            [] ),
+                                          false ),
                                       Some
                                         (Syntax.Error
                                            (Syntax.Binary
@@ -2451,8 +2636,8 @@ let expected =
                                                 Syntax.Call
                                                   ( Syntax.Select
                                                       (Syntax.Var "std", "type"),
-                                                    ([ Syntax.Var "sep" ], [])
-                                                  ) ))) )) )) ) ) ));
+                                                    ([ Syntax.Var "sep" ], []),
+                                                    false ) ))) )) )) ) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "lines",
@@ -2467,7 +2652,8 @@ let expected =
                             Syntax.Add,
                             Syntax.Array [ Syntax.String "" ] );
                       ],
-                      [] ) ) ));
+                      [] ),
+                    false ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "deepJoin",
@@ -2476,13 +2662,15 @@ let expected =
                 Syntax.If
                   ( Syntax.Call
                       ( Syntax.Select (Syntax.Var "std", "isString"),
-                        ([ Syntax.Var "arr" ], []) ),
+                        ([ Syntax.Var "arr" ], []),
+                        false ),
                     Syntax.Var "arr",
                     Some
                       (Syntax.If
                          ( Syntax.Call
                              ( Syntax.Select (Syntax.Var "std", "isArray"),
-                               ([ Syntax.Var "arr" ], []) ),
+                               ([ Syntax.Var "arr" ], []),
+                               false ),
                            Syntax.Call
                              ( Syntax.Select (Syntax.Var "std", "join"),
                                ( [
@@ -2491,11 +2679,13 @@ let expected =
                                      ( Syntax.Call
                                          ( Syntax.Select
                                              (Syntax.Var "std", "deepJoin"),
-                                           ([ Syntax.Var "x" ], []) ),
+                                           ([ Syntax.Var "x" ], []),
+                                           false ),
                                        ("x", Syntax.Var "arr"),
                                        [] );
                                  ],
-                                 [] ) ),
+                                 [] ),
+                               false ),
                            Some
                              (Syntax.Error
                                 (Syntax.Binary
@@ -2504,8 +2694,8 @@ let expected =
                                      Syntax.Mod,
                                      Syntax.Call
                                        ( Syntax.Select (Syntax.Var "std", "type"),
-                                         ([ Syntax.Var "arr" ], []) ) ))) )) )
-              ));
+                                         ([ Syntax.Var "arr" ], []),
+                                         false ) ))) )) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "format",
@@ -2523,7 +2713,8 @@ let expected =
                                     Syntax.Call
                                       ( Syntax.Select
                                           (Syntax.Var "std", "length"),
-                                        ([ Syntax.Var "str" ], []) ) ),
+                                        ([ Syntax.Var "str" ], []),
+                                        false ) ),
                                 Some (Syntax.String "Truncated format code.") ),
                               Syntax.Local
                                 ( [
@@ -2557,7 +2748,8 @@ let expected =
                                                             ( [
                                                                 Syntax.Var "str";
                                                               ],
-                                                              [] ) ) ),
+                                                              [] ),
+                                                            false ) ),
                                                     Syntax.Error
                                                       (Syntax.String
                                                          "Truncated format \
@@ -2610,7 +2802,8 @@ let expected =
                                                                              "c"
                                                                          );
                                                                      ],
-                                                                     [] ) ),
+                                                                     [] ),
+                                                                   false ),
                                                                Some
                                                                  (Syntax.Object
                                                                     (Syntax
@@ -2668,7 +2861,8 @@ let expected =
                                                       Syntax.Number 1. );
                                                   Syntax.String "";
                                                 ],
-                                                [] ) ) ),
+                                                [] ),
+                                              false ) ),
                                       Some
                                         (Syntax.Object
                                            (Syntax.ObjectMemberList
@@ -2707,8 +2901,8 @@ let expected =
                                                     ( Syntax.Select
                                                         ( Syntax.Var "std",
                                                           "length" ),
-                                                      ([ Syntax.Var "str" ], [])
-                                                    ) ),
+                                                      ([ Syntax.Var "str" ], []),
+                                                      false ) ),
                                               Some
                                                 (Syntax.String
                                                    "Truncated format code.") ),
@@ -2755,7 +2949,8 @@ let expected =
                                                                          ));
                                                                   ] );
                                                           ],
-                                                          [] ) ),
+                                                          [] ),
+                                                        false ),
                                                     Some
                                                       (Syntax.If
                                                          ( Syntax.Binary
@@ -2801,7 +2996,8 @@ let expected =
                                                                                 ));
                                                                          ] );
                                                                  ],
-                                                                 [] ) ),
+                                                                 [] ),
+                                                               false ),
                                                            Some
                                                              (Syntax.If
                                                                 ( Syntax.Binary
@@ -2857,7 +3053,8 @@ let expected =
                                                                                 ]
                                                                             );
                                                                         ],
-                                                                        [] ) ),
+                                                                        [] ),
+                                                                      false ),
                                                                   Some
                                                                     (Syntax.If
                                                                        ( Syntax
@@ -2921,7 +3118,8 @@ let expected =
                                                                                 );
                                                                                ],
                                                                                []
-                                                                             )
+                                                                             ),
+                                                                             false
                                                                            ),
                                                                          Some
                                                                            (Syntax
@@ -2990,7 +3188,8 @@ let expected =
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Some
                                                                                 (
@@ -3080,7 +3279,8 @@ let expected =
                                                         Syntax.False ));
                                                ]);
                                         ],
-                                        [] ) ) ) );
+                                        [] ),
+                                      false ) ) );
                         ],
                         Syntax.Local
                           ( [
@@ -3095,8 +3295,8 @@ let expected =
                                               Syntax.Call
                                                 ( Syntax.Select
                                                     (Syntax.Var "std", "length"),
-                                                  ([ Syntax.Var "str" ], []) )
-                                            ),
+                                                  ([ Syntax.Var "str" ], []),
+                                                  false ) ),
                                           Syntax.And,
                                           Syntax.Binary
                                             ( Syntax.ArrayIndex
@@ -3146,7 +3346,8 @@ let expected =
                                                                      Syntax.Var
                                                                        "str";
                                                                    ],
-                                                                   [] ) ) ),
+                                                                   [] ),
+                                                                 false ) ),
                                                          Some
                                                            (Syntax.String
                                                               "Truncated \
@@ -3205,7 +3406,8 @@ let expected =
                                                                              0.
                                                                          );
                                                                      ],
-                                                                     [] ) ),
+                                                                     [] ),
+                                                                   false ),
                                                                Some
                                                                  (Syntax.If
                                                                     ( Syntax
@@ -3263,7 +3465,9 @@ let expected =
                                                                                 );
                                                                             ],
                                                                             []
-                                                                          ) ),
+                                                                          ),
+                                                                          false
+                                                                        ),
                                                                       Some
                                                                         (Syntax
                                                                          .If
@@ -3325,7 +3529,8 @@ let expected =
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                ),
                                                                              Some
                                                                                (Syntax
@@ -3389,7 +3594,8 @@ let expected =
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Some
                                                                                 (
@@ -3454,7 +3660,8 @@ let expected =
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Some
                                                                                 (
@@ -3519,7 +3726,8 @@ let expected =
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Some
                                                                                 (
@@ -3584,7 +3792,8 @@ let expected =
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Some
                                                                                 (
@@ -3649,7 +3858,8 @@ let expected =
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Some
                                                                                 (
@@ -3714,7 +3924,8 @@ let expected =
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Some
                                                                                 (
@@ -3779,7 +3990,8 @@ let expected =
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Some
                                                                                 (
@@ -3841,7 +4053,8 @@ let expected =
                                                      Syntax.Var "i";
                                                      Syntax.Number 0.;
                                                    ],
-                                                   [] ) ) )) ) );
+                                                   [] ),
+                                                 false ) )) ) );
                             ],
                             Syntax.Local
                               ( [
@@ -3856,8 +4069,8 @@ let expected =
                                                   ( Syntax.Select
                                                       ( Syntax.Var "std",
                                                         "length" ),
-                                                    ([ Syntax.Var "str" ], [])
-                                                  ) ),
+                                                    ([ Syntax.Var "str" ], []),
+                                                    false ) ),
                                             Some
                                               (Syntax.String
                                                  "Truncated format code.") ),
@@ -3885,7 +4098,8 @@ let expected =
                                                               Syntax.Number 1.
                                                             );
                                                         ],
-                                                        [] ) ),
+                                                        [] ),
+                                                      false ),
                                                   Some
                                                     (Syntax.Object
                                                        (Syntax.ObjectMemberList
@@ -3924,7 +4138,8 @@ let expected =
                                                           ( Syntax.Var "std",
                                                             "length" ),
                                                         ( [ Syntax.Var "str" ],
-                                                          [] ) ) ),
+                                                          [] ),
+                                                        false ) ),
                                                 Some
                                                   (Syntax.String
                                                      "Truncated format code.")
@@ -3980,7 +4195,8 @@ let expected =
                                                             ( [
                                                                 Syntax.Var "str";
                                                               ],
-                                                              [] ) ) ),
+                                                              [] ),
+                                                            false ) ),
                                                     Some
                                                       (Syntax.String
                                                          "Truncated format \
@@ -5093,7 +5309,8 @@ let expected =
                                                                     Syntax.Var
                                                                       "str";
                                                                   ],
-                                                                  [] ) ) ),
+                                                                  [] ),
+                                                                false ) ),
                                                         Some
                                                           (Syntax.String
                                                              "Truncated format \
@@ -5113,7 +5330,8 @@ let expected =
                                                                         .Var
                                                                           "i";
                                                                       ],
-                                                                      [] ) ) );
+                                                                      [] ),
+                                                                    false ) );
                                                           ],
                                                           Syntax.Local
                                                             ( [
@@ -5135,8 +5353,9 @@ let expected =
                                                                                 "i"
                                                                               );
                                                                           ],
-                                                                          [] )
-                                                                      ) );
+                                                                          [] ),
+                                                                        false )
+                                                                  );
                                                               ],
                                                               Syntax.Local
                                                                 ( [
@@ -5161,8 +5380,9 @@ let expected =
                                                                                 );
                                                                               ],
                                                                               []
-                                                                            ) )
-                                                                      );
+                                                                            ),
+                                                                            false
+                                                                          ) );
                                                                   ],
                                                                   Syntax.Local
                                                                     ( [
@@ -5189,7 +5409,8 @@ let expected =
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                               )
                                                                           );
                                                                       ],
@@ -5220,7 +5441,8 @@ let expected =
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                               );
                                                                           ],
@@ -5247,7 +5469,8 @@ let expected =
                                                                                 "len_mod";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 );
                                                                               ],
@@ -5460,7 +5683,8 @@ let expected =
                                                                       Syntax.Var
                                                                         "str";
                                                                     ],
-                                                                    [] ) ) ),
+                                                                    [] ),
+                                                                  false ) ),
                                                           Syntax.Binary
                                                             ( Syntax.Var "out",
                                                               Syntax.Add,
@@ -5527,7 +5751,8 @@ let expected =
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                              );
                                                                          ],
@@ -5577,7 +5802,8 @@ let expected =
                                                                                 "";
                                                                                ],
                                                                                []
-                                                                             )
+                                                                             ),
+                                                                             true
                                                                            ) ),
                                                                      Some
                                                                        (Syntax
@@ -5618,8 +5844,10 @@ let expected =
                                                                                 );
                                                                               ],
                                                                               []
-                                                                            ) ))
-                                                                   ) )) ) );
+                                                                            ),
+                                                                            true
+                                                                          )) )
+                                                               )) ) );
                                                 ],
                                                 Syntax.Local
                                                   ( [
@@ -5638,7 +5866,8 @@ let expected =
                                                                   Syntax.String
                                                                     "";
                                                                 ],
-                                                                [] ) ) );
+                                                                [] ),
+                                                              false ) );
                                                     ],
                                                     Syntax.Local
                                                       ( [
@@ -5712,7 +5941,8 @@ let expected =
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ))
                                                                           ) );
                                                                   ],
@@ -5727,8 +5957,9 @@ let expected =
                                                                           .String
                                                                             "";
                                                                         ],
-                                                                        [] ) )
-                                                                ) );
+                                                                        [] ),
+                                                                      false ) )
+                                                            );
                                                         ],
                                                         Syntax.Local
                                                           ( [
@@ -5771,7 +6002,8 @@ let expected =
                                                                                 "str";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 );
                                                                               Syntax
@@ -5779,7 +6011,9 @@ let expected =
                                                                                 "s";
                                                                             ],
                                                                             []
-                                                                          ) ),
+                                                                          ),
+                                                                          false
+                                                                        ),
                                                                       Syntax.Add,
                                                                       Syntax.Var
                                                                         "str" )
@@ -5839,7 +6073,8 @@ let expected =
                                                                                 "str";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 );
                                                                                 Syntax
@@ -5847,7 +6082,8 @@ let expected =
                                                                                 "s";
                                                                                 ],
                                                                                 []
-                                                                              )
+                                                                              ),
+                                                                              false
                                                                             ) )
                                                                     );
                                                                 ],
@@ -5981,11 +6217,13 @@ let expected =
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .Add,
@@ -6018,7 +6256,8 @@ let expected =
                                                                                 "mag";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 ))
                                                                                 )
@@ -6105,7 +6344,8 @@ let expected =
                                                                                 "min_digits";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 );
                                                                                 ],
@@ -6136,7 +6376,8 @@ let expected =
                                                                                 "0";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 );
                                                                                 ],
@@ -6357,7 +6598,8 @@ let expected =
                                                                                 "n__";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 );
                                                                                 ],
@@ -6433,11 +6675,13 @@ let expected =
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .Add,
@@ -6496,7 +6740,8 @@ let expected =
                                                                                 "n_";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .Equal,
@@ -6535,11 +6780,13 @@ let expected =
                                                                                 "n_";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ))
                                                                                 )
                                                                                 );
@@ -6668,7 +6915,8 @@ let expected =
                                                                                 "min_digits";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 );
                                                                                 ],
@@ -6731,7 +6979,8 @@ let expected =
                                                                                 "0";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 )
                                                                                 );
@@ -6892,7 +7141,8 @@ let expected =
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Some
                                                                                 (
@@ -6929,7 +7179,8 @@ let expected =
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ))
                                                                                 ))
                                                                                 )
@@ -6967,7 +7218,8 @@ let expected =
                                                                                 "str";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .Sub,
@@ -6977,7 +7229,8 @@ let expected =
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 )
                                                                                 );
@@ -7045,7 +7298,8 @@ let expected =
                                                                                 "n__";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 );
                                                                                 ],
@@ -7075,7 +7329,8 @@ let expected =
                                                                                 "n_";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 );
                                                                                 ],
@@ -7108,7 +7363,8 @@ let expected =
                                                                                 "prec";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 );
                                                                                 ],
@@ -7144,7 +7400,8 @@ let expected =
                                                                                 "n_";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .Mult,
@@ -7189,7 +7446,8 @@ let expected =
                                                                                 "n_";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .Mult,
@@ -7220,7 +7478,8 @@ let expected =
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 )
                                                                                 );
@@ -7254,7 +7513,8 @@ let expected =
                                                                                 "numerator";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .Mod,
@@ -7395,7 +7655,8 @@ let expected =
                                                                                 "";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 );
                                                                                 ],
@@ -7503,7 +7764,8 @@ let expected =
                                                                                 "";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 );
                                                                                 ],
@@ -7549,7 +7811,8 @@ let expected =
                                                                                 "frac_str";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Some
                                                                                 (
@@ -7694,11 +7957,13 @@ let expected =
                                                                                 "n__";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .Div,
@@ -7720,12 +7985,14 @@ let expected =
                                                                                 10.;
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ))
                                                                                 )
                                                                                 );
@@ -7796,7 +8063,8 @@ let expected =
                                                                                 "exponent";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 );
                                                                                 Syntax
                                                                                 .Number
@@ -7816,7 +8084,8 @@ let expected =
                                                                                 "";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 )
                                                                                 );
@@ -7897,7 +8166,8 @@ let expected =
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 ),
                                                                                 Some
@@ -7931,7 +8201,8 @@ let expected =
                                                                                 "exponent";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 ))
                                                                                 )
@@ -7971,7 +8242,8 @@ let expected =
                                                                                 "suff";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 )
                                                                                 );
@@ -8010,7 +8282,8 @@ let expected =
                                                                                 "prec";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .Add,
@@ -8226,7 +8499,8 @@ let expected =
                                                                                 "val";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Some
                                                                                 (
@@ -8274,7 +8548,8 @@ let expected =
                                                                                 "val";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .NotEqual,
@@ -8333,7 +8608,8 @@ let expected =
                                                                                 "val";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 )),
                                                                                 Some
@@ -8395,11 +8671,13 @@ let expected =
                                                                                 "val";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 );
                                                                                 Syntax
                                                                                 .Var
@@ -8431,7 +8709,8 @@ let expected =
                                                                                 "";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ))
                                                                                 ),
                                                                                 Some
@@ -8480,7 +8759,8 @@ let expected =
                                                                                 "val";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .NotEqual,
@@ -8539,7 +8819,8 @@ let expected =
                                                                                 "val";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 )),
                                                                                 Some
@@ -8631,11 +8912,13 @@ let expected =
                                                                                 "val";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 );
                                                                                 Syntax
                                                                                 .Var
@@ -8667,7 +8950,8 @@ let expected =
                                                                                 "zero_prefix";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 ))
                                                                                 ),
@@ -8717,7 +9001,8 @@ let expected =
                                                                                 "val";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .NotEqual,
@@ -8776,7 +9061,8 @@ let expected =
                                                                                 "val";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 )),
                                                                                 Some
@@ -8807,7 +9093,8 @@ let expected =
                                                                                 "val";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 );
                                                                                 Syntax
                                                                                 .Var
@@ -8849,7 +9136,8 @@ let expected =
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ))
                                                                                 ),
                                                                                 Some
@@ -8898,7 +9186,8 @@ let expected =
                                                                                 "val";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .NotEqual,
@@ -8957,7 +9246,8 @@ let expected =
                                                                                 "val";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 )),
                                                                                 Some
@@ -9007,7 +9297,8 @@ let expected =
                                                                                 "fpprec";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ))
                                                                                 ),
                                                                                 Some
@@ -9056,7 +9347,8 @@ let expected =
                                                                                 "val";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .NotEqual,
@@ -9115,7 +9407,8 @@ let expected =
                                                                                 "val";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 )),
                                                                                 Some
@@ -9173,7 +9466,8 @@ let expected =
                                                                                 "fpprec";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ))
                                                                                 ),
                                                                                 Some
@@ -9222,7 +9516,8 @@ let expected =
                                                                                 "val";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .NotEqual,
@@ -9281,7 +9576,8 @@ let expected =
                                                                                 "val";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 )),
                                                                                 Some
@@ -9356,11 +9652,13 @@ let expected =
                                                                                 "val";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .Div,
@@ -9382,12 +9680,14 @@ let expected =
                                                                                 10.;
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Some
                                                                                 (
@@ -9504,7 +9804,8 @@ let expected =
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Some
                                                                                 (
@@ -9546,7 +9847,8 @@ let expected =
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 );
                                                                                 ],
@@ -9610,7 +9912,8 @@ let expected =
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 ))
                                                                                 )
@@ -9662,7 +9965,8 @@ let expected =
                                                                                 "val";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .Equal,
@@ -9688,7 +9992,8 @@ let expected =
                                                                                 "val";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Some
                                                                                 (
@@ -9716,7 +10021,8 @@ let expected =
                                                                                 "val";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .Equal,
@@ -9748,7 +10054,8 @@ let expected =
                                                                                 "val";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .Equal,
@@ -9794,7 +10101,8 @@ let expected =
                                                                                 "val";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 )))
                                                                                 ),
@@ -9834,7 +10142,8 @@ let expected =
                                                                                 "val";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 )))
                                                                                 ))
@@ -9935,7 +10244,8 @@ let expected =
                                                                                 "codes";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 ),
                                                                                 Syntax
@@ -9967,7 +10277,8 @@ let expected =
                                                                                 "arr";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 ),
                                                                                 Syntax
@@ -10009,7 +10320,8 @@ let expected =
                                                                                 "arr";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 ),
                                                                                 Syntax
@@ -10077,7 +10389,8 @@ let expected =
                                                                                 "code";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .Equal,
@@ -10128,7 +10441,8 @@ let expected =
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                true
                                                                                 ),
                                                                                 Some
                                                                                 (
@@ -10234,7 +10548,8 @@ let expected =
                                                                                 "arr";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 ),
                                                                                 Syntax
@@ -10276,7 +10591,8 @@ let expected =
                                                                                 "arr";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 ),
                                                                                 Syntax
@@ -10472,7 +10788,8 @@ let expected =
                                                                                 "arr";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 ),
                                                                                 Syntax
@@ -10514,7 +10831,8 @@ let expected =
                                                                                 "arr";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 ),
                                                                                 Syntax
@@ -10668,7 +10986,8 @@ let expected =
                                                                                 "arr";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 ),
                                                                                 Syntax
@@ -10722,7 +11041,8 @@ let expected =
                                                                                 "arr";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 ),
                                                                                 Syntax
@@ -10811,7 +11131,8 @@ let expected =
                                                                                 "j2";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ))
                                                                                 )
                                                                                 );
@@ -10864,7 +11185,8 @@ let expected =
                                                                                 " ";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Some
                                                                                 (
@@ -10892,7 +11214,8 @@ let expected =
                                                                                 " ";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ))
                                                                                 )
                                                                                 );
@@ -10988,7 +11311,8 @@ let expected =
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                true
                                                                                 )
                                                                                 )
                                                                                 )
@@ -11057,7 +11381,8 @@ let expected =
                                                                                 "codes";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 ),
                                                                                 Syntax
@@ -11109,7 +11434,8 @@ let expected =
                                                                                 "code";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .Equal,
@@ -11157,7 +11483,8 @@ let expected =
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                true
                                                                                 ),
                                                                                 Some
                                                                                 (
@@ -11346,7 +11673,8 @@ let expected =
                                                                                 "f";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .ArrayIndex
@@ -11438,7 +11766,8 @@ let expected =
                                                                                 "f";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ))
                                                                                 )
                                                                                 );
@@ -11486,7 +11815,8 @@ let expected =
                                                                                 " ";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Some
                                                                                 (
@@ -11509,7 +11839,8 @@ let expected =
                                                                                 " ";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ))
                                                                                 )
                                                                                 );
@@ -11554,7 +11885,8 @@ let expected =
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                true
                                                                                 )
                                                                                 )
                                                                                 )
@@ -11588,7 +11920,8 @@ let expected =
                                                                                 "vals";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .Call
@@ -11615,7 +11948,8 @@ let expected =
                                                                                 "";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Some
                                                                                 (
@@ -11640,7 +11974,8 @@ let expected =
                                                                                 "vals";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .Call
@@ -11664,7 +11999,8 @@ let expected =
                                                                                 "";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Some
                                                                                 (
@@ -11697,7 +12033,8 @@ let expected =
                                                                                 "";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ))
                                                                                 ))
                                                                                 )
@@ -11742,13 +12079,15 @@ let expected =
                                                      Syntax.Var "idx" );
                                                  Syntax.Var "running";
                                                ],
-                                               [] ) );
+                                               [] ),
+                                             false );
                                          Syntax.Binary
                                            ( Syntax.Var "idx",
                                              Syntax.Sub,
                                              Syntax.Number 1. );
                                        ],
-                                       [] ) )) ) );
+                                       [] ),
+                                     true )) ) );
                     ],
                     Syntax.Call
                       ( Syntax.Var "aux",
@@ -11759,11 +12098,13 @@ let expected =
                             Syntax.Binary
                               ( Syntax.Call
                                   ( Syntax.Select (Syntax.Var "std", "length"),
-                                    ([ Syntax.Var "arr" ], []) ),
+                                    ([ Syntax.Var "arr" ], []),
+                                    false ),
                                 Syntax.Sub,
                                 Syntax.Number 1. );
                           ],
-                          [] ) ) ) ));
+                          [] ),
+                        false ) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "foldl",
@@ -11785,7 +12126,8 @@ let expected =
                                   Syntax.Ge,
                                   Syntax.Call
                                     ( Syntax.Select (Syntax.Var "std", "length"),
-                                      ([ Syntax.Var "arr" ], []) ) ),
+                                      ([ Syntax.Var "arr" ], []),
+                                      false ) ),
                               Syntax.Var "running",
                               Some
                                 (Syntax.Call
@@ -11801,13 +12143,15 @@ let expected =
                                                    ( Syntax.Var "arr",
                                                      Syntax.Var "idx" );
                                                ],
-                                               [] ) );
+                                               [] ),
+                                             false );
                                          Syntax.Binary
                                            ( Syntax.Var "idx",
                                              Syntax.Add,
                                              Syntax.Number 1. );
                                        ],
-                                       [] ) )) ) );
+                                       [] ),
+                                     true )) ) );
                     ],
                     Syntax.Call
                       ( Syntax.Var "aux",
@@ -11817,7 +12161,8 @@ let expected =
                             Syntax.Var "init";
                             Syntax.Number 0.;
                           ],
-                          [] ) ) ) ));
+                          [] ),
+                        false ) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "filterMap",
@@ -11828,7 +12173,8 @@ let expected =
                       ( Syntax.Not,
                         Syntax.Call
                           ( Syntax.Select (Syntax.Var "std", "isFunction"),
-                            ([ Syntax.Var "filter_func" ], []) ) ),
+                            ([ Syntax.Var "filter_func" ], []),
+                            false ) ),
                     Syntax.Error
                       (Syntax.Binary
                          ( Syntax.String
@@ -11836,14 +12182,16 @@ let expected =
                            Syntax.Add,
                            Syntax.Call
                              ( Syntax.Select (Syntax.Var "std", "type"),
-                               ([ Syntax.Var "filter_func" ], []) ) )),
+                               ([ Syntax.Var "filter_func" ], []),
+                               false ) )),
                     Some
                       (Syntax.If
                          ( Syntax.Unary
                              ( Syntax.Not,
                                Syntax.Call
                                  ( Syntax.Select (Syntax.Var "std", "isFunction"),
-                                   ([ Syntax.Var "map_func" ], []) ) ),
+                                   ([ Syntax.Var "map_func" ], []),
+                                   false ) ),
                            Syntax.Error
                              (Syntax.Binary
                                 ( Syntax.String
@@ -11852,7 +12200,8 @@ let expected =
                                   Syntax.Add,
                                   Syntax.Call
                                     ( Syntax.Select (Syntax.Var "std", "type"),
-                                      ([ Syntax.Var "map_func" ], []) ) )),
+                                      ([ Syntax.Var "map_func" ], []),
+                                      false ) )),
                            Some
                              (Syntax.If
                                 ( Syntax.Unary
@@ -11860,7 +12209,8 @@ let expected =
                                       Syntax.Call
                                         ( Syntax.Select
                                             (Syntax.Var "std", "isArray"),
-                                          ([ Syntax.Var "arr" ], []) ) ),
+                                          ([ Syntax.Var "arr" ], []),
+                                          false ) ),
                                   Syntax.Error
                                     (Syntax.Binary
                                        ( Syntax.String
@@ -11870,7 +12220,8 @@ let expected =
                                          Syntax.Call
                                            ( Syntax.Select
                                                (Syntax.Var "std", "type"),
-                                             ([ Syntax.Var "arr" ], []) ) )),
+                                             ([ Syntax.Var "arr" ], []),
+                                             false ) )),
                                   Some
                                     (Syntax.Call
                                        ( Syntax.Select (Syntax.Var "std", "map"),
@@ -11883,9 +12234,11 @@ let expected =
                                                      Syntax.Var "filter_func";
                                                      Syntax.Var "arr";
                                                    ],
-                                                   [] ) );
+                                                   [] ),
+                                                 false );
                                            ],
-                                           [] ) )) )) )) ) ));
+                                           [] ),
+                                         false )) )) )) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "assertEqual",
@@ -11899,13 +12252,15 @@ let expected =
                             ( Syntax.Binary
                                 ( Syntax.Call
                                     ( Syntax.Select (Syntax.Var "std", "type"),
-                                      ([ Syntax.Var "a" ], []) ),
+                                      ([ Syntax.Var "a" ], []),
+                                      false ),
                                   Syntax.Equal,
                                   Syntax.String "string" ),
                               Syntax.Call
                                 ( Syntax.Select
                                     (Syntax.Var "std", "escapeStringJson"),
-                                  ([ Syntax.Var "a" ], []) ),
+                                  ([ Syntax.Var "a" ], []),
+                                  false ),
                               Some (Syntax.Var "a") ) );
                     ],
                     Syntax.Local
@@ -11917,13 +12272,15 @@ let expected =
                                     ( Syntax.Call
                                         ( Syntax.Select
                                             (Syntax.Var "std", "type"),
-                                          ([ Syntax.Var "b" ], []) ),
+                                          ([ Syntax.Var "b" ], []),
+                                          false ),
                                       Syntax.Equal,
                                       Syntax.String "string" ),
                                   Syntax.Call
                                     ( Syntax.Select
                                         (Syntax.Var "std", "escapeStringJson"),
-                                      ([ Syntax.Var "b" ], []) ),
+                                      ([ Syntax.Var "b" ], []),
+                                      false ),
                                   Some (Syntax.Var "b") ) );
                         ],
                         Syntax.If
@@ -11952,14 +12309,16 @@ let expected =
                       ( Syntax.Not,
                         Syntax.Call
                           ( Syntax.Select (Syntax.Var "std", "isNumber"),
-                            ([ Syntax.Var "n" ], []) ) ),
+                            ([ Syntax.Var "n" ], []),
+                            false ) ),
                     Syntax.Error
                       (Syntax.Binary
                          ( Syntax.String "std.abs expected number, got ",
                            Syntax.Add,
                            Syntax.Call
                              ( Syntax.Select (Syntax.Var "std", "type"),
-                               ([ Syntax.Var "n" ], []) ) )),
+                               ([ Syntax.Var "n" ], []),
+                               false ) )),
                     Some
                       (Syntax.If
                          ( Syntax.Binary
@@ -11977,14 +12336,16 @@ let expected =
                       ( Syntax.Not,
                         Syntax.Call
                           ( Syntax.Select (Syntax.Var "std", "isNumber"),
-                            ([ Syntax.Var "n" ], []) ) ),
+                            ([ Syntax.Var "n" ], []),
+                            false ) ),
                     Syntax.Error
                       (Syntax.Binary
                          ( Syntax.String "std.sign expected number, got ",
                            Syntax.Add,
                            Syntax.Call
                              ( Syntax.Select (Syntax.Var "std", "type"),
-                               ([ Syntax.Var "n" ], []) ) )),
+                               ([ Syntax.Var "n" ], []),
+                               false ) )),
                     Some
                       (Syntax.If
                          ( Syntax.Binary
@@ -12006,7 +12367,8 @@ let expected =
                       ( Syntax.Not,
                         Syntax.Call
                           ( Syntax.Select (Syntax.Var "std", "isNumber"),
-                            ([ Syntax.Var "a" ], []) ) ),
+                            ([ Syntax.Var "a" ], []),
+                            false ) ),
                     Syntax.Error
                       (Syntax.Binary
                          ( Syntax.String
@@ -12014,14 +12376,16 @@ let expected =
                            Syntax.Add,
                            Syntax.Call
                              ( Syntax.Select (Syntax.Var "std", "type"),
-                               ([ Syntax.Var "a" ], []) ) )),
+                               ([ Syntax.Var "a" ], []),
+                               false ) )),
                     Some
                       (Syntax.If
                          ( Syntax.Unary
                              ( Syntax.Not,
                                Syntax.Call
                                  ( Syntax.Select (Syntax.Var "std", "isNumber"),
-                                   ([ Syntax.Var "b" ], []) ) ),
+                                   ([ Syntax.Var "b" ], []),
+                                   false ) ),
                            Syntax.Error
                              (Syntax.Binary
                                 ( Syntax.String
@@ -12029,7 +12393,8 @@ let expected =
                                   Syntax.Add,
                                   Syntax.Call
                                     ( Syntax.Select (Syntax.Var "std", "type"),
-                                      ([ Syntax.Var "b" ], []) ) )),
+                                      ([ Syntax.Var "b" ], []),
+                                      false ) )),
                            Some
                              (Syntax.If
                                 ( Syntax.Binary
@@ -12046,7 +12411,8 @@ let expected =
                       ( Syntax.Not,
                         Syntax.Call
                           ( Syntax.Select (Syntax.Var "std", "isNumber"),
-                            ([ Syntax.Var "a" ], []) ) ),
+                            ([ Syntax.Var "a" ], []),
+                            false ) ),
                     Syntax.Error
                       (Syntax.Binary
                          ( Syntax.String
@@ -12054,14 +12420,16 @@ let expected =
                            Syntax.Add,
                            Syntax.Call
                              ( Syntax.Select (Syntax.Var "std", "type"),
-                               ([ Syntax.Var "a" ], []) ) )),
+                               ([ Syntax.Var "a" ], []),
+                               false ) )),
                     Some
                       (Syntax.If
                          ( Syntax.Unary
                              ( Syntax.Not,
                                Syntax.Call
                                  ( Syntax.Select (Syntax.Var "std", "isNumber"),
-                                   ([ Syntax.Var "b" ], []) ) ),
+                                   ([ Syntax.Var "b" ], []),
+                                   false ) ),
                            Syntax.Error
                              (Syntax.Binary
                                 ( Syntax.String
@@ -12069,7 +12437,8 @@ let expected =
                                   Syntax.Add,
                                   Syntax.Call
                                     ( Syntax.Select (Syntax.Var "std", "type"),
-                                      ([ Syntax.Var "b" ], []) ) )),
+                                      ([ Syntax.Var "b" ], []),
+                                      false ) )),
                            Some
                              (Syntax.If
                                 ( Syntax.Binary
@@ -12106,7 +12475,8 @@ let expected =
                         Syntax.Var "arrs";
                         Syntax.Array [];
                       ],
-                      [] ) ) ));
+                      [] ),
+                    false ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "flattenDeepArray",
@@ -12115,7 +12485,8 @@ let expected =
                 Syntax.If
                   ( Syntax.Call
                       ( Syntax.Select (Syntax.Var "std", "isArray"),
-                        ([ Syntax.Var "value" ], []) ),
+                        ([ Syntax.Var "value" ], []),
+                        false ),
                     Syntax.ArrayFor
                       ( Syntax.Var "y",
                         ("x", Syntax.Var "value"),
@@ -12125,7 +12496,8 @@ let expected =
                               Syntax.Call
                                 ( Syntax.Select
                                     (Syntax.Var "std", "flattenDeepArray"),
-                                  ([ Syntax.Var "x" ], []) ) );
+                                  ([ Syntax.Var "x" ], []),
+                                  false ) );
                         ] ),
                     Some (Syntax.Array [ Syntax.Var "value" ]) ) ));
          Syntax.MemberField
@@ -12159,7 +12531,8 @@ let expected =
                                                       Syntax.Var
                                                         "value_or_values";
                                                     ],
-                                                    [] ) ),
+                                                    [] ),
+                                                  false ),
                                               Syntax.ArrayFor
                                                 ( Syntax.Binary
                                                     ( Syntax.String "%s = %s",
@@ -12190,10 +12563,12 @@ let expected =
                                         Syntax.Call
                                           ( Syntax.Select
                                               (Syntax.Var "std", "objectFields"),
-                                            ([ Syntax.Var "body" ], []) ) ),
+                                            ([ Syntax.Var "body" ], []),
+                                            false ) ),
                                       [] );
                                 ],
-                                [] ) ) );
+                                [] ),
+                              false ) );
                     ],
                     Syntax.Local
                       ( [
@@ -12211,7 +12586,8 @@ let expected =
                                   Syntax.Add,
                                   Syntax.Call
                                     ( Syntax.Var "body_lines",
-                                      ([ Syntax.Var "sbody" ], []) ) ) );
+                                      ([ Syntax.Var "sbody" ], []),
+                                      false ) ) );
                           Syntax.Bind
                             ( "main_body",
                               Syntax.If
@@ -12221,14 +12597,16 @@ let expected =
                                       ( [
                                           Syntax.Var "ini"; Syntax.String "main";
                                         ],
-                                        [] ) ),
+                                        [] ),
+                                      false ),
                                   Syntax.Call
                                     ( Syntax.Var "body_lines",
                                       ( [
                                           Syntax.Select
                                             (Syntax.Var "ini", "main");
                                         ],
-                                        [] ) ),
+                                        [] ),
+                                      false ),
                                   Some (Syntax.Array []) ) );
                           Syntax.Bind
                             ( "all_sections",
@@ -12242,7 +12620,8 @@ let expected =
                                                 (Syntax.Var "ini", "sections"),
                                               Syntax.Var "k" );
                                         ],
-                                        [] ) ),
+                                        [] ),
+                                      false ),
                                   ( "k",
                                     Syntax.Call
                                       ( Syntax.Select
@@ -12251,7 +12630,8 @@ let expected =
                                             Syntax.Select
                                               (Syntax.Var "ini", "sections");
                                           ],
-                                          [] ) ) ),
+                                          [] ),
+                                        false ) ),
                                   [] ) );
                         ],
                         Syntax.Call
@@ -12265,12 +12645,13 @@ let expected =
                                         Syntax.Call
                                           ( Syntax.Select
                                               (Syntax.Var "std", "flattenArrays"),
-                                            ([ Syntax.Var "all_sections" ], [])
-                                          ) ),
+                                            ([ Syntax.Var "all_sections" ], []),
+                                            false ) ),
                                     Syntax.Add,
                                     Syntax.Array [ Syntax.String "" ] );
                               ],
-                              [] ) ) ) ) ));
+                              [] ),
+                            false ) ) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "manifestToml",
@@ -12278,7 +12659,8 @@ let expected =
                 Syntax.H 2,
                 Syntax.Call
                   ( Syntax.Select (Syntax.Var "std", "manifestTomlEx"),
-                    ([ Syntax.Var "value"; Syntax.String "  " ], []) ) ));
+                    ([ Syntax.Var "value"; Syntax.String "  " ], []),
+                    false ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "manifestTomlEx",
@@ -12308,9 +12690,11 @@ let expected =
                                                     Syntax.String
                                                       "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_-";
                                                   ],
-                                                  [] ) );
+                                                  [] ),
+                                                false );
                                           ],
-                                          [] ) ) );
+                                          [] ),
+                                        false ) );
                               ],
                               Syntax.If
                                 ( Syntax.Binary
@@ -12327,19 +12711,23 @@ let expected =
                                                             ( Syntax.Var "std",
                                                               "stringChars" ),
                                                           ( [ Syntax.Var "key" ],
-                                                            [] ) );
+                                                            [] ),
+                                                          false );
                                                     ],
-                                                    [] ) );
+                                                    [] ),
+                                                  false );
                                               Syntax.Var "bare_allowed";
                                             ],
-                                            [] ) ),
+                                            [] ),
+                                          false ),
                                       Syntax.Equal,
                                       Syntax.Var "bare_allowed" ),
                                   Syntax.Var "key",
                                   Some
                                     (Syntax.Call
                                        ( Syntax.Var "escapeStringToml",
-                                         ([ Syntax.Var "key" ], []) )) ) ) );
+                                         ([ Syntax.Var "key" ], []),
+                                         false )) ) ) );
                       Syntax.BindFunc
                         ( "isTableArray",
                           [ ("v", None) ],
@@ -12347,13 +12735,15 @@ let expected =
                             ( Syntax.Binary
                                 ( Syntax.Call
                                     ( Syntax.Select (Syntax.Var "std", "isArray"),
-                                      ([ Syntax.Var "v" ], []) ),
+                                      ([ Syntax.Var "v" ], []),
+                                      false ),
                                   Syntax.And,
                                   Syntax.Binary
                                     ( Syntax.Call
                                         ( Syntax.Select
                                             (Syntax.Var "std", "length"),
-                                          ([ Syntax.Var "v" ], []) ),
+                                          ([ Syntax.Var "v" ], []),
+                                          false ),
                                       Syntax.Gt,
                                       Syntax.Number 0. ) ),
                               Syntax.And,
@@ -12367,20 +12757,24 @@ let expected =
                                                 (Syntax.Var "std", "isObject");
                                               Syntax.Var "v";
                                             ],
-                                            [] ) );
+                                            [] ),
+                                          false );
                                     ],
-                                    [] ) ) ) );
+                                    [] ),
+                                  false ) ) );
                       Syntax.BindFunc
                         ( "isSection",
                           [ ("v", None) ],
                           Syntax.Binary
                             ( Syntax.Call
                                 ( Syntax.Select (Syntax.Var "std", "isObject"),
-                                  ([ Syntax.Var "v" ], []) ),
+                                  ([ Syntax.Var "v" ], []),
+                                  false ),
                               Syntax.Or,
                               Syntax.Call
                                 ( Syntax.Var "isTableArray",
-                                  ([ Syntax.Var "v" ], []) ) ) );
+                                  ([ Syntax.Var "v" ], []),
+                                  false ) ) );
                       Syntax.BindFunc
                         ( "renderValue",
                           [
@@ -12419,8 +12813,8 @@ let expected =
                                                      ( Syntax.Select
                                                          ( Syntax.Var "std",
                                                            "isNumber" ),
-                                                       ([ Syntax.Var "v" ], [])
-                                                     ),
+                                                       ([ Syntax.Var "v" ], []),
+                                                       false ),
                                                    Syntax.Binary
                                                      ( Syntax.String "",
                                                        Syntax.Add,
@@ -12435,14 +12829,16 @@ let expected =
                                                               ( [
                                                                   Syntax.Var "v";
                                                                 ],
-                                                                [] ) ),
+                                                                [] ),
+                                                              false ),
                                                           Syntax.Call
                                                             ( Syntax.Var
                                                                 "escapeStringToml",
                                                               ( [
                                                                   Syntax.Var "v";
                                                                 ],
-                                                                [] ) ),
+                                                                [] ),
+                                                              false ),
                                                           Some
                                                             (Syntax.If
                                                                ( Syntax.Call
@@ -12458,7 +12854,8 @@ let expected =
                                                                          .Var
                                                                            "v";
                                                                        ],
-                                                                       [] ) ),
+                                                                       [] ),
+                                                                     false ),
                                                                  Syntax.Error
                                                                    (Syntax
                                                                     .Binary
@@ -12492,7 +12889,9 @@ let expected =
                                                                                 "v";
                                                                               ],
                                                                               []
-                                                                            ) ),
+                                                                            ),
+                                                                            false
+                                                                          ),
                                                                         Syntax
                                                                         .If
                                                                           ( Syntax
@@ -12515,7 +12914,8 @@ let expected =
                                                                                 "v";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .Equal,
@@ -12572,7 +12972,8 @@ let expected =
                                                                                 "v";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .Sub,
@@ -12582,7 +12983,8 @@ let expected =
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 );
                                                                                 ],
@@ -12761,7 +13163,8 @@ let expected =
                                                                                 "";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 );
                                                                                 ],
@@ -12775,7 +13178,8 @@ let expected =
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 ),
                                                                                 Syntax
@@ -12841,7 +13245,8 @@ let expected =
                                                                                 "lines";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 )
                                                                                 )
@@ -12869,7 +13274,8 @@ let expected =
                                                                                 "v";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                Syntax
                                                                                .Local
@@ -12939,7 +13345,8 @@ let expected =
                                                                                 "k";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .Add,
@@ -12991,7 +13398,8 @@ let expected =
                                                                                 "";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 );
                                                                                 ],
@@ -13015,14 +13423,16 @@ let expected =
                                                                                 "v";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 ),
                                                                                 []
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 ),
                                                                                 Syntax
@@ -13059,7 +13469,8 @@ let expected =
                                                                                 "lines";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 ),
                                                                                None
@@ -13099,7 +13510,8 @@ let expected =
                                                                         .Var
                                                                           "k";
                                                                       ],
-                                                                      [] ) ) ),
+                                                                      [] ),
+                                                                    false ) ),
                                                             Syntax.Add,
                                                             Syntax.String " = "
                                                           ),
@@ -13127,15 +13539,16 @@ let expected =
                                                                 Syntax.Var
                                                                   "cindent";
                                                               ],
-                                                              [] ) ) );
+                                                              [] ),
+                                                            false ) );
                                                   ],
                                                 ( "k",
                                                   Syntax.Call
                                                     ( Syntax.Select
                                                         ( Syntax.Var "std",
                                                           "objectFields" ),
-                                                      ([ Syntax.Var "v" ], [])
-                                                    ) ),
+                                                      ([ Syntax.Var "v" ], []),
+                                                      false ) ),
                                                 [
                                                   Syntax.Ifspec
                                                     (Syntax.Unary
@@ -13151,10 +13564,12 @@ let expected =
                                                                      Syntax.Var
                                                                        "k" );
                                                                ],
-                                                               [] ) ) ));
+                                                               [] ),
+                                                             false ) ));
                                                 ] );
                                           ],
-                                          [] ) ) );
+                                          [] ),
+                                        false ) );
                               ],
                               Syntax.Local
                                 ( [
@@ -13170,7 +13585,8 @@ let expected =
                                                         Syntax.String "\n";
                                                         Syntax.Var "kvp";
                                                       ],
-                                                      [] ) );
+                                                      [] ),
+                                                    false );
                                               ],
                                             Syntax.Add,
                                             Syntax.ArrayFor
@@ -13185,7 +13601,8 @@ let expected =
                                                                 Syntax.Var "k"
                                                               );
                                                           ],
-                                                          [] ) ),
+                                                          [] ),
+                                                        false ),
                                                     Syntax.Call
                                                       ( Syntax.Var "renderTable",
                                                         ( [
@@ -13212,7 +13629,8 @@ let expected =
                                                                   ] );
                                                             Syntax.Var "cindent";
                                                           ],
-                                                          [] ) ),
+                                                          [] ),
+                                                        false ),
                                                     Some
                                                       (Syntax.Call
                                                          ( Syntax.Var
@@ -13245,14 +13663,15 @@ let expected =
                                                                Syntax.Var
                                                                  "cindent";
                                                              ],
-                                                             [] ) )) ),
+                                                             [] ),
+                                                           false )) ),
                                                 ( "k",
                                                   Syntax.Call
                                                     ( Syntax.Select
                                                         ( Syntax.Var "std",
                                                           "objectFields" ),
-                                                      ([ Syntax.Var "v" ], [])
-                                                    ) ),
+                                                      ([ Syntax.Var "v" ], []),
+                                                      false ) ),
                                                 [
                                                   Syntax.Ifspec
                                                     (Syntax.Call
@@ -13263,7 +13682,8 @@ let expected =
                                                                  Syntax.Var "k"
                                                                );
                                                            ],
-                                                           [] ) ));
+                                                           [] ),
+                                                         false ));
                                                 ] ) ) );
                                   ],
                                   Syntax.Call
@@ -13272,7 +13692,8 @@ let expected =
                                           Syntax.String "\n\n";
                                           Syntax.Var "sections";
                                         ],
-                                        [] ) ) ) ) );
+                                        [] ),
+                                      false ) ) ) );
                       Syntax.BindFunc
                         ( "renderTable",
                           [
@@ -13303,9 +13724,11 @@ let expected =
                                                             "escapeKeyToml";
                                                           Syntax.Var "path";
                                                         ],
-                                                        [] ) );
+                                                        [] ),
+                                                      false );
                                                 ],
-                                                [] ) ) ),
+                                                [] ),
+                                              false ) ),
                                       Syntax.Add,
                                       Syntax.String "]" ),
                                   Syntax.Add,
@@ -13329,7 +13752,8 @@ let expected =
                                           Syntax.Add,
                                           Syntax.Var "indent" );
                                     ],
-                                    [] ) ) ) );
+                                    [] ),
+                                  false ) ) );
                       Syntax.BindFunc
                         ( "renderTableArray",
                           [
@@ -13351,11 +13775,13 @@ let expected =
                                                   ( Syntax.Select
                                                       ( Syntax.Var "std",
                                                         "length" ),
-                                                    ([ Syntax.Var "v" ], []) ),
+                                                    ([ Syntax.Var "v" ], []),
+                                                    false ),
                                                 Syntax.Sub,
                                                 Syntax.Number 1. );
                                           ],
-                                          [] ) ) );
+                                          [] ),
+                                        false ) );
                               ],
                               Syntax.Local
                                 ( [
@@ -13397,10 +13823,11 @@ let expected =
                                                                             .Var
                                                                               "path";
                                                                           ],
-                                                                          [] )
-                                                                      );
+                                                                          [] ),
+                                                                        false );
                                                                   ],
-                                                                  [] ) ) ),
+                                                                  [] ),
+                                                                false ) ),
                                                         Syntax.Add,
                                                         Syntax.String "]]" ),
                                                     Syntax.Add,
@@ -13441,7 +13868,8 @@ let expected =
                                                             Syntax.Var "indent"
                                                           );
                                                       ],
-                                                      [] ) ) ),
+                                                      [] ),
+                                                    false ) ),
                                             ("i", Syntax.Var "range"),
                                             [] ) );
                                   ],
@@ -13451,12 +13879,14 @@ let expected =
                                           Syntax.String "\n\n";
                                           Syntax.Var "sections";
                                         ],
-                                        [] ) ) ) ) );
+                                        [] ),
+                                      false ) ) ) );
                     ],
                     Syntax.If
                       ( Syntax.Call
                           ( Syntax.Select (Syntax.Var "std", "isObject"),
-                            ([ Syntax.Var "value" ], []) ),
+                            ([ Syntax.Var "value" ], []),
+                            false ),
                         Syntax.Call
                           ( Syntax.Var "renderTableInternal",
                             ( [
@@ -13465,7 +13895,8 @@ let expected =
                                 Syntax.Array [];
                                 Syntax.String "";
                               ],
-                              [] ) ),
+                              [] ),
+                            false ),
                         Some
                           (Syntax.Error
                              (Syntax.Binary
@@ -13474,7 +13905,8 @@ let expected =
                                   Syntax.Add,
                                   Syntax.Call
                                     ( Syntax.Select (Syntax.Var "std", "type"),
-                                      ([ Syntax.Var "value" ], []) ) ))) ) ) ));
+                                      ([ Syntax.Var "value" ], []),
+                                      false ) ))) ) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "escapeStringJson",
@@ -13486,7 +13918,8 @@ let expected =
                         ( "str",
                           Syntax.Call
                             ( Syntax.Select (Syntax.Var "std", "toString"),
-                              ([ Syntax.Var "str_" ], []) ) );
+                              ([ Syntax.Var "str_" ], []),
+                              false ) );
                     ],
                     Syntax.Local
                       ( [
@@ -13590,7 +14023,8 @@ let expected =
                                                                                 "ch";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 );
                                                                                 ],
@@ -13681,15 +14115,18 @@ let expected =
                                     Syntax.ArrayFor
                                       ( Syntax.Call
                                           ( Syntax.Var "trans",
-                                            ([ Syntax.Var "ch" ], []) ),
+                                            ([ Syntax.Var "ch" ], []),
+                                            false ),
                                         ( "ch",
                                           Syntax.Call
                                             ( Syntax.Select
                                                 (Syntax.Var "std", "stringChars"),
-                                              ([ Syntax.Var "str" ], []) ) ),
+                                              ([ Syntax.Var "str" ], []),
+                                              false ) ),
                                         [] );
                                   ],
-                                  [] ) ) ) ) ) ));
+                                  [] ),
+                                false ) ) ) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "escapeStringPython",
@@ -13697,7 +14134,8 @@ let expected =
                 Syntax.H 2,
                 Syntax.Call
                   ( Syntax.Select (Syntax.Var "std", "escapeStringJson"),
-                    ([ Syntax.Var "str" ], []) ) ));
+                    ([ Syntax.Var "str" ], []),
+                    false ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "escapeStringBash",
@@ -13709,7 +14147,8 @@ let expected =
                         ( "str",
                           Syntax.Call
                             ( Syntax.Select (Syntax.Var "std", "toString"),
-                              ([ Syntax.Var "str_" ], []) ) );
+                              ([ Syntax.Var "str_" ], []),
+                              false ) );
                     ],
                     Syntax.Binary
                       ( Syntax.String "'%s'",
@@ -13721,7 +14160,8 @@ let expected =
                                 Syntax.String "'";
                                 Syntax.String "'\"'\"'";
                               ],
-                              [] ) ) ) ) ));
+                              [] ),
+                            false ) ) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "escapeStringDollars",
@@ -13733,7 +14173,8 @@ let expected =
                         ( "str",
                           Syntax.Call
                             ( Syntax.Select (Syntax.Var "std", "toString"),
-                              ([ Syntax.Var "str_" ], []) ) );
+                              ([ Syntax.Var "str_" ], []),
+                              false ) );
                     ],
                     Syntax.Call
                       ( Syntax.Select (Syntax.Var "std", "strReplace"),
@@ -13742,7 +14183,8 @@ let expected =
                             Syntax.String "$";
                             Syntax.String "$$";
                           ],
-                          [] ) ) ) ));
+                          [] ),
+                        false ) ) ));
          Syntax.MemberObjlocal
            (Syntax.Bind
               ( "xml_escapes",
@@ -13791,7 +14233,8 @@ let expected =
                         ( "str",
                           Syntax.Call
                             ( Syntax.Select (Syntax.Var "std", "toString"),
-                              ([ Syntax.Var "str_" ], []) ) );
+                              ([ Syntax.Var "str_" ], []),
+                              false ) );
                     ],
                     Syntax.Call
                       ( Syntax.Select (Syntax.Var "std", "join"),
@@ -13805,15 +14248,18 @@ let expected =
                                         Syntax.Var "ch";
                                         Syntax.Var "ch";
                                       ],
-                                      [] ) ),
+                                      [] ),
+                                    false ),
                                 ( "ch",
                                   Syntax.Call
                                     ( Syntax.Select
                                         (Syntax.Var "std", "stringChars"),
-                                      ([ Syntax.Var "str" ], []) ) ),
+                                      ([ Syntax.Var "str" ], []),
+                                      false ) ),
                                 [] );
                           ],
-                          [] ) ) ) ));
+                          [] ),
+                        false ) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "manifestJson",
@@ -13821,7 +14267,8 @@ let expected =
                 Syntax.H 2,
                 Syntax.Call
                   ( Syntax.Select (Syntax.Var "std", "manifestJsonEx"),
-                    ([ Syntax.Var "value"; Syntax.String "    " ], []) ) ));
+                    ([ Syntax.Var "value"; Syntax.String "    " ], []),
+                    false ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "manifestJsonMinified",
@@ -13835,7 +14282,8 @@ let expected =
                         Syntax.String "";
                         Syntax.String ":";
                       ],
-                      [] ) ) ));
+                      [] ),
+                    false ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "manifestJsonEx",
@@ -13875,8 +14323,8 @@ let expected =
                                                      ( Syntax.Select
                                                          ( Syntax.Var "std",
                                                            "isNumber" ),
-                                                       ([ Syntax.Var "v" ], [])
-                                                     ),
+                                                       ([ Syntax.Var "v" ], []),
+                                                       false ),
                                                    Syntax.Binary
                                                      ( Syntax.String "",
                                                        Syntax.Add,
@@ -13891,7 +14339,8 @@ let expected =
                                                               ( [
                                                                   Syntax.Var "v";
                                                                 ],
-                                                                [] ) ),
+                                                                [] ),
+                                                              false ),
                                                           Syntax.Call
                                                             ( Syntax.Select
                                                                 ( Syntax.Var
@@ -13901,7 +14350,8 @@ let expected =
                                                               ( [
                                                                   Syntax.Var "v";
                                                                 ],
-                                                                [] ) ),
+                                                                [] ),
+                                                              false ),
                                                           Some
                                                             (Syntax.If
                                                                ( Syntax.Call
@@ -13917,7 +14367,8 @@ let expected =
                                                                          .Var
                                                                            "v";
                                                                        ],
-                                                                       [] ) ),
+                                                                       [] ),
+                                                                     false ),
                                                                  Syntax.Error
                                                                    (Syntax
                                                                     .Binary
@@ -13951,7 +14402,9 @@ let expected =
                                                                                 "v";
                                                                               ],
                                                                               []
-                                                                            ) ),
+                                                                            ),
+                                                                            false
+                                                                          ),
                                                                         Syntax
                                                                         .Local
                                                                           ( [
@@ -13996,7 +14449,8 @@ let expected =
                                                                                 "v";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .Sub,
@@ -14006,7 +14460,8 @@ let expected =
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 );
                                                                             ],
@@ -14145,7 +14600,8 @@ let expected =
                                                                                 "new_indent";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 );
                                                                                 ],
@@ -14159,7 +14615,8 @@ let expected =
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 ),
                                                                                 Syntax
@@ -14213,7 +14670,8 @@ let expected =
                                                                                 "lines";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 )
                                                                               )
@@ -14239,7 +14697,8 @@ let expected =
                                                                                 "v";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                Syntax
                                                                                .Local
@@ -14349,7 +14808,8 @@ let expected =
                                                                                 "k";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 ),
                                                                                 Syntax
@@ -14408,7 +14868,8 @@ let expected =
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 );
                                                                                 ],
@@ -14432,14 +14893,16 @@ let expected =
                                                                                 "v";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 ),
                                                                                 []
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 ),
                                                                                 Syntax
@@ -14493,7 +14956,8 @@ let expected =
                                                                                 "lines";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 ),
                                                                                None
@@ -14506,7 +14970,8 @@ let expected =
                         ( [
                             Syntax.Var "value"; Syntax.Array []; Syntax.String "";
                           ],
-                          [] ) ) ) ));
+                          [] ),
+                        false ) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "manifestYamlDoc",
@@ -14533,13 +14998,16 @@ let expected =
                                                   Syntax.Var "charSet";
                                                   Syntax.Var "strSet";
                                                 ],
-                                                [] ) );
+                                                [] ),
+                                              false );
                                         ],
-                                        [] ) ),
+                                        [] ),
+                                      false ),
                                   Syntax.Equal,
                                   Syntax.Call
                                     ( Syntax.Select (Syntax.Var "std", "length"),
-                                      ([ Syntax.Var "strSet" ], []) ) ),
+                                      ([ Syntax.Var "strSet" ], []),
+                                      false ) ),
                               Syntax.True,
                               Some Syntax.False ) );
                     ],
@@ -14591,7 +15059,8 @@ let expected =
                                                              ( [
                                                                  Syntax.Var "key";
                                                                ],
-                                                               [] ) ) ));
+                                                               [] ),
+                                                             false ) ));
                                                 ] ) );
                                       ],
                                       Syntax.If
@@ -14599,7 +15068,8 @@ let expected =
                                             ( Syntax.Call
                                                 ( Syntax.Select
                                                     (Syntax.Var "std", "length"),
-                                                  ([ Syntax.Var "bad" ], []) ),
+                                                  ([ Syntax.Var "bad" ], []),
+                                                  false ),
                                               Syntax.Gt,
                                               Syntax.Number 0. ),
                                           Syntax.True,
@@ -14621,7 +15091,8 @@ let expected =
                                                       Syntax.Number 0.;
                                                       Syntax.Number 2.;
                                                     ],
-                                                    [] ) ),
+                                                    [] ),
+                                                  false ),
                                               Syntax.Equal,
                                               Syntax.Var "type" ),
                                           Syntax.Or,
@@ -14634,7 +15105,8 @@ let expected =
                                                       Syntax.Number 0.;
                                                       Syntax.Number 3.;
                                                     ],
-                                                    [] ) ),
+                                                    [] ),
+                                                  false ),
                                               Syntax.Equal,
                                               Syntax.Binary
                                                 ( Syntax.String "-",
@@ -14664,9 +15136,11 @@ let expected =
                                                                 Syntax.String
                                                                   "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz_-/";
                                                               ],
-                                                              [] ) );
+                                                              [] ),
+                                                            false );
                                                       ],
-                                                      [] ) ) );
+                                                      [] ),
+                                                    false ) );
                                           ],
                                           Syntax.Local
                                             ( [
@@ -14687,9 +15161,11 @@ let expected =
                                                                     Syntax.String
                                                                       "0123456789";
                                                                   ],
-                                                                  [] ) );
+                                                                  [] ),
+                                                                false );
                                                           ],
-                                                          [] ) ) );
+                                                          [] ),
+                                                        false ) );
                                               ],
                                               Syntax.Local
                                                 ( [
@@ -14717,10 +15193,12 @@ let expected =
                                                                             .String
                                                                               "_-";
                                                                           ],
-                                                                          [] )
-                                                                      ) );
+                                                                          [] ),
+                                                                        false )
+                                                                  );
                                                               ],
-                                                              [] ) ) );
+                                                              [] ),
+                                                            false ) );
                                                   ],
                                                   Syntax.Local
                                                     ( [
@@ -14753,10 +15231,12 @@ let expected =
                                                                                 "b";
                                                                               ],
                                                                               []
-                                                                            ) )
-                                                                      );
+                                                                            ),
+                                                                            false
+                                                                          ) );
                                                                   ],
-                                                                  [] ) ) );
+                                                                  [] ),
+                                                                false ) );
                                                       ],
                                                       Syntax.Local
                                                         ( [
@@ -14793,11 +15273,13 @@ let expected =
                                                                                 "abcdefx_-";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                               )
                                                                           );
                                                                       ],
-                                                                      [] ) ) );
+                                                                      [] ),
+                                                                    false ) );
                                                           ],
                                                           Syntax.Local
                                                             ( [
@@ -14837,12 +15319,14 @@ let expected =
                                                                                 "e._-";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                               );
                                                                           ],
-                                                                          [] )
-                                                                      ) );
+                                                                          [] ),
+                                                                        false )
+                                                                  );
                                                               ],
                                                               Syntax.Local
                                                                 ( [
@@ -14884,13 +15368,15 @@ let expected =
                                                                                 "-";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 );
                                                                               ],
                                                                               []
-                                                                            ) )
-                                                                      );
+                                                                            ),
+                                                                            false
+                                                                          ) );
                                                                   ],
                                                                   Syntax.Local
                                                                     ( [
@@ -14923,7 +15409,8 @@ let expected =
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                               )
                                                                           );
                                                                       ],
@@ -14951,7 +15438,8 @@ let expected =
                                                                                 "key";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                               );
                                                                           ],
@@ -14980,7 +15468,8 @@ let expected =
                                                                                 "key";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 );
                                                                               ],
@@ -15010,7 +15499,8 @@ let expected =
                                                                                 "keyChars";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 );
                                                                                 ],
@@ -15053,11 +15543,13 @@ let expected =
                                                                                 "keyLc";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 );
                                                                                 ],
@@ -15085,7 +15577,8 @@ let expected =
                                                                                 "keySet";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 ),
                                                                                 Syntax
@@ -15108,7 +15601,8 @@ let expected =
                                                                                 "key";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .False,
@@ -15136,7 +15630,8 @@ let expected =
                                                                                 "keySet";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .And,
@@ -15177,11 +15672,13 @@ let expected =
                                                                                 "key";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .Equal,
@@ -15216,7 +15713,8 @@ let expected =
                                                                                 "keySetLc";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .And,
@@ -15257,11 +15755,13 @@ let expected =
                                                                                 "key";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .Lt,
@@ -15299,7 +15799,8 @@ let expected =
                                                                                 "keySetLc";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .And,
@@ -15324,7 +15825,8 @@ let expected =
                                                                                 "key";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .Gt,
@@ -15351,7 +15853,8 @@ let expected =
                                                                                 "0b";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 ),
                                                                                 Syntax
@@ -15386,7 +15889,8 @@ let expected =
                                                                                 "keySetLc";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .And,
@@ -15427,11 +15931,13 @@ let expected =
                                                                                 "key";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .Equal,
@@ -15479,11 +15985,13 @@ let expected =
                                                                                 "key";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .Lt,
@@ -15531,11 +16039,13 @@ let expected =
                                                                                 "keyLc";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .Lt,
@@ -15576,7 +16086,8 @@ let expected =
                                                                                 "keySetLc";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .And,
@@ -15617,11 +16128,13 @@ let expected =
                                                                                 "key";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .Lt,
@@ -15653,7 +16166,8 @@ let expected =
                                                                                 "keyChars";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .Gt,
@@ -15680,7 +16194,8 @@ let expected =
                                                                                 "0x";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 ),
                                                                                 Syntax
@@ -15709,15 +16224,16 @@ let expected =
                                           Syntax.If
                                             ( Syntax.Call
                                                 ( Syntax.Var "bareSafe",
-                                                  ([ Syntax.Var "key" ], []) ),
+                                                  ([ Syntax.Var "key" ], []),
+                                                  false ),
                                               Syntax.Var "key",
                                               Some
                                                 (Syntax.Call
                                                    ( Syntax.Select
                                                        ( Syntax.Var "std",
                                                          "escapeStringJson" ),
-                                                     ([ Syntax.Var "key" ], [])
-                                                   )) ) );
+                                                     ([ Syntax.Var "key" ], []),
+                                                     false )) ) );
                                     ],
                                     Syntax.Local
                                       ( [
@@ -15768,7 +16284,9 @@ let expected =
                                                                                 "v";
                                                                              ],
                                                                              []
-                                                                           ) ),
+                                                                           ),
+                                                                           false
+                                                                         ),
                                                                        Syntax
                                                                        .Binary
                                                                          ( Syntax
@@ -15801,7 +16319,8 @@ let expected =
                                                                                 "v";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                               Syntax
                                                                               .Local
@@ -15829,7 +16348,8 @@ let expected =
                                                                                 "v";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 );
                                                                                 ],
@@ -15913,7 +16433,8 @@ let expected =
                                                                                 "\n";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 );
                                                                                 ],
@@ -15997,7 +16518,8 @@ let expected =
                                                                                 "split";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .Sub,
@@ -16010,7 +16532,8 @@ let expected =
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 ),
                                                                                 Some
@@ -16033,7 +16556,8 @@ let expected =
                                                                                 "v";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ))
                                                                                 ))
                                                                                 )
@@ -16061,7 +16585,8 @@ let expected =
                                                                                 "v";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .Error
@@ -16105,7 +16630,8 @@ let expected =
                                                                                 "v";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .If
@@ -16131,7 +16657,8 @@ let expected =
                                                                                 "v";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .Equal,
@@ -16182,7 +16709,8 @@ let expected =
                                                                                 "value";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .And,
@@ -16207,7 +16735,8 @@ let expected =
                                                                                 "value";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .Gt,
@@ -16305,7 +16834,8 @@ let expected =
                                                                                 "value";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .And,
@@ -16330,7 +16860,8 @@ let expected =
                                                                                 "value";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .Gt,
@@ -16481,7 +17012,8 @@ let expected =
                                                                                 "v";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .Sub,
@@ -16491,7 +17023,8 @@ let expected =
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 );
                                                                                 ],
@@ -16572,7 +17105,8 @@ let expected =
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 ),
                                                                                 ( 
@@ -16609,7 +17143,8 @@ let expected =
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 );
                                                                                 ]
                                                                                 );
@@ -16647,7 +17182,8 @@ let expected =
                                                                                 "parts";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 )
                                                                                 )
@@ -16676,7 +17212,8 @@ let expected =
                                                                                 "v";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .If
@@ -16702,7 +17239,8 @@ let expected =
                                                                                 "v";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .Equal,
@@ -16753,7 +17291,8 @@ let expected =
                                                                                 "value";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .And,
@@ -16778,7 +17317,8 @@ let expected =
                                                                                 "value";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .Gt,
@@ -16888,7 +17428,8 @@ let expected =
                                                                                 "value";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .And,
@@ -16913,7 +17454,8 @@ let expected =
                                                                                 "value";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Syntax
                                                                                 .Gt,
@@ -17076,7 +17618,8 @@ let expected =
                                                                                 "k";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                 Some
                                                                                 (
@@ -17093,7 +17636,8 @@ let expected =
                                                                                 "k";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ))
                                                                                 ),
                                                                                 Syntax
@@ -17159,7 +17703,8 @@ let expected =
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 ),
                                                                                 ( 
@@ -17182,7 +17727,8 @@ let expected =
                                                                                 "v";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 ),
                                                                                 [
@@ -17213,7 +17759,8 @@ let expected =
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 );
                                                                                 ]
                                                                                 );
@@ -17251,7 +17798,8 @@ let expected =
                                                                                 "lines";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                                 )
                                                                                 ))
@@ -17271,7 +17819,8 @@ let expected =
                                                 Syntax.Array [];
                                                 Syntax.String "";
                                               ],
-                                              [] ) ) ) ) ) ) ) ) ));
+                                              [] ),
+                                            false ) ) ) ) ) ) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "manifestYamlStream",
@@ -17287,7 +17836,8 @@ let expected =
                       ( Syntax.Not,
                         Syntax.Call
                           ( Syntax.Select (Syntax.Var "std", "isArray"),
-                            ([ Syntax.Var "value" ], []) ) ),
+                            ([ Syntax.Var "value" ], []),
+                            false ) ),
                     Syntax.Error
                       (Syntax.Binary
                          ( Syntax.String
@@ -17295,7 +17845,8 @@ let expected =
                            Syntax.Add,
                            Syntax.Call
                              ( Syntax.Select (Syntax.Var "std", "type"),
-                               ([ Syntax.Var "value" ], []) ) )),
+                               ([ Syntax.Var "value" ], []),
+                               false ) )),
                     Some
                       (Syntax.Binary
                          ( Syntax.Binary
@@ -17316,11 +17867,13 @@ let expected =
                                                      "indent_array_in_object";
                                                    Syntax.Var "quote_keys";
                                                  ],
-                                                 [] ) ),
+                                                 [] ),
+                                               false ),
                                            ("e", Syntax.Var "value"),
                                            [] );
                                      ],
-                                     [] ) ) ),
+                                     [] ),
+                                   false ) ),
                            Syntax.Add,
                            Syntax.If
                              ( Syntax.Var "c_document_end",
@@ -17334,7 +17887,8 @@ let expected =
                 Syntax.If
                   ( Syntax.Call
                       ( Syntax.Select (Syntax.Var "std", "isObject"),
-                        ([ Syntax.Var "v" ], []) ),
+                        ([ Syntax.Var "v" ], []),
+                        false ),
                     Syntax.Local
                       ( [
                           Syntax.Bind
@@ -17349,7 +17903,8 @@ let expected =
                                             ( Syntax.Select
                                                 ( Syntax.Var "std",
                                                   "escapeStringPython" ),
-                                              ([ Syntax.Var "k" ], []) );
+                                              ([ Syntax.Var "k" ], []),
+                                              false );
                                           Syntax.Call
                                             ( Syntax.Select
                                                 ( Syntax.Var "std",
@@ -17359,13 +17914,15 @@ let expected =
                                                     ( Syntax.Var "v",
                                                       Syntax.Var "k" );
                                                 ],
-                                                [] ) );
+                                                [] ),
+                                              false );
                                         ] ),
                                   ( "k",
                                     Syntax.Call
                                       ( Syntax.Select
                                           (Syntax.Var "std", "objectFields"),
-                                        ([ Syntax.Var "v" ], []) ) ),
+                                        ([ Syntax.Var "v" ], []),
+                                        false ) ),
                                   [] ) );
                         ],
                         Syntax.Binary
@@ -17376,13 +17933,15 @@ let expected =
                                 Syntax.Call
                                   ( Syntax.Select (Syntax.Var "std", "join"),
                                     ( [ Syntax.String ", "; Syntax.Var "fields" ],
-                                      [] ) );
+                                      [] ),
+                                    false );
                               ] ) ),
                     Some
                       (Syntax.If
                          ( Syntax.Call
                              ( Syntax.Select (Syntax.Var "std", "isArray"),
-                               ([ Syntax.Var "v" ], []) ),
+                               ([ Syntax.Var "v" ], []),
+                               false ),
                            Syntax.Binary
                              ( Syntax.String "[%s]",
                                Syntax.Mod,
@@ -17397,18 +17956,21 @@ let expected =
                                                  ( Syntax.Select
                                                      ( Syntax.Var "std",
                                                        "manifestPython" ),
-                                                   ([ Syntax.Var "v2" ], []) ),
+                                                   ([ Syntax.Var "v2" ], []),
+                                                   false ),
                                                ("v2", Syntax.Var "v"),
                                                [] );
                                          ],
-                                         [] ) );
+                                         [] ),
+                                       false );
                                  ] ),
                            Some
                              (Syntax.If
                                 ( Syntax.Call
                                     ( Syntax.Select
                                         (Syntax.Var "std", "isString"),
-                                      ([ Syntax.Var "v" ], []) ),
+                                      ([ Syntax.Var "v" ], []),
+                                      false ),
                                   Syntax.Binary
                                     ( Syntax.String "%s",
                                       Syntax.Mod,
@@ -17418,14 +17980,16 @@ let expected =
                                             ( Syntax.Select
                                                 ( Syntax.Var "std",
                                                   "escapeStringPython" ),
-                                              ([ Syntax.Var "v" ], []) );
+                                              ([ Syntax.Var "v" ], []),
+                                              false );
                                         ] ),
                                   Some
                                     (Syntax.If
                                        ( Syntax.Call
                                            ( Syntax.Select
                                                (Syntax.Var "std", "isFunction"),
-                                             ([ Syntax.Var "v" ], []) ),
+                                             ([ Syntax.Var "v" ], []),
+                                             false ),
                                          Syntax.Error
                                            (Syntax.String
                                               "cannot manifest function"),
@@ -17435,12 +17999,14 @@ let expected =
                                                   ( Syntax.Select
                                                       ( Syntax.Var "std",
                                                         "isNumber" ),
-                                                    ([ Syntax.Var "v" ], []) ),
+                                                    ([ Syntax.Var "v" ], []),
+                                                    false ),
                                                 Syntax.Call
                                                   ( Syntax.Select
                                                       ( Syntax.Var "std",
                                                         "toString" ),
-                                                    ([ Syntax.Var "v" ], []) ),
+                                                    ([ Syntax.Var "v" ], []),
+                                                    false ),
                                                 Some
                                                   (Syntax.If
                                                      ( Syntax.Binary
@@ -17498,13 +18064,15 @@ let expected =
                                                 ( Syntax.Var "conf",
                                                   Syntax.Var "k" );
                                             ],
-                                            [] ) );
+                                            [] ),
+                                          false );
                                     ] ),
                               ( "k",
                                 Syntax.Call
                                   ( Syntax.Select
                                       (Syntax.Var "std", "objectFields"),
-                                    ([ Syntax.Var "conf" ], []) ) ),
+                                    ([ Syntax.Var "conf" ], []),
+                                    false ) ),
                               [] ) );
                     ],
                     Syntax.Call
@@ -17516,7 +18084,8 @@ let expected =
                                 Syntax.Add,
                                 Syntax.Array [ Syntax.String "" ] );
                           ],
-                          [] ) ) ) ));
+                          [] ),
+                        false ) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "manifestXmlJsonml",
@@ -17527,7 +18096,8 @@ let expected =
                       ( Syntax.Not,
                         Syntax.Call
                           ( Syntax.Select (Syntax.Var "std", "isArray"),
-                            ([ Syntax.Var "value" ], []) ) ),
+                            ([ Syntax.Var "value" ], []),
+                            false ) ),
                     Syntax.Error
                       (Syntax.Binary
                          ( Syntax.String
@@ -17535,7 +18105,8 @@ let expected =
                            Syntax.Mod,
                            Syntax.Call
                              ( Syntax.Select (Syntax.Var "std", "type"),
-                               ([ Syntax.Var "value" ], []) ) )),
+                               ([ Syntax.Var "value" ], []),
+                               false ) )),
                     Some
                       (Syntax.Local
                          ( [
@@ -17546,7 +18117,8 @@ let expected =
                                    ( Syntax.Call
                                        ( Syntax.Select
                                            (Syntax.Var "std", "isString"),
-                                         ([ Syntax.Var "v" ], []) ),
+                                         ([ Syntax.Var "v" ], []),
+                                         false ),
                                      Syntax.Var "v",
                                      Some
                                        (Syntax.Local
@@ -17573,7 +18145,8 @@ let expected =
                                                                       Syntax.Var
                                                                         "v";
                                                                     ],
-                                                                    [] ) ),
+                                                                    [] ),
+                                                                  false ),
                                                               Syntax.Gt,
                                                               Syntax.Number 1.
                                                             ),
@@ -17592,7 +18165,8 @@ let expected =
                                                                       .Number
                                                                         1. );
                                                                 ],
-                                                                [] ) ) ) );
+                                                                [] ),
+                                                              false ) ) );
                                                 ],
                                                 Syntax.Local
                                                   ( [
@@ -17706,14 +18280,15 @@ let expected =
                                                                                 "attrs";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 )
                                                                               ),
                                                                               []
                                                                             );
                                                                         ],
-                                                                        [] ) )
-                                                                );
+                                                                        [] ),
+                                                                      false ) );
                                                             ],
                                                             Syntax.Call
                                                               ( Syntax.Select
@@ -17750,7 +18325,8 @@ let expected =
                                                                                 "x";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                               ),
                                                                             ( "x",
                                                                               Syntax
@@ -17770,12 +18346,14 @@ let expected =
                                                                           ">";
                                                                       ];
                                                                   ],
-                                                                  [] ) ) ) ) )
-                                              ) )) ) );
+                                                                  [] ),
+                                                                false ) ) ) ) )
+                                          )) ) );
                            ],
                            Syntax.Call
-                             (Syntax.Var "aux", ([ Syntax.Var "value" ], [])) ))
-                  ) ));
+                             ( Syntax.Var "aux",
+                               ([ Syntax.Var "value" ], []),
+                               false ) )) ) ));
          Syntax.MemberObjlocal
            (Syntax.Bind
               ( "base64_table",
@@ -17795,7 +18373,8 @@ let expected =
                        ( "i",
                          Syntax.Call
                            ( Syntax.Select (Syntax.Var "std", "range"),
-                             ([ Syntax.Number 0.; Syntax.Number 63. ], []) ) ),
+                             ([ Syntax.Number 0.; Syntax.Number 63. ], []),
+                             false ) ),
                        [] )) ));
          Syntax.MemberField
            (Syntax.FieldFunc
@@ -17809,7 +18388,8 @@ let expected =
                           Syntax.If
                             ( Syntax.Call
                                 ( Syntax.Select (Syntax.Var "std", "isString"),
-                                  ([ Syntax.Var "input" ], []) ),
+                                  ([ Syntax.Var "input" ], []),
+                                  false ),
                               Syntax.Call
                                 ( Syntax.Select (Syntax.Var "std", "map"),
                                   ( [
@@ -17817,7 +18397,8 @@ let expected =
                                         (Syntax.Var "std", "codepoint");
                                       Syntax.Var "input";
                                     ],
-                                    [] ) ),
+                                    [] ),
+                                  false ),
                               Some (Syntax.Var "input") ) );
                     ],
                     Syntax.Local
@@ -17832,7 +18413,8 @@ let expected =
                                       Syntax.Call
                                         ( Syntax.Select
                                             (Syntax.Var "std", "length"),
-                                          ([ Syntax.Var "arr" ], []) ) ),
+                                          ([ Syntax.Var "arr" ], []),
+                                          false ) ),
                                   Syntax.Var "r",
                                   Some
                                     (Syntax.If
@@ -17845,7 +18427,8 @@ let expected =
                                              Syntax.Call
                                                ( Syntax.Select
                                                    (Syntax.Var "std", "length"),
-                                                 ([ Syntax.Var "arr" ], []) ) ),
+                                                 ([ Syntax.Var "arr" ], []),
+                                                 false ) ),
                                          Syntax.Local
                                            ( [
                                                Syntax.Bind
@@ -17913,7 +18496,8 @@ let expected =
                                                          Syntax.Add,
                                                          Syntax.Var "str" );
                                                    ],
-                                                   [] ) ) ),
+                                                   [] ),
+                                                 true ) ),
                                          Some
                                            (Syntax.If
                                               ( Syntax.Binary
@@ -17927,7 +18511,8 @@ let expected =
                                                           ( Syntax.Var "std",
                                                             "length" ),
                                                         ( [ Syntax.Var "arr" ],
-                                                          [] ) ) ),
+                                                          [] ),
+                                                        false ) ),
                                                 Syntax.Local
                                                   ( [
                                                       Syntax.Bind
@@ -18103,7 +18688,8 @@ let expected =
                                                                 Syntax.Var "str"
                                                               );
                                                           ],
-                                                          [] ) ) ),
+                                                          [] ),
+                                                        true ) ),
                                                 Some
                                                   (Syntax.Local
                                                      ( [
@@ -18359,8 +18945,8 @@ let expected =
                                                                    Syntax.Var
                                                                      "str" );
                                                              ],
-                                                             [] ) ) )) )) )) )
-                            );
+                                                             [] ),
+                                                           true ) )) )) )) ) );
                         ],
                         Syntax.Local
                           ( [
@@ -18377,7 +18963,8 @@ let expected =
                                               ("a", Syntax.Var "bytes"),
                                               [] );
                                         ],
-                                        [] ) ) );
+                                        [] ),
+                                      false ) );
                             ],
                             Syntax.If
                               ( Syntax.Unary (Syntax.Not, Syntax.Var "sanity"),
@@ -18393,7 +18980,8 @@ let expected =
                                            Syntax.Number 0.;
                                            Syntax.String "";
                                          ],
-                                         [] ) )) ) ) ) ) ));
+                                         [] ),
+                                       false )) ) ) ) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "base64DecodeBytes",
@@ -18404,7 +18992,8 @@ let expected =
                       ( Syntax.Binary
                           ( Syntax.Call
                               ( Syntax.Select (Syntax.Var "std", "length"),
-                                ([ Syntax.Var "str" ], []) ),
+                                ([ Syntax.Var "str" ], []),
+                                false ),
                             Syntax.Mod,
                             Syntax.Number 4. ),
                         Syntax.NotEqual,
@@ -18427,7 +19016,8 @@ let expected =
                                          Syntax.Call
                                            ( Syntax.Select
                                                (Syntax.Var "std", "length"),
-                                             ([ Syntax.Var "str" ], []) ) ),
+                                             ([ Syntax.Var "str" ], []),
+                                             false ) ),
                                      Syntax.Var "r",
                                      Some
                                        (Syntax.Local
@@ -18706,7 +19296,8 @@ let expected =
                                                                 Syntax.Var "n3"
                                                               );
                                                           ],
-                                                          [] ) ) ) ) )) ) );
+                                                          [] ),
+                                                        true ) ) ) )) ) );
                            ],
                            Syntax.Call
                              ( Syntax.Var "aux",
@@ -18715,7 +19306,8 @@ let expected =
                                    Syntax.Number 0.;
                                    Syntax.Array [];
                                  ],
-                                 [] ) ) )) ) ));
+                                 [] ),
+                               false ) )) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "base64Decode",
@@ -18728,7 +19320,8 @@ let expected =
                           Syntax.Call
                             ( Syntax.Select
                                 (Syntax.Var "std", "base64DecodeBytes"),
-                              ([ Syntax.Var "str" ], []) ) );
+                              ([ Syntax.Var "str" ], []),
+                              false ) );
                     ],
                     Syntax.Call
                       ( Syntax.Select (Syntax.Var "std", "join"),
@@ -18740,9 +19333,11 @@ let expected =
                                     Syntax.Select (Syntax.Var "std", "char");
                                     Syntax.Var "bytes";
                                   ],
-                                  [] ) );
+                                  [] ),
+                                false );
                           ],
-                          [] ) ) ) ));
+                          [] ),
+                        false ) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "reverse",
@@ -18754,7 +19349,8 @@ let expected =
                         ( "l",
                           Syntax.Call
                             ( Syntax.Select (Syntax.Var "std", "length"),
-                              ([ Syntax.Var "arr" ], []) ) );
+                              ([ Syntax.Var "arr" ], []),
+                              false ) );
                     ],
                     Syntax.Call
                       ( Syntax.Select (Syntax.Var "std", "makeArray"),
@@ -18772,7 +19368,8 @@ let expected =
                                         Syntax.Sub,
                                         Syntax.Number 1. ) ) );
                           ],
-                          [] ) ) ) ));
+                          [] ),
+                        false ) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "sort",
@@ -18790,14 +19387,16 @@ let expected =
                                     Syntax.Call
                                       ( Syntax.Select
                                           (Syntax.Var "std", "length"),
-                                        ([ Syntax.Var "arr" ], []) ) );
+                                        ([ Syntax.Var "arr" ], []),
+                                        false ) );
                               ],
                               Syntax.If
                                 ( Syntax.Binary
                                     ( Syntax.Call
                                         ( Syntax.Select
                                             (Syntax.Var "std", "length"),
-                                          ([ Syntax.Var "arr" ], []) ),
+                                          ([ Syntax.Var "arr" ], []),
+                                          false ),
                                       Syntax.Le,
                                       Syntax.Number 1. ),
                                   Syntax.Var "arr",
@@ -18818,7 +19417,8 @@ let expected =
                                                                Syntax.Var "pos"
                                                              );
                                                          ],
-                                                         [] ) ) );
+                                                         [] ),
+                                                       false ) );
                                              ],
                                              Syntax.Local
                                                ( [
@@ -18880,7 +19480,8 @@ let expected =
                                                                             ))
                                                                      ) );
                                                              ],
-                                                             [] ) ) );
+                                                             [] ),
+                                                           false ) );
                                                  ],
                                                  Syntax.Local
                                                    ( [
@@ -18913,7 +19514,8 @@ let expected =
                                                                                 "x";
                                                                                ],
                                                                                 []
-                                                                               )
+                                                                               ),
+                                                                               false
                                                                              ),
                                                                            Syntax
                                                                            .Lt,
@@ -18924,7 +19526,8 @@ let expected =
                                                                    Syntax.Var
                                                                      "rest";
                                                                  ],
-                                                                 [] ) ) );
+                                                                 [] ),
+                                                               false ) );
                                                      ],
                                                      Syntax.Local
                                                        ( [
@@ -18959,7 +19562,8 @@ let expected =
                                                                                 "x";
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                false
                                                                                 ),
                                                                                Syntax
                                                                                .Ge,
@@ -18972,7 +19576,8 @@ let expected =
                                                                        .Var
                                                                          "rest";
                                                                      ],
-                                                                     [] ) ) );
+                                                                     [] ),
+                                                                   false ) );
                                                          ],
                                                          Syntax.Binary
                                                            ( Syntax.Binary
@@ -18987,7 +19592,8 @@ let expected =
                                                                          .Var
                                                                            "keyF";
                                                                        ],
-                                                                       [] ) ),
+                                                                       [] ),
+                                                                     false ),
                                                                  Syntax.Add,
                                                                  Syntax.Array
                                                                    [
@@ -19011,7 +19617,8 @@ let expected =
                                                                      Syntax.Var
                                                                        "keyF";
                                                                    ],
-                                                                   [] ) ) ) ) )
+                                                                   [] ),
+                                                                 false ) ) ) )
                                                ) ) )) ) ) );
                     ],
                     Syntax.Local
@@ -19026,13 +19633,15 @@ let expected =
                                         Syntax.Call
                                           ( Syntax.Select
                                               (Syntax.Var "std", "length"),
-                                            ([ Syntax.Var "a" ], []) ) );
+                                            ([ Syntax.Var "a" ], []),
+                                            false ) );
                                     Syntax.Bind
                                       ( "lb",
                                         Syntax.Call
                                           ( Syntax.Select
                                               (Syntax.Var "std", "length"),
-                                            ([ Syntax.Var "b" ], []) ) );
+                                            ([ Syntax.Var "b" ], []),
+                                            false ) );
                                   ],
                                   Syntax.Local
                                     ( [
@@ -19088,7 +19697,8 @@ let expected =
                                                                                 "i"
                                                                             );
                                                                         ],
-                                                                        [] ) ),
+                                                                        [] ),
+                                                                      false ),
                                                                   Syntax.Le,
                                                                   Syntax.Call
                                                                     ( Syntax.Var
@@ -19104,8 +19714,8 @@ let expected =
                                                                                 "j"
                                                                             );
                                                                         ],
-                                                                        [] ) )
-                                                                ),
+                                                                        [] ),
+                                                                      false ) ),
                                                               Syntax.Call
                                                                 ( Syntax.Var
                                                                     "aux",
@@ -19145,7 +19755,8 @@ let expected =
                                                                                 );
                                                                             ] );
                                                                     ],
-                                                                    [] ) ),
+                                                                    [] ),
+                                                                  true ),
                                                               Some
                                                                 (Syntax.Call
                                                                    ( Syntax.Var
@@ -19188,8 +19799,9 @@ let expected =
                                                                                ]
                                                                            );
                                                                        ],
-                                                                       [] ) ))
-                                                            )) )) ) );
+                                                                       [] ),
+                                                                     true )) ))
+                                                     )) ) );
                                       ],
                                       Syntax.Call
                                         ( Syntax.Var "aux",
@@ -19198,7 +19810,8 @@ let expected =
                                               Syntax.Number 0.;
                                               Syntax.Array [];
                                             ],
-                                            [] ) ) ) ) );
+                                            [] ),
+                                          false ) ) ) );
                         ],
                         Syntax.Local
                           ( [
@@ -19206,20 +19819,23 @@ let expected =
                                 ( "l",
                                   Syntax.Call
                                     ( Syntax.Select (Syntax.Var "std", "length"),
-                                      ([ Syntax.Var "arr" ], []) ) );
+                                      ([ Syntax.Var "arr" ], []),
+                                      false ) );
                             ],
                             Syntax.If
                               ( Syntax.Binary
                                   ( Syntax.Call
                                       ( Syntax.Select
                                           (Syntax.Var "std", "length"),
-                                        ([ Syntax.Var "arr" ], []) ),
+                                        ([ Syntax.Var "arr" ], []),
+                                        false ),
                                     Syntax.Le,
                                     Syntax.Number 30. ),
                                 Syntax.Call
                                   ( Syntax.Var "quickSort",
                                     ( [ Syntax.Var "arr" ],
-                                      [ ("keyF", Syntax.Var "keyF") ] ) ),
+                                      [ ("keyF", Syntax.Var "keyF") ] ),
+                                    false ),
                                 Some
                                   (Syntax.Local
                                      ( [
@@ -19234,7 +19850,8 @@ let expected =
                                                          Syntax.Div,
                                                          Syntax.Number 2. );
                                                    ],
-                                                   [] ) ) );
+                                                   [] ),
+                                                 false ) );
                                        ],
                                        Syntax.Local
                                          ( [
@@ -19265,7 +19882,8 @@ let expected =
                                                            ( "keyF",
                                                              Syntax.Var "keyF"
                                                            );
-                                                         ] ) );
+                                                         ] ),
+                                                       false );
                                                    Syntax.Call
                                                      ( Syntax.Select
                                                          ( Syntax.Var "std",
@@ -19275,9 +19893,11 @@ let expected =
                                                            ( "keyF",
                                                              Syntax.Var "keyF"
                                                            );
-                                                         ] ) );
+                                                         ] ),
+                                                       false );
                                                  ],
-                                                 [] ) ) ) )) ) ) ) ) ));
+                                                 [] ),
+                                               false ) ) )) ) ) ) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "uniq",
@@ -19292,7 +19912,8 @@ let expected =
                             ( Syntax.Binary
                                 ( Syntax.Call
                                     ( Syntax.Select (Syntax.Var "std", "length"),
-                                      ([ Syntax.Var "a" ], []) ),
+                                      ([ Syntax.Var "a" ], []),
+                                      false ),
                                   Syntax.Equal,
                                   Syntax.Number 0. ),
                               Syntax.Array [ Syntax.Var "b" ],
@@ -19310,15 +19931,18 @@ let expected =
                                                                ( Syntax.Var "std",
                                                                  "length" ),
                                                              ( [ Syntax.Var "a" ],
-                                                               [] ) ),
+                                                               [] ),
+                                                             false ),
                                                          Syntax.Sub,
                                                          Syntax.Number 1. ) );
                                                ],
-                                               [] ) ),
+                                               [] ),
+                                             false ),
                                          Syntax.Equal,
                                          Syntax.Call
                                            ( Syntax.Var "keyF",
-                                             ([ Syntax.Var "b" ], []) ) ),
+                                             ([ Syntax.Var "b" ], []),
+                                             false ) ),
                                      Syntax.Var "a",
                                      Some
                                        (Syntax.Binary
@@ -19330,7 +19954,8 @@ let expected =
                     Syntax.Call
                       ( Syntax.Select (Syntax.Var "std", "foldl"),
                         ( [ Syntax.Var "f"; Syntax.Var "arr"; Syntax.Array [] ],
-                          [] ) ) ) ));
+                          [] ),
+                        false ) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "set",
@@ -19341,10 +19966,12 @@ let expected =
                     ( [
                         Syntax.Call
                           ( Syntax.Select (Syntax.Var "std", "sort"),
-                            ([ Syntax.Var "arr"; Syntax.Var "keyF" ], []) );
+                            ([ Syntax.Var "arr"; Syntax.Var "keyF" ], []),
+                            false );
                         Syntax.Var "keyF";
                       ],
-                      [] ) ) ));
+                      [] ),
+                    false ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "setMember",
@@ -19361,9 +19988,11 @@ let expected =
                                     Syntax.Var "arr";
                                     Syntax.Var "keyF";
                                   ],
-                                  [] ) );
+                                  [] ),
+                                false );
                           ],
-                          [] ) ),
+                          [] ),
+                        false ),
                     Syntax.Gt,
                     Syntax.Number 0. ) ));
          Syntax.MemberField
@@ -19388,7 +20017,8 @@ let expected =
                                   Syntax.Ge,
                                   Syntax.Call
                                     ( Syntax.Select (Syntax.Var "std", "length"),
-                                      ([ Syntax.Var "a" ], []) ) ),
+                                      ([ Syntax.Var "a" ], []),
+                                      false ) ),
                               Syntax.Binary
                                 ( Syntax.Var "acc",
                                   Syntax.Add,
@@ -19405,7 +20035,8 @@ let expected =
                                          Syntax.Call
                                            ( Syntax.Select
                                                (Syntax.Var "std", "length"),
-                                             ([ Syntax.Var "b" ], []) ) ),
+                                             ([ Syntax.Var "b" ], []),
+                                             false ) ),
                                      Syntax.Binary
                                        ( Syntax.Var "acc",
                                          Syntax.Add,
@@ -19426,7 +20057,8 @@ let expected =
                                                             ( Syntax.Var "a",
                                                               Syntax.Var "i" );
                                                         ],
-                                                        [] ) ) );
+                                                        [] ),
+                                                      false ) );
                                             ],
                                             Syntax.Local
                                               ( [
@@ -19440,7 +20072,8 @@ let expected =
                                                                   Syntax.Var "j"
                                                                 );
                                                             ],
-                                                            [] ) ) );
+                                                            [] ),
+                                                          false ) );
                                                 ],
                                                 Syntax.If
                                                   ( Syntax.Binary
@@ -19477,7 +20110,8 @@ let expected =
                                                                           "i" );
                                                                   ] );
                                                           ],
-                                                          [] ) ),
+                                                          [] ),
+                                                        true ),
                                                     Some
                                                       (Syntax.If
                                                          ( Syntax.Binary
@@ -19520,7 +20154,8 @@ let expected =
                                                                              );
                                                                          ] );
                                                                  ],
-                                                                 [] ) ),
+                                                                 [] ),
+                                                               true ),
                                                            Some
                                                              (Syntax.Call
                                                                 ( Syntax.Var
@@ -19565,8 +20200,9 @@ let expected =
                                                                                 );
                                                                             ] );
                                                                     ],
-                                                                    [] ) )) ))
-                                                  ) ) )) )) ) );
+                                                                    [] ),
+                                                                  true )) )) )
+                                              ) )) )) ) );
                     ],
                     Syntax.Call
                       ( Syntax.Var "aux",
@@ -19577,7 +20213,8 @@ let expected =
                             Syntax.Number 0.;
                             Syntax.Array [];
                           ],
-                          [] ) ) ) ));
+                          [] ),
+                        false ) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "setInter",
@@ -19602,7 +20239,8 @@ let expected =
                                       Syntax.Call
                                         ( Syntax.Select
                                             (Syntax.Var "std", "length"),
-                                          ([ Syntax.Var "a" ], []) ) ),
+                                          ([ Syntax.Var "a" ], []),
+                                          false ) ),
                                   Syntax.Or,
                                   Syntax.Binary
                                     ( Syntax.Var "j",
@@ -19610,7 +20248,8 @@ let expected =
                                       Syntax.Call
                                         ( Syntax.Select
                                             (Syntax.Var "std", "length"),
-                                          ([ Syntax.Var "b" ], []) ) ) ),
+                                          ([ Syntax.Var "b" ], []),
+                                          false ) ) ),
                               Syntax.Var "acc",
                               Some
                                 (Syntax.If
@@ -19622,7 +20261,8 @@ let expected =
                                                    ( Syntax.Var "a",
                                                      Syntax.Var "i" );
                                                ],
-                                               [] ) ),
+                                               [] ),
+                                             false ),
                                          Syntax.Equal,
                                          Syntax.Call
                                            ( Syntax.Var "keyF",
@@ -19631,7 +20271,8 @@ let expected =
                                                    ( Syntax.Var "b",
                                                      Syntax.Var "j" );
                                                ],
-                                               [] ) ) ),
+                                               [] ),
+                                             false ) ),
                                      Syntax.Call
                                        ( Syntax.Var "aux",
                                          ( [
@@ -19655,7 +20296,8 @@ let expected =
                                                          Syntax.Var "i" );
                                                    ] );
                                            ],
-                                           [] ) ),
+                                           [] ),
+                                         true ),
                                      Some
                                        (Syntax.If
                                           ( Syntax.Binary
@@ -19666,7 +20308,8 @@ let expected =
                                                           ( Syntax.Var "a",
                                                             Syntax.Var "i" );
                                                       ],
-                                                      [] ) ),
+                                                      [] ),
+                                                    false ),
                                                 Syntax.Lt,
                                                 Syntax.Call
                                                   ( Syntax.Var "keyF",
@@ -19675,7 +20318,8 @@ let expected =
                                                           ( Syntax.Var "b",
                                                             Syntax.Var "j" );
                                                       ],
-                                                      [] ) ) ),
+                                                      [] ),
+                                                    false ) ),
                                             Syntax.Call
                                               ( Syntax.Var "aux",
                                                 ( [
@@ -19688,7 +20332,8 @@ let expected =
                                                     Syntax.Var "j";
                                                     Syntax.Var "acc";
                                                   ],
-                                                  [] ) ),
+                                                  [] ),
+                                                true ),
                                             Some
                                               (Syntax.Call
                                                  ( Syntax.Var "aux",
@@ -19702,7 +20347,8 @@ let expected =
                                                            Syntax.Number 1. );
                                                        Syntax.Var "acc";
                                                      ],
-                                                     [] ) )) )) )) ) );
+                                                     [] ),
+                                                   true )) )) )) ) );
                     ],
                     Syntax.Call
                       ( Syntax.Var "aux",
@@ -19713,7 +20359,8 @@ let expected =
                             Syntax.Number 0.;
                             Syntax.Array [];
                           ],
-                          [] ) ) ) ));
+                          [] ),
+                        true ) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "setDiff",
@@ -19736,7 +20383,8 @@ let expected =
                                   Syntax.Ge,
                                   Syntax.Call
                                     ( Syntax.Select (Syntax.Var "std", "length"),
-                                      ([ Syntax.Var "a" ], []) ) ),
+                                      ([ Syntax.Var "a" ], []),
+                                      false ) ),
                               Syntax.Var "acc",
                               Some
                                 (Syntax.If
@@ -19746,7 +20394,8 @@ let expected =
                                          Syntax.Call
                                            ( Syntax.Select
                                                (Syntax.Var "std", "length"),
-                                             ([ Syntax.Var "b" ], []) ) ),
+                                             ([ Syntax.Var "b" ], []),
+                                             false ) ),
                                      Syntax.Binary
                                        ( Syntax.Var "acc",
                                          Syntax.Add,
@@ -19765,7 +20414,8 @@ let expected =
                                                           ( Syntax.Var "a",
                                                             Syntax.Var "i" );
                                                       ],
-                                                      [] ) ),
+                                                      [] ),
+                                                    false ),
                                                 Syntax.Equal,
                                                 Syntax.Call
                                                   ( Syntax.Var "keyF",
@@ -19774,7 +20424,8 @@ let expected =
                                                           ( Syntax.Var "b",
                                                             Syntax.Var "j" );
                                                       ],
-                                                      [] ) ) ),
+                                                      [] ),
+                                                    false ) ),
                                             Syntax.Call
                                               ( Syntax.Var "aux",
                                                 ( [
@@ -19790,7 +20441,8 @@ let expected =
                                                         Syntax.Number 1. );
                                                     Syntax.Var "acc";
                                                   ],
-                                                  [] ) ),
+                                                  [] ),
+                                                true ),
                                             Some
                                               (Syntax.If
                                                  ( Syntax.Binary
@@ -19802,7 +20454,8 @@ let expected =
                                                                    Syntax.Var
                                                                      "i" );
                                                              ],
-                                                             [] ) ),
+                                                             [] ),
+                                                           false ),
                                                        Syntax.Lt,
                                                        Syntax.Call
                                                          ( Syntax.Var "keyF",
@@ -19812,7 +20465,8 @@ let expected =
                                                                    Syntax.Var
                                                                      "j" );
                                                              ],
-                                                             [] ) ) ),
+                                                             [] ),
+                                                           false ) ),
                                                    Syntax.Call
                                                      ( Syntax.Var "aux",
                                                        ( [
@@ -19838,7 +20492,8 @@ let expected =
                                                                          "i" );
                                                                  ] );
                                                          ],
-                                                         [] ) ),
+                                                         [] ),
+                                                       true ),
                                                    Some
                                                      (Syntax.Call
                                                         ( Syntax.Var "aux",
@@ -19853,8 +20508,8 @@ let expected =
                                                                     1. );
                                                               Syntax.Var "acc";
                                                             ],
-                                                            [] ) )) )) )) )) )
-                        );
+                                                            [] ),
+                                                          true )) )) )) )) ) );
                     ],
                     Syntax.Call
                       ( Syntax.Var "aux",
@@ -19865,7 +20520,8 @@ let expected =
                             Syntax.Number 0.;
                             Syntax.Array [];
                           ],
-                          [] ) ) ) ));
+                          [] ),
+                        true ) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "mergePatch",
@@ -19874,7 +20530,8 @@ let expected =
                 Syntax.If
                   ( Syntax.Call
                       ( Syntax.Select (Syntax.Var "std", "isObject"),
-                        ([ Syntax.Var "patch" ], []) ),
+                        ([ Syntax.Var "patch" ], []),
+                        false ),
                     Syntax.Local
                       ( [
                           Syntax.Bind
@@ -19883,7 +20540,8 @@ let expected =
                                 ( Syntax.Call
                                     ( Syntax.Select
                                         (Syntax.Var "std", "isObject"),
-                                      ([ Syntax.Var "target" ], []) ),
+                                      ([ Syntax.Var "target" ], []),
+                                      false ),
                                   Syntax.Var "target",
                                   Some
                                     (Syntax.Object (Syntax.ObjectMemberList []))
@@ -19897,13 +20555,13 @@ let expected =
                                     ( Syntax.Call
                                         ( Syntax.Select
                                             (Syntax.Var "std", "isObject"),
-                                          ([ Syntax.Var "target_object" ], [])
-                                        ),
+                                          ([ Syntax.Var "target_object" ], []),
+                                          false ),
                                       Syntax.Call
                                         ( Syntax.Select
                                             (Syntax.Var "std", "objectFields"),
-                                          ([ Syntax.Var "target_object" ], [])
-                                        ),
+                                          ([ Syntax.Var "target_object" ], []),
+                                          false ),
                                       Some (Syntax.Array []) ) );
                             ],
                             Syntax.Local
@@ -19917,8 +20575,8 @@ let expected =
                                               ( Syntax.Select
                                                   ( Syntax.Var "std",
                                                     "objectFields" ),
-                                                ([ Syntax.Var "patch" ], []) )
-                                          ),
+                                                ([ Syntax.Var "patch" ], []),
+                                                false ) ),
                                           [
                                             Syntax.Ifspec
                                               (Syntax.Binary
@@ -19943,9 +20601,11 @@ let expected =
                                                         ( Syntax.Var "std",
                                                           "objectFields" ),
                                                       ( [ Syntax.Var "patch" ],
-                                                        [] ) );
+                                                        [] ),
+                                                      false );
                                                 ],
-                                                [] ) ) );
+                                                [] ),
+                                              false ) );
                                     ],
                                     Syntax.Object
                                       (Syntax.ObjectFor
@@ -19962,7 +20622,8 @@ let expected =
                                                            Syntax.Var "patch";
                                                            Syntax.Var "k";
                                                          ],
-                                                         [] ) ) ),
+                                                         [] ),
+                                                       false ) ),
                                                Syntax.ArrayIndex
                                                  ( Syntax.Var "target_object",
                                                    Syntax.Var "k" ),
@@ -19980,7 +20641,8 @@ let expected =
                                                                     "target_object";
                                                                   Syntax.Var "k";
                                                                 ],
-                                                                [] ) ) ),
+                                                                [] ),
+                                                              false ) ),
                                                       Syntax.Call
                                                         ( Syntax.Select
                                                             ( Syntax.Var "std",
@@ -19993,7 +20655,8 @@ let expected =
                                                                   Syntax.Var "k"
                                                                 );
                                                             ],
-                                                            [] ) ),
+                                                            [] ),
+                                                          true ),
                                                       Some
                                                         (Syntax.Call
                                                            ( Syntax.Select
@@ -20013,7 +20676,8 @@ let expected =
                                                                      Syntax.Var
                                                                        "k" );
                                                                ],
-                                                               [] ) )) )) ),
+                                                               [] ),
+                                                             true )) )) ),
                                            [],
                                            ( "k",
                                              Syntax.Call
@@ -20023,7 +20687,8 @@ let expected =
                                                      Syntax.Var "both_fields";
                                                      Syntax.Var "null_fields";
                                                    ],
-                                                   [] ) ) ),
+                                                   [] ),
+                                                 false ) ),
                                            [] )) ) ) ) ),
                     Some (Syntax.Var "patch") ) ));
          Syntax.MemberField
@@ -20044,7 +20709,8 @@ let expected =
                             Syntax.Var "f";
                             Syntax.Var "inc_hidden";
                           ],
-                          [] ) ),
+                          [] ),
+                        false ),
                     Syntax.ArrayIndex (Syntax.Var "o", Syntax.Var "f"),
                     Some (Syntax.Var "default") ) ));
          Syntax.MemberField
@@ -20054,7 +20720,8 @@ let expected =
                 Syntax.H 2,
                 Syntax.Call
                   ( Syntax.Select (Syntax.Var "std", "objectFieldsEx"),
-                    ([ Syntax.Var "o"; Syntax.False ], []) ) ));
+                    ([ Syntax.Var "o"; Syntax.False ], []),
+                    false ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "objectFieldsAll",
@@ -20062,7 +20729,8 @@ let expected =
                 Syntax.H 2,
                 Syntax.Call
                   ( Syntax.Select (Syntax.Var "std", "objectFieldsEx"),
-                    ([ Syntax.Var "o"; Syntax.True ], []) ) ));
+                    ([ Syntax.Var "o"; Syntax.True ], []),
+                    false ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "objectHas",
@@ -20070,7 +20738,8 @@ let expected =
                 Syntax.H 2,
                 Syntax.Call
                   ( Syntax.Select (Syntax.Var "std", "objectHasEx"),
-                    ([ Syntax.Var "o"; Syntax.Var "f"; Syntax.False ], []) ) ));
+                    ([ Syntax.Var "o"; Syntax.Var "f"; Syntax.False ], []),
+                    false ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "objectHasAll",
@@ -20078,7 +20747,8 @@ let expected =
                 Syntax.H 2,
                 Syntax.Call
                   ( Syntax.Select (Syntax.Var "std", "objectHasEx"),
-                    ([ Syntax.Var "o"; Syntax.Var "f"; Syntax.True ], []) ) ));
+                    ([ Syntax.Var "o"; Syntax.Var "f"; Syntax.True ], []),
+                    false ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "objectValues",
@@ -20089,7 +20759,8 @@ let expected =
                     ( "k",
                       Syntax.Call
                         ( Syntax.Select (Syntax.Var "std", "objectFields"),
-                          ([ Syntax.Var "o" ], []) ) ),
+                          ([ Syntax.Var "o" ], []),
+                          false ) ),
                     [] ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
@@ -20101,7 +20772,8 @@ let expected =
                     ( "k",
                       Syntax.Call
                         ( Syntax.Select (Syntax.Var "std", "objectFieldsAll"),
-                          ([ Syntax.Var "o" ], []) ) ),
+                          ([ Syntax.Var "o" ], []),
+                          false ) ),
                     [] ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
@@ -20129,7 +20801,8 @@ let expected =
                     ( "k",
                       Syntax.Call
                         ( Syntax.Select (Syntax.Var "std", "objectFields"),
-                          ([ Syntax.Var "o" ], []) ) ),
+                          ([ Syntax.Var "o" ], []),
+                          false ) ),
                     [] ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
@@ -20157,7 +20830,8 @@ let expected =
                     ( "k",
                       Syntax.Call
                         ( Syntax.Select (Syntax.Var "std", "objectFieldsAll"),
-                          ([ Syntax.Var "o" ], []) ) ),
+                          ([ Syntax.Var "o" ], []),
+                          false ) ),
                     [] ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
@@ -20170,7 +20844,8 @@ let expected =
                         ( "ta",
                           Syntax.Call
                             ( Syntax.Select (Syntax.Var "std", "type"),
-                              ([ Syntax.Var "a" ], []) ) );
+                              ([ Syntax.Var "a" ], []),
+                              false ) );
                     ],
                     Syntax.Local
                       ( [
@@ -20178,7 +20853,8 @@ let expected =
                             ( "tb",
                               Syntax.Call
                                 ( Syntax.Select (Syntax.Var "std", "type"),
-                                  ([ Syntax.Var "b" ], []) ) );
+                                  ([ Syntax.Var "b" ], []),
+                                  false ) );
                         ],
                         Syntax.If
                           ( Syntax.Unary
@@ -20186,8 +20862,8 @@ let expected =
                                 Syntax.Call
                                   ( Syntax.Select
                                       (Syntax.Var "std", "primitiveEquals"),
-                                    ([ Syntax.Var "ta"; Syntax.Var "tb" ], [])
-                                  ) ),
+                                    ([ Syntax.Var "ta"; Syntax.Var "tb" ], []),
+                                    false ) ),
                             Syntax.False,
                             Some
                               (Syntax.If
@@ -20197,7 +20873,8 @@ let expected =
                                        ( [
                                            Syntax.Var "ta"; Syntax.String "array";
                                          ],
-                                         [] ) ),
+                                         [] ),
+                                       false ),
                                    Syntax.Local
                                      ( [
                                          Syntax.Bind
@@ -20205,7 +20882,8 @@ let expected =
                                              Syntax.Call
                                                ( Syntax.Select
                                                    (Syntax.Var "std", "length"),
-                                                 ([ Syntax.Var "a" ], []) ) );
+                                                 ([ Syntax.Var "a" ], []),
+                                                 false ) );
                                        ],
                                        Syntax.If
                                          ( Syntax.Unary
@@ -20221,9 +20899,11 @@ let expected =
                                                              ( Syntax.Var "std",
                                                                "length" ),
                                                            ( [ Syntax.Var "b" ],
-                                                             [] ) );
+                                                             [] ),
+                                                           false );
                                                      ],
-                                                     [] ) ) ),
+                                                     [] ),
+                                                   false ) ),
                                            Syntax.False,
                                            Some
                                              (Syntax.Local
@@ -20293,8 +20973,10 @@ let expected =
                                                                                 );
                                                                             ],
                                                                             []
-                                                                          ) ))
-                                                                 )) ) );
+                                                                          ),
+                                                                          true
+                                                                        )) )) )
+                                                      );
                                                   ],
                                                   Syntax.Call
                                                     ( Syntax.Var "aux",
@@ -20303,7 +20985,8 @@ let expected =
                                                           Syntax.Var "b";
                                                           Syntax.Number 0.;
                                                         ],
-                                                        [] ) ) )) ) ),
+                                                        [] ),
+                                                      false ) )) ) ),
                                    Some
                                      (Syntax.If
                                         ( Syntax.Call
@@ -20314,7 +20997,8 @@ let expected =
                                                   Syntax.Var "ta";
                                                   Syntax.String "object";
                                                 ],
-                                                [] ) ),
+                                                [] ),
+                                              false ),
                                           Syntax.Local
                                             ( [
                                                 Syntax.Bind
@@ -20323,8 +21007,8 @@ let expected =
                                                       ( Syntax.Select
                                                           ( Syntax.Var "std",
                                                             "objectFields" ),
-                                                        ([ Syntax.Var "a" ], [])
-                                                      ) );
+                                                        ([ Syntax.Var "a" ], []),
+                                                        false ) );
                                               ],
                                               Syntax.Local
                                                 ( [
@@ -20338,7 +21022,8 @@ let expected =
                                                                 Syntax.Var
                                                                   "fields";
                                                               ],
-                                                              [] ) ) );
+                                                              [] ),
+                                                            false ) );
                                                   ],
                                                   Syntax.If
                                                     ( Syntax.Binary
@@ -20353,7 +21038,8 @@ let expected =
                                                               ( [
                                                                   Syntax.Var "b";
                                                                 ],
-                                                                [] ) ) ),
+                                                                [] ),
+                                                              false ) ),
                                                       Syntax.False,
                                                       Some
                                                         (Syntax.Local
@@ -20461,7 +21147,8 @@ let expected =
                                                                                 );
                                                                                 ],
                                                                                 []
-                                                                                )
+                                                                                ),
+                                                                                true
                                                                                 ))
                                                                             ))
                                                                      ) );
@@ -20477,8 +21164,9 @@ let expected =
                                                                      .Number
                                                                        0.;
                                                                    ],
-                                                                   [] ) ) )) )
-                                                ) ),
+                                                                   [] ),
+                                                                 false ) )) ) )
+                                            ),
                                           Some
                                             (Syntax.Call
                                                ( Syntax.Select
@@ -20488,7 +21176,8 @@ let expected =
                                                      Syntax.Var "a";
                                                      Syntax.Var "b";
                                                    ],
-                                                   [] ) )) )) )) ) ) ) ));
+                                                   [] ),
+                                                 false )) )) )) ) ) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "resolvePath",
@@ -20500,7 +21189,8 @@ let expected =
                         ( "arr",
                           Syntax.Call
                             ( Syntax.Select (Syntax.Var "std", "split"),
-                              ([ Syntax.Var "f"; Syntax.String "/" ], []) ) );
+                              ([ Syntax.Var "f"; Syntax.String "/" ], []),
+                              false ) );
                     ],
                     Syntax.Call
                       ( Syntax.Select (Syntax.Var "std", "join"),
@@ -20514,7 +21204,8 @@ let expected =
                                           ( Syntax.Call
                                               ( Syntax.Select
                                                   (Syntax.Var "std", "length"),
-                                                ([ Syntax.Var "arr" ], []) ),
+                                                ([ Syntax.Var "arr" ], []),
+                                                false ),
                                             Syntax.Sub,
                                             Syntax.Number 1. );
                                         Syntax.Function
@@ -20523,11 +21214,13 @@ let expected =
                                               (Syntax.Var "arr", Syntax.Var "i")
                                           );
                                       ],
-                                      [] ) ),
+                                      [] ),
+                                    false ),
                                 Syntax.Add,
                                 Syntax.Array [ Syntax.Var "r" ] );
                           ],
-                          [] ) ) ) ));
+                          [] ),
+                        false ) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "prune",
@@ -20547,12 +21240,14 @@ let expected =
                                    ( Syntax.Call
                                        ( Syntax.Select
                                            (Syntax.Var "std", "isArray"),
-                                         ([ Syntax.Var "b" ], []) ),
+                                         ([ Syntax.Var "b" ], []),
+                                         false ),
                                      Syntax.Binary
                                        ( Syntax.Call
                                            ( Syntax.Select
                                                (Syntax.Var "std", "length"),
-                                             ([ Syntax.Var "b" ], []) ),
+                                             ([ Syntax.Var "b" ], []),
+                                             false ),
                                          Syntax.Gt,
                                          Syntax.Number 0. ),
                                      Some
@@ -20560,13 +21255,15 @@ let expected =
                                           ( Syntax.Call
                                               ( Syntax.Select
                                                   (Syntax.Var "std", "isObject"),
-                                                ([ Syntax.Var "b" ], []) ),
+                                                ([ Syntax.Var "b" ], []),
+                                                false ),
                                             Syntax.Binary
                                               ( Syntax.Call
                                                   ( Syntax.Select
                                                       ( Syntax.Var "std",
                                                         "length" ),
-                                                    ([ Syntax.Var "b" ], []) ),
+                                                    ([ Syntax.Var "b" ], []),
+                                                    false ),
                                                 Syntax.Gt,
                                                 Syntax.Number 0. ),
                                             Some Syntax.True )) )) ) );
@@ -20574,11 +21271,13 @@ let expected =
                     Syntax.If
                       ( Syntax.Call
                           ( Syntax.Select (Syntax.Var "std", "isArray"),
-                            ([ Syntax.Var "a" ], []) ),
+                            ([ Syntax.Var "a" ], []),
+                            false ),
                         Syntax.ArrayFor
                           ( Syntax.Call
                               ( Syntax.Select (Syntax.Var "std", "prune"),
-                                ([ Syntax.Var "x" ], []) ),
+                                ([ Syntax.Var "x" ], []),
+                                false ),
                             ("x", Syntax.Var "a"),
                             [
                               Syntax.Ifspec
@@ -20588,15 +21287,18 @@ let expected =
                                          Syntax.Call
                                            ( Syntax.Select
                                                (Syntax.Dollar, "prune"),
-                                             ([ Syntax.Var "x" ], []) );
+                                             ([ Syntax.Var "x" ], []),
+                                             false );
                                        ],
-                                       [] ) ));
+                                       [] ),
+                                     false ));
                             ] ),
                         Some
                           (Syntax.If
                              ( Syntax.Call
                                  ( Syntax.Select (Syntax.Var "std", "isObject"),
-                                   ([ Syntax.Var "a" ], []) ),
+                                   ([ Syntax.Var "a" ], []),
+                                   false ),
                                Syntax.Object
                                  (Syntax.ObjectFor
                                     ( [],
@@ -20607,13 +21309,15 @@ let expected =
                                               Syntax.ArrayIndex
                                                 (Syntax.Var "a", Syntax.Var "x");
                                             ],
-                                            [] ) ),
+                                            [] ),
+                                          false ),
                                       [],
                                       ( "x",
                                         Syntax.Call
                                           ( Syntax.Select
                                               (Syntax.Var "std", "objectFields"),
-                                            ([ Syntax.Var "a" ], []) ) ),
+                                            ([ Syntax.Var "a" ], []),
+                                            false ) ),
                                       [
                                         Syntax.Ifspec
                                           (Syntax.Call
@@ -20628,9 +21332,11 @@ let expected =
                                                              ( Syntax.Var "a",
                                                                Syntax.Var "x" );
                                                          ],
-                                                         [] ) );
+                                                         [] ),
+                                                       false );
                                                  ],
-                                                 [] ) ));
+                                                 [] ),
+                                               false ));
                                       ] )),
                                Some (Syntax.Var "a") )) ) ) ));
          Syntax.MemberField
@@ -20643,7 +21349,8 @@ let expected =
                       ( Syntax.Not,
                         Syntax.Call
                           ( Syntax.Select (Syntax.Var "std", "isString"),
-                            ([ Syntax.Var "pat" ], []) ) ),
+                            ([ Syntax.Var "pat" ], []),
+                            false ) ),
                     Syntax.Error
                       (Syntax.Binary
                          ( Syntax.String
@@ -20652,14 +21359,16 @@ let expected =
                            Syntax.Add,
                            Syntax.Call
                              ( Syntax.Select (Syntax.Var "std", "type"),
-                               ([ Syntax.Var "pat" ], []) ) )),
+                               ([ Syntax.Var "pat" ], []),
+                               false ) )),
                     Some
                       (Syntax.If
                          ( Syntax.Unary
                              ( Syntax.Not,
                                Syntax.Call
                                  ( Syntax.Select (Syntax.Var "std", "isString"),
-                                   ([ Syntax.Var "str" ], []) ) ),
+                                   ([ Syntax.Var "str" ], []),
+                                   false ) ),
                            Syntax.Error
                              (Syntax.Binary
                                 ( Syntax.String
@@ -20668,7 +21377,8 @@ let expected =
                                   Syntax.Add,
                                   Syntax.Call
                                     ( Syntax.Select (Syntax.Var "std", "type"),
-                                      ([ Syntax.Var "str" ], []) ) )),
+                                      ([ Syntax.Var "str" ], []),
+                                      false ) )),
                            Some
                              (Syntax.Local
                                 ( [
@@ -20677,7 +21387,8 @@ let expected =
                                         Syntax.Call
                                           ( Syntax.Select
                                               (Syntax.Var "std", "length"),
-                                            ([ Syntax.Var "pat" ], []) ) );
+                                            ([ Syntax.Var "pat" ], []),
+                                            false ) );
                                   ],
                                   Syntax.Local
                                     ( [
@@ -20686,7 +21397,8 @@ let expected =
                                             Syntax.Call
                                               ( Syntax.Select
                                                   (Syntax.Var "std", "length"),
-                                                ([ Syntax.Var "str" ], []) ) );
+                                                ([ Syntax.Var "str" ], []),
+                                                false ) );
                                       ],
                                       Syntax.If
                                         ( Syntax.Binary
@@ -20748,9 +21460,11 @@ let expected =
                                                                  Syntax.Var
                                                                    "pat_len" );
                                                            ],
-                                                           [] ) );
+                                                           [] ),
+                                                         false );
                                                    ],
-                                                   [] ) )) ) ) )) )) ) ));
+                                                   [] ),
+                                                 false )) ) ) )) )) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "find",
@@ -20761,7 +21475,8 @@ let expected =
                       ( Syntax.Not,
                         Syntax.Call
                           ( Syntax.Select (Syntax.Var "std", "isArray"),
-                            ([ Syntax.Var "arr" ], []) ) ),
+                            ([ Syntax.Var "arr" ], []),
+                            false ) ),
                     Syntax.Error
                       (Syntax.Binary
                          ( Syntax.String
@@ -20769,7 +21484,8 @@ let expected =
                            Syntax.Add,
                            Syntax.Call
                              ( Syntax.Select (Syntax.Var "std", "type"),
-                               ([ Syntax.Var "arr" ], []) ) )),
+                               ([ Syntax.Var "arr" ], []),
+                               false ) )),
                     Some
                       (Syntax.Call
                          ( Syntax.Select (Syntax.Var "std", "filter"),
@@ -20789,13 +21505,16 @@ let expected =
                                          ( Syntax.Call
                                              ( Syntax.Select
                                                  (Syntax.Var "std", "length"),
-                                               ([ Syntax.Var "arr" ], []) ),
+                                               ([ Syntax.Var "arr" ], []),
+                                               false ),
                                            Syntax.Sub,
                                            Syntax.Number 1. );
                                      ],
-                                     [] ) );
+                                     [] ),
+                                   false );
                              ],
-                             [] ) )) ) ));
+                             [] ),
+                           false )) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "all",
@@ -20804,7 +21523,8 @@ let expected =
                 Syntax.Assert
                   ( ( Syntax.Call
                         ( Syntax.Select (Syntax.Var "std", "isArray"),
-                          ([ Syntax.Var "arr" ], []) ),
+                          ([ Syntax.Var "arr" ], []),
+                          false ),
                       Some
                         (Syntax.Binary
                            ( Syntax.String
@@ -20812,14 +21532,16 @@ let expected =
                              Syntax.Add,
                              Syntax.Call
                                ( Syntax.Select (Syntax.Var "std", "type"),
-                                 ([ Syntax.Var "arr" ], []) ) )) ),
+                                 ([ Syntax.Var "arr" ], []),
+                                 false ) )) ),
                     Syntax.Local
                       ( [
                           Syntax.Bind
                             ( "arrLen",
                               Syntax.Call
                                 ( Syntax.Select (Syntax.Var "std", "length"),
-                                  ([ Syntax.Var "arr" ], []) ) );
+                                  ([ Syntax.Var "arr" ], []),
+                                  false ) );
                         ],
                         Syntax.Local
                           ( [
@@ -20846,8 +21568,8 @@ let expected =
                                                      ( Syntax.Select
                                                          ( Syntax.Var "std",
                                                            "isBoolean" ),
-                                                       ([ Syntax.Var "e" ], [])
-                                                     ),
+                                                       ([ Syntax.Var "e" ], []),
+                                                       false ),
                                                    Some
                                                      (Syntax.Binary
                                                         ( Syntax.String
@@ -20867,7 +21589,8 @@ let expected =
                                                                       Syntax.Var
                                                                         "e";
                                                                     ],
-                                                                    [] ) );
+                                                                    [] ),
+                                                                  false );
                                                             ] )) ),
                                                  Syntax.If
                                                    ( Syntax.Unary
@@ -20886,12 +21609,13 @@ let expected =
                                                                     .Number
                                                                       1. );
                                                               ],
-                                                              [] ) )) ) ) )) )
-                                );
+                                                              [] ),
+                                                            true )) ) ) )) ) );
                             ],
                             Syntax.Call
-                              (Syntax.Var "aux", ([ Syntax.Number 0. ], [])) )
-                      ) ) ));
+                              ( Syntax.Var "aux",
+                                ([ Syntax.Number 0. ], []),
+                                false ) ) ) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "any",
@@ -20900,7 +21624,8 @@ let expected =
                 Syntax.Assert
                   ( ( Syntax.Call
                         ( Syntax.Select (Syntax.Var "std", "isArray"),
-                          ([ Syntax.Var "arr" ], []) ),
+                          ([ Syntax.Var "arr" ], []),
+                          false ),
                       Some
                         (Syntax.Binary
                            ( Syntax.String
@@ -20908,14 +21633,16 @@ let expected =
                              Syntax.Add,
                              Syntax.Call
                                ( Syntax.Select (Syntax.Var "std", "type"),
-                                 ([ Syntax.Var "arr" ], []) ) )) ),
+                                 ([ Syntax.Var "arr" ], []),
+                                 false ) )) ),
                     Syntax.Local
                       ( [
                           Syntax.Bind
                             ( "arrLen",
                               Syntax.Call
                                 ( Syntax.Select (Syntax.Var "std", "length"),
-                                  ([ Syntax.Var "arr" ], []) ) );
+                                  ([ Syntax.Var "arr" ], []),
+                                  false ) );
                         ],
                         Syntax.Local
                           ( [
@@ -20942,8 +21669,8 @@ let expected =
                                                      ( Syntax.Select
                                                          ( Syntax.Var "std",
                                                            "isBoolean" ),
-                                                       ([ Syntax.Var "e" ], [])
-                                                     ),
+                                                       ([ Syntax.Var "e" ], []),
+                                                       false ),
                                                    Some
                                                      (Syntax.Binary
                                                         ( Syntax.String
@@ -20963,7 +21690,8 @@ let expected =
                                                                       Syntax.Var
                                                                         "e";
                                                                     ],
-                                                                    [] ) );
+                                                                    [] ),
+                                                                  false );
                                                             ] )) ),
                                                  Syntax.If
                                                    ( Syntax.Var "e",
@@ -20980,12 +21708,13 @@ let expected =
                                                                     .Number
                                                                       1. );
                                                               ],
-                                                              [] ) )) ) ) )) )
-                                );
+                                                              [] ),
+                                                            true )) ) ) )) ) );
                             ],
                             Syntax.Call
-                              (Syntax.Var "aux", ([ Syntax.Number 0. ], [])) )
-                      ) ) ));
+                              ( Syntax.Var "aux",
+                                ([ Syntax.Number 0. ], []),
+                                false ) ) ) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "__compare",
@@ -20997,12 +21726,14 @@ let expected =
                         ( "t1",
                           Syntax.Call
                             ( Syntax.Select (Syntax.Var "std", "type"),
-                              ([ Syntax.Var "v1" ], []) ) );
+                              ([ Syntax.Var "v1" ], []),
+                              false ) );
                       Syntax.Bind
                         ( "t2",
                           Syntax.Call
                             ( Syntax.Select (Syntax.Var "std", "type"),
-                              ([ Syntax.Var "v2" ], []) ) );
+                              ([ Syntax.Var "v2" ], []),
+                              false ) );
                     ],
                     Syntax.If
                       ( Syntax.Binary
@@ -21029,7 +21760,8 @@ let expected =
                                Syntax.Call
                                  ( Syntax.Select
                                      (Syntax.Var "std", "__compare_array"),
-                                   ([ Syntax.Var "v1"; Syntax.Var "v2" ], []) ),
+                                   ([ Syntax.Var "v1"; Syntax.Var "v2" ], []),
+                                   false ),
                                Some
                                  (Syntax.If
                                     ( Syntax.Binary
@@ -21085,12 +21817,14 @@ let expected =
                         ( "len1",
                           Syntax.Call
                             ( Syntax.Select (Syntax.Var "std", "length"),
-                              ([ Syntax.Var "arr1" ], []) ) );
+                              ([ Syntax.Var "arr1" ], []),
+                              false ) );
                       Syntax.Bind
                         ( "len2",
                           Syntax.Call
                             ( Syntax.Select (Syntax.Var "std", "length"),
-                              ([ Syntax.Var "arr2" ], []) ) );
+                              ([ Syntax.Var "arr2" ], []),
+                              false ) );
                     ],
                     Syntax.Local
                       ( [
@@ -21098,8 +21832,8 @@ let expected =
                             ( "minLen",
                               Syntax.Call
                                 ( Syntax.Select (Syntax.Var "std", "min"),
-                                  ([ Syntax.Var "len1"; Syntax.Var "len2" ], [])
-                                ) );
+                                  ([ Syntax.Var "len1"; Syntax.Var "len2" ], []),
+                                  false ) );
                         ],
                         Syntax.Local
                           ( [
@@ -21127,7 +21861,8 @@ let expected =
                                                           ( Syntax.Var "arr2",
                                                             Syntax.Var "i" );
                                                       ],
-                                                      [] ) ) );
+                                                      [] ),
+                                                    false ) );
                                           ],
                                           Syntax.If
                                             ( Syntax.Binary
@@ -21144,7 +21879,8 @@ let expected =
                                                              Syntax.Add,
                                                              Syntax.Number 1. );
                                                        ],
-                                                       [] ) )) ) ),
+                                                       [] ),
+                                                     true )) ) ),
                                       Some
                                         (Syntax.Call
                                            ( Syntax.Select
@@ -21153,11 +21889,13 @@ let expected =
                                                  Syntax.Var "len1";
                                                  Syntax.Var "len2";
                                                ],
-                                               [] ) )) ) );
+                                               [] ),
+                                             false )) ) );
                             ],
                             Syntax.Call
-                              (Syntax.Var "aux", ([ Syntax.Number 0. ], [])) )
-                      ) ) ));
+                              ( Syntax.Var "aux",
+                                ([ Syntax.Number 0. ], []),
+                                false ) ) ) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "__array_less",
@@ -21166,7 +21904,8 @@ let expected =
                 Syntax.Binary
                   ( Syntax.Call
                       ( Syntax.Select (Syntax.Var "std", "__compare_array"),
-                        ([ Syntax.Var "arr1"; Syntax.Var "arr2" ], []) ),
+                        ([ Syntax.Var "arr1"; Syntax.Var "arr2" ], []),
+                        false ),
                     Syntax.Equal,
                     Syntax.Unary (Syntax.Neg, Syntax.Number 1.) ) ));
          Syntax.MemberField
@@ -21177,7 +21916,8 @@ let expected =
                 Syntax.Binary
                   ( Syntax.Call
                       ( Syntax.Select (Syntax.Var "std", "__compare_array"),
-                        ([ Syntax.Var "arr1"; Syntax.Var "arr2" ], []) ),
+                        ([ Syntax.Var "arr1"; Syntax.Var "arr2" ], []),
+                        false ),
                     Syntax.Equal,
                     Syntax.Number 1. ) ));
          Syntax.MemberField
@@ -21188,7 +21928,8 @@ let expected =
                 Syntax.Binary
                   ( Syntax.Call
                       ( Syntax.Select (Syntax.Var "std", "__compare_array"),
-                        ([ Syntax.Var "arr1"; Syntax.Var "arr2" ], []) ),
+                        ([ Syntax.Var "arr1"; Syntax.Var "arr2" ], []),
+                        false ),
                     Syntax.Le,
                     Syntax.Number 0. ) ));
          Syntax.MemberField
@@ -21199,7 +21940,8 @@ let expected =
                 Syntax.Binary
                   ( Syntax.Call
                       ( Syntax.Select (Syntax.Var "std", "__compare_array"),
-                        ([ Syntax.Var "arr1"; Syntax.Var "arr2" ], []) ),
+                        ([ Syntax.Var "arr1"; Syntax.Var "arr2" ], []),
+                        false ),
                     Syntax.Ge,
                     Syntax.Number 0. ) ));
          Syntax.MemberField
@@ -21217,7 +21959,8 @@ let expected =
                         Syntax.Var "arr";
                         Syntax.Number 0.;
                       ],
-                      [] ) ) ));
+                      [] ),
+                    false ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "avg",
@@ -21227,7 +21970,8 @@ let expected =
                   ( Syntax.Binary
                       ( Syntax.Call
                           ( Syntax.Select (Syntax.Var "std", "length"),
-                            ([ Syntax.Var "arr" ], []) ),
+                            ([ Syntax.Var "arr" ], []),
+                            false ),
                         Syntax.Equal,
                         Syntax.Number 0. ),
                     Syntax.Error
@@ -21237,11 +21981,13 @@ let expected =
                       (Syntax.Binary
                          ( Syntax.Call
                              ( Syntax.Select (Syntax.Var "std", "sum"),
-                               ([ Syntax.Var "arr" ], []) ),
+                               ([ Syntax.Var "arr" ], []),
+                               false ),
                            Syntax.Div,
                            Syntax.Call
                              ( Syntax.Select (Syntax.Var "std", "length"),
-                               ([ Syntax.Var "arr" ], []) ) )) ) ));
+                               ([ Syntax.Var "arr" ], []),
+                               false ) )) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "minArray",
@@ -21260,7 +22006,8 @@ let expected =
                   ( Syntax.Binary
                       ( Syntax.Call
                           ( Syntax.Select (Syntax.Var "std", "length"),
-                            ([ Syntax.Var "arr" ], []) ),
+                            ([ Syntax.Var "arr" ], []),
+                            false ),
                         Syntax.Equal,
                         Syntax.Number 0. ),
                     Syntax.Var "onEmpty",
@@ -21286,14 +22033,15 @@ let expected =
                                                  ( [
                                                      Syntax.Call
                                                        ( Syntax.Var "keyF",
-                                                         ([ Syntax.Var "a" ], [])
-                                                       );
+                                                         ([ Syntax.Var "a" ], []),
+                                                         false );
                                                      Syntax.Call
                                                        ( Syntax.Var "keyF",
-                                                         ([ Syntax.Var "b" ], [])
-                                                       );
+                                                         ([ Syntax.Var "b" ], []),
+                                                         false );
                                                    ],
-                                                   [] ) ),
+                                                   [] ),
+                                                 false ),
                                              Syntax.Gt,
                                              Syntax.Number 0. ),
                                          Syntax.Var "b",
@@ -21306,7 +22054,8 @@ let expected =
                                        Syntax.Var "arr";
                                        Syntax.Var "minVal";
                                      ],
-                                     [] ) ) ) )) ) ));
+                                     [] ),
+                                   false ) ) )) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "maxArray",
@@ -21325,7 +22074,8 @@ let expected =
                   ( Syntax.Binary
                       ( Syntax.Call
                           ( Syntax.Select (Syntax.Var "std", "length"),
-                            ([ Syntax.Var "arr" ], []) ),
+                            ([ Syntax.Var "arr" ], []),
+                            false ),
                         Syntax.Equal,
                         Syntax.Number 0. ),
                     Syntax.Var "onEmpty",
@@ -21351,14 +22101,15 @@ let expected =
                                                  ( [
                                                      Syntax.Call
                                                        ( Syntax.Var "keyF",
-                                                         ([ Syntax.Var "a" ], [])
-                                                       );
+                                                         ([ Syntax.Var "a" ], []),
+                                                         false );
                                                      Syntax.Call
                                                        ( Syntax.Var "keyF",
-                                                         ([ Syntax.Var "b" ], [])
-                                                       );
+                                                         ([ Syntax.Var "b" ], []),
+                                                         false );
                                                    ],
-                                                   [] ) ),
+                                                   [] ),
+                                                 false ),
                                              Syntax.Lt,
                                              Syntax.Number 0. ),
                                          Syntax.Var "b",
@@ -21371,7 +22122,8 @@ let expected =
                                        Syntax.Var "arr";
                                        Syntax.Var "maxVal";
                                      ],
-                                     [] ) ) ) )) ) ));
+                                     [] ),
+                                   false ) ) )) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "xor",
@@ -21396,7 +22148,8 @@ let expected =
                         Syntax.Binary
                           (Syntax.Var "x", Syntax.Add, Syntax.Number 0.5);
                       ],
-                      [] ) ) ));
+                      [] ),
+                    false ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "isEmpty",
@@ -21405,7 +22158,8 @@ let expected =
                 Syntax.Binary
                   ( Syntax.Call
                       ( Syntax.Select (Syntax.Var "std", "length"),
-                        ([ Syntax.Var "str" ], []) ),
+                        ([ Syntax.Var "str" ], []),
+                        false ),
                     Syntax.Equal,
                     Syntax.Number 0. ) ));
          Syntax.MemberField
@@ -21422,7 +22176,8 @@ let expected =
                             ("e", Syntax.Var "arr"),
                             [] );
                       ],
-                      [] ) ) ));
+                      [] ),
+                    false ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "equalsIgnoreCase",
@@ -21431,11 +22186,13 @@ let expected =
                 Syntax.Binary
                   ( Syntax.Call
                       ( Syntax.Select (Syntax.Var "std", "asciiLower"),
-                        ([ Syntax.Var "str1" ], []) ),
+                        ([ Syntax.Var "str1" ], []),
+                        false ),
                     Syntax.Equal,
                     Syntax.Call
                       ( Syntax.Select (Syntax.Var "std", "asciiLower"),
-                        ([ Syntax.Var "str2" ], []) ) ) ));
+                        ([ Syntax.Var "str2" ], []),
+                        false ) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "isEven",
@@ -21445,7 +22202,8 @@ let expected =
                   ( Syntax.Binary
                       ( Syntax.Call
                           ( Syntax.Select (Syntax.Var "std", "round"),
-                            ([ Syntax.Var "x" ], []) ),
+                            ([ Syntax.Var "x" ], []),
+                            false ),
                         Syntax.Mod,
                         Syntax.Number 2. ),
                     Syntax.Equal,
@@ -21459,7 +22217,8 @@ let expected =
                   ( Syntax.Binary
                       ( Syntax.Call
                           ( Syntax.Select (Syntax.Var "std", "round"),
-                            ([ Syntax.Var "x" ], []) ),
+                            ([ Syntax.Var "x" ], []),
+                            false ),
                         Syntax.Mod,
                         Syntax.Number 2. ),
                     Syntax.NotEqual,
@@ -21472,7 +22231,8 @@ let expected =
                 Syntax.Binary
                   ( Syntax.Call
                       ( Syntax.Select (Syntax.Var "std", "round"),
-                        ([ Syntax.Var "x" ], []) ),
+                        ([ Syntax.Var "x" ], []),
+                        false ),
                     Syntax.Equal,
                     Syntax.Var "x" ) ));
          Syntax.MemberField
@@ -21483,7 +22243,8 @@ let expected =
                 Syntax.Binary
                   ( Syntax.Call
                       ( Syntax.Select (Syntax.Var "std", "round"),
-                        ([ Syntax.Var "x" ], []) ),
+                        ([ Syntax.Var "x" ], []),
+                        false ),
                     Syntax.NotEqual,
                     Syntax.Var "x" ) ));
          Syntax.MemberField
@@ -21501,11 +22262,13 @@ let expected =
                               Syntax.Binary
                                 ( Syntax.Call
                                     ( Syntax.Select (Syntax.Var "std", "length"),
-                                      ([ Syntax.Var "arr" ], []) ),
+                                      ([ Syntax.Var "arr" ], []),
+                                      false ),
                                   Syntax.Sub,
                                   Syntax.Number 1. );
                             ],
-                            [] ) ) ),
+                            [] ),
+                          false ) ),
                     [
                       Syntax.Ifspec
                         (Syntax.Binary
@@ -21522,13 +22285,15 @@ let expected =
                         ( "indexes",
                           Syntax.Call
                             ( Syntax.Select (Syntax.Var "std", "find"),
-                              ([ Syntax.Var "elem"; Syntax.Var "arr" ], []) ) );
+                              ([ Syntax.Var "elem"; Syntax.Var "arr" ], []),
+                              false ) );
                     ],
                     Syntax.If
                       ( Syntax.Binary
                           ( Syntax.Call
                               ( Syntax.Select (Syntax.Var "std", "length"),
-                                ([ Syntax.Var "indexes" ], []) ),
+                                ([ Syntax.Var "indexes" ], []),
+                                false ),
                             Syntax.Equal,
                             Syntax.Number 0. ),
                         Syntax.Var "arr",
@@ -21540,7 +22305,8 @@ let expected =
                                    Syntax.ArrayIndex
                                      (Syntax.Var "indexes", Syntax.Number 0.);
                                  ],
-                                 [] ) )) ) ) ));
+                                 [] ),
+                               false )) ) ) ));
          Syntax.MemberField
            (Syntax.FieldFunc
               ( Syntax.FieldnameID "objectRemoveKey",
@@ -21555,7 +22321,8 @@ let expected =
                        ( "k",
                          Syntax.Call
                            ( Syntax.Select (Syntax.Var "std", "objectFields"),
-                             ([ Syntax.Var "obj" ], []) ) ),
+                             ([ Syntax.Var "obj" ], []),
+                             false ) ),
                        [
                          Syntax.Ifspec
                            (Syntax.Binary
@@ -21596,5 +22363,6 @@ let expected =
                         Syntax.Var "str";
                         Syntax.String " \t\n\012\r\194\133\194\160";
                       ],
-                      [] ) ) ));
+                      [] ),
+                    false ) ));
        ])
