@@ -173,11 +173,11 @@ Expr :
   | IMPORTSTR s=STRING {
     Syntax.Importstr s
   }
+  | IMPORTBIN s=STRING {
+    Syntax.Importbin s
+  }
 
   (*
-  | IMPORTBIN String {
-    Syntax.Importbin
-  }
   | ERROR Expr {
     Syntax.Error
   }

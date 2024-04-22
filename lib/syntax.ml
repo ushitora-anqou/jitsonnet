@@ -35,6 +35,7 @@ type expr =
   | Function of (params * expr)
   | If of (expr * expr * expr option)
   | Import of string
+  | Importbin of string
   | Importstr of string
   | Local of (bind list * expr)
   | Null
