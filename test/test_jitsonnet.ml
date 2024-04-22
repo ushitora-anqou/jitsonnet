@@ -343,6 +343,10 @@ let test_parse_assert () =
     {|assert assert x == 3.0 : "s1"; 0.0 == 0.0 : "s2"; 0.0|};
   ()
 
+let test_parse_import () =
+  assert_expr (Import "foo") {|import "foo"|};
+  ()
+
 let assert_token expected got_src =
   let got = L.main (Lexing.from_string got_src) in
   Logs.info (fun m ->
@@ -488,6 +492,7 @@ let () =
           test_case "object seq" `Quick test_parse_objectseq;
           test_case "function" `Quick test_parse_function;
           test_case "assert" `Quick test_parse_assert;
+          test_case "import" `Quick test_parse_import;
         ] );
       ( "lexer",
         [

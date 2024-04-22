@@ -167,11 +167,11 @@ Expr :
   | a=Assert SEMICOLON e=Expr {
     Syntax.Assert (a, e)
   }
+  | IMPORT s=STRING {
+    Syntax.Import s
+  }
 
   (*
-  | IMPORT String {
-    Syntax.Import
-  }
   | IMPORTSTR String {
     Syntax.Importstr
   }
