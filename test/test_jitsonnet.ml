@@ -364,6 +364,13 @@ let test_parse_error () =
   assert_expr (Error (Binary (String "%d", Mod, Number 3.0))) {|error "%d" % 3|};
   ()
 
+let test_parse_std () =
+  assert_expr Std_ast.expected
+    (let ic = open_in_bin "../../../test/std.jsonnet" in
+     Fun.protect ~finally:(fun () -> close_in ic) @@ fun () ->
+     In_channel.input_all ic);
+  ()
+
 let assert_token expected got_src =
   let got = L.main (Lexing.from_string got_src) in
   Logs.info (fun m ->
@@ -511,6 +518,7 @@ let () =
           test_case "assert" `Quick test_parse_assert;
           test_case "import" `Quick test_parse_import;
           test_case "error" `Quick test_parse_error;
+          test_case "std" `Quick test_parse_std;
         ] );
       ( "lexer",
         [

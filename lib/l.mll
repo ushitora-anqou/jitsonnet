@@ -123,7 +123,7 @@ rule main = parse
   in
   P.STRING (Buffer.contents string_literal_buffer)
 }
-| ['a'-'z'] ['a'-'z' '0'-'9' '_' '\'']* {
+| ['_' 'a'-'z' 'A'-'Z'] ['_' 'a'-'z' 'A'-'Z' '0'-'9']* {
   let id = Lexing.lexeme lexbuf in
   match List.assoc_opt id keywords with
   | Some x -> x
@@ -149,6 +149,10 @@ and block_comment = parse
 | "*/" {
   ()
 }
+| newline {
+  Lexing.new_line lexbuf;
+  block_comment lexbuf
+}
 | _ {
   block_comment lexbuf
 }
@@ -163,6 +167,11 @@ and double_quoted_string = parse
 }
 | '\\' ([^ 'u'] as c) {
   Buffer.add_char string_literal_buffer (char_for_backslash c);
+  double_quoted_string lexbuf
+}
+| newline as s {
+  Lexing.new_line lexbuf;
+  Buffer.add_string string_literal_buffer s;
   double_quoted_string lexbuf
 }
 | _ as c {
@@ -182,6 +191,11 @@ and single_quoted_string = parse
   Buffer.add_char string_literal_buffer (char_for_backslash c);
   single_quoted_string lexbuf
 }
+| newline as s {
+  Lexing.new_line lexbuf;
+  Buffer.add_string string_literal_buffer s;
+  single_quoted_string lexbuf
+}
 | _ as c {
   Buffer.add_char string_literal_buffer c;
   single_quoted_string lexbuf
@@ -195,6 +209,11 @@ and double_quoted_verbatim_string = parse
   Buffer.add_char string_literal_buffer '"';
   double_quoted_verbatim_string lexbuf
 }
+| newline as s {
+  Lexing.new_line lexbuf;
+  Buffer.add_string string_literal_buffer s;
+  double_quoted_verbatim_string lexbuf
+}
 | _ as c {
   Buffer.add_char string_literal_buffer c;
   double_quoted_verbatim_string lexbuf
@@ -206,6 +225,11 @@ and single_quoted_verbatim_string = parse
 }
 | '\'' '\'' {
   Buffer.add_char string_literal_buffer '\'';
+  single_quoted_verbatim_string lexbuf
+}
+| newline as s {
+  Lexing.new_line lexbuf;
+  Buffer.add_string string_literal_buffer s;
   single_quoted_verbatim_string lexbuf
 }
 | _ as c {
