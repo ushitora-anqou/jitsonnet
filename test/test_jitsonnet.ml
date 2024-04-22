@@ -345,6 +345,7 @@ let test_parse_assert () =
 
 let test_parse_import () =
   assert_expr (Import "foo") {|import "foo"|};
+  assert_expr (Importstr "foo") {|importstr "foo"|};
   ()
 
 let assert_token expected got_src =
