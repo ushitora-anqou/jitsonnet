@@ -203,6 +203,7 @@ let test_parse_array_slice () =
 
 let test_parse_call () =
   assert_expr (Call (Var "x", ([], []), false)) {|x()|};
+  assert_expr (Call (Var "x", ([], []), true)) {|x() tailstrict|};
   assert_expr (Call (Var "x", ([ Var "a" ], []), false)) {|x(a)|};
   assert_expr (Call (Var "x", ([ Var "a" ], []), false)) {|x(a,)|};
   assert_expr (Call (Var "x", ([ Var "a"; Var "b" ], []), false)) {|x(a, b)|};
