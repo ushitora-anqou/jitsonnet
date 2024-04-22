@@ -7,7 +7,7 @@
 %token <string> ID
 %token <string> STRING
 
-%nonassoc THEN FUNCTION
+%nonassoc THEN FUNCTION ERROR
 %nonassoc ELSE
 %nonassoc SEMICOLON
 %left BARBAR
@@ -176,11 +176,11 @@ Expr :
   | IMPORTBIN s=STRING {
     Syntax.Importbin s
   }
+  | ERROR e=Expr {
+    Syntax.Error e
+  }
 
   (*
-  | ERROR Expr {
-    Syntax.Error
-  }
   | Expr IN SUPER {
     Syntax.InSuper
   }

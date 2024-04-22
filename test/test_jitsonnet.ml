@@ -349,6 +349,10 @@ let test_parse_import () =
   assert_expr (Importbin "foo") {|importbin "foo"|};
   ()
 
+let test_parse_error () =
+  assert_expr (Error (Binary (String "%d", Mod, Number 3.0))) {|error "%d" % 3|};
+  ()
+
 let assert_token expected got_src =
   let got = L.main (Lexing.from_string got_src) in
   Logs.info (fun m ->
@@ -495,6 +499,7 @@ let () =
           test_case "function" `Quick test_parse_function;
           test_case "assert" `Quick test_parse_assert;
           test_case "import" `Quick test_parse_import;
+          test_case "error" `Quick test_parse_error;
         ] );
       ( "lexer",
         [

@@ -31,6 +31,7 @@ type expr =
   | Binary of (expr * binop * expr)
   | Call of (expr * args)
   | Dollar
+  | Error of expr
   | False
   | Function of (params * expr)
   | If of (expr * expr * expr option)
