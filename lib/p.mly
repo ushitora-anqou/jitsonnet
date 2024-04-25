@@ -135,10 +135,10 @@ Expr :
     Syntax.ArraySlice(x, a, None, c)
   }
   | SUPER DOT id=ID {
-    Syntax.SuperSelect id
+    Syntax.Select (Super, id)
   }
   | SUPER LBRACKET e=Expr RBRACKET {
-    Syntax.SuperIndex e
+    Syntax.ArrayIndex (Super, e)
   }
   | e=Expr LPAREN args=Args RPAREN tailstrict=option(TAILSTRICT) {
     Syntax.Call (e, args, Option.is_some tailstrict)
@@ -180,7 +180,7 @@ Expr :
     Syntax.Error e
   }
   | e=Expr IN SUPER {
-    Syntax.InSuper e
+    Syntax.Binary (e, `In, Super)
   }
   | LPAREN e=Expr RPAREN {
     e
@@ -379,25 +379,25 @@ Param :
   }
 
 %inline Binaryop :
-  | AND { Syntax.Land }
-  | ANDAND { Syntax.And }
-  | BANGEQ { Syntax.NotEqual }
-  | BAR { Syntax.Lor }
-  | EQEQ { Syntax.Equal }
-  | GE { Syntax.Ge }
-  | GT { Syntax.Gt }
-  | GTGT { Syntax.Lsr }
-  | HAT { Syntax.Xor }
-  | IN { Syntax.In }
-  | LE { Syntax.Le }
-  | LT { Syntax.Lt }
-  | LTLT { Syntax.Lsl }
-  | MINUS { Syntax.Sub }
-  | BARBAR { Syntax.Or }
-  | PERCENT { Syntax.Mod }
-  | PLUS { Syntax.Add }
-  | SLASH { Syntax.Div }
-  | STAR { Syntax.Mult }
+  | AND { `Land }
+  | ANDAND { `And }
+  | BANGEQ { `NotEqual }
+  | BAR { `Lor }
+  | EQEQ { `Equal }
+  | GE { `Ge }
+  | GT { `Gt }
+  | GTGT { `Lsr }
+  | HAT { `Xor }
+  | IN { `In }
+  | LE { `Le }
+  | LT { `Lt }
+  | LTLT { `Lsl }
+  | MINUS { `Sub }
+  | BARBAR { `Or }
+  | PERCENT { `Mod }
+  | PLUS { `Add }
+  | SLASH { `Div }
+  | STAR { `Mult }
 
 %inline Unaryop :
   | BANG { Syntax.Not }

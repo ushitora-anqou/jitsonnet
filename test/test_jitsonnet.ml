@@ -1,5 +1,127 @@
 open Jitsonnet
 
+let assert_token expected got_src =
+  let got = L.main (Lexing.from_string got_src) in
+  Logs.info (fun m ->
+      m "got %s, expected %s"
+        (Parser.string_of_token got)
+        (Parser.string_of_token expected));
+  assert (got = expected);
+  ()
+
+let test_lexer_keyword () =
+  assert_token ASSERT "assert";
+  assert_token ELSE "else";
+  assert_token ERROR "error";
+  assert_token FALSE "false";
+  assert_token FOR "for";
+  assert_token FUNCTION "function";
+  assert_token IF "if";
+  assert_token IMPORT "import";
+  assert_token IMPORTSTR "importstr";
+  assert_token IMPORTBIN "importbin";
+  assert_token IN "in";
+  assert_token LOCAL "local";
+  assert_token NULL "null";
+  assert_token TAILSTRICT "tailstrict";
+  assert_token THEN "then";
+  assert_token SELF "self";
+  assert_token SUPER "super";
+  assert_token TRUE "true";
+  ()
+
+let test_lexer_number () =
+  assert_token (NUMBER 0.0) "0";
+  assert_token (NUMBER 1.0) "1";
+  assert_token (NUMBER 0.0) "0.0";
+  assert_token (NUMBER 1.0) "1.0";
+  assert_token (NUMBER 1.0) "1e0";
+  assert_token (NUMBER 10.0) "1e1";
+  assert_token (NUMBER 10.0) "1e+1";
+  assert_token (NUMBER 0.1) "1e-1";
+  ()
+
+let test_lexer_string () =
+  assert_token (STRING "") {|""|};
+  assert_token (STRING "abc") {|"abc"|};
+  assert_token (STRING "ab\nc") {|"ab
+c"|};
+  assert_token (STRING "\"") {|"\""|};
+  assert_token (STRING "\'") {|"\'"|};
+  assert_token (STRING "\\") {|"\\"|};
+  assert_token (STRING "/") {|"\/"|};
+  assert_token (STRING "\b") {|"\b"|};
+  assert_token (STRING "\x0c") {|"\f"|};
+  assert_token (STRING "\n") {|"\n"|};
+  assert_token (STRING "\r") {|"\r"|};
+  assert_token (STRING "\t") {|"\t"|};
+  assert_token (STRING "\u{30F9}") {|"\u30F9"|};
+
+  assert_token (STRING "") {|''|};
+  assert_token (STRING "abc") {|'abc'|};
+  assert_token (STRING "ab\nc") {|'ab
+c'|};
+  assert_token (STRING "\"") {|'\"'|};
+  assert_token (STRING "\'") {|'\''|};
+  assert_token (STRING "\\") {|'\\'|};
+  assert_token (STRING "/") {|'\/'|};
+  assert_token (STRING "\b") {|'\b'|};
+  assert_token (STRING "\x0c") {|'\f'|};
+  assert_token (STRING "\n") {|'\n'|};
+  assert_token (STRING "\r") {|'\r'|};
+  assert_token (STRING "\t") {|'\t'|};
+  assert_token (STRING "\u{30F9}") {|'\u30F9'|};
+
+  assert_token (STRING "") {|@""|};
+  assert_token (STRING "abc") {|@"abc"|};
+  assert_token (STRING "ab\nc") {|@"ab
+c"|};
+  assert_token (STRING "\\") {|@"\"|};
+  assert_token (STRING "\"") {|@""""|};
+  assert_token (STRING "\'") {|"\'"|};
+  assert_token (STRING "\\\\") {|@"\\"|};
+  assert_token (STRING "\\/") {|@"\/"|};
+  assert_token (STRING "\\b") {|@"\b"|};
+  assert_token (STRING "\\f") {|@"\f"|};
+  assert_token (STRING "\\n") {|@"\n"|};
+  assert_token (STRING "\\r") {|@"\r"|};
+  assert_token (STRING "\\t") {|@"\t"|};
+  assert_token (STRING "\\u30F9") {|@"\u30F9"|};
+
+  assert_token (STRING "") {|@''|};
+  assert_token (STRING "abc") {|@'abc'|};
+  assert_token (STRING "ab\nc") {|@'ab
+c'|};
+  assert_token (STRING "\\\"") {|@'\"'|};
+  assert_token (STRING "\\") {|@'\'|};
+  assert_token (STRING "'") {|@''''|};
+  assert_token (STRING "\\\\") {|@'\\'|};
+  assert_token (STRING "\\/") {|@'\/'|};
+  assert_token (STRING "\\b") {|@'\b'|};
+  assert_token (STRING "\\f") {|@'\f'|};
+  assert_token (STRING "\\n") {|@'\n'|};
+  assert_token (STRING "\\r") {|@'\r'|};
+  assert_token (STRING "\\t") {|@'\t'|};
+  assert_token (STRING "\\u30F9") {|@'\u30F9'|};
+
+  assert_token (STRING "\nabc\n\ndef\n  gh\n\n|||\n |||\n")
+    {|
+
+ |||
+
+  abc
+
+  def
+    gh
+
+  |||
+   |||
+ |||
+
+|};
+
+  ()
+
 let assert_expr expected got =
   match Parser.parse_string got with
   | Error msg ->
@@ -172,8 +294,8 @@ let test_parse_select () =
              "y" ),
          "z" ))
     {|{y: {z: "a"}}.y.z|};
-  assert_expr (SuperSelect "x") {|super.x|};
-  assert_expr (SuperIndex (String "x")) {|super["x"]|};
+  assert_expr (Select (Super, "x")) {|super.x|};
+  assert_expr (ArrayIndex (Super, String "x")) {|super["x"]|};
   ()
 
 let test_parse_array_index () =
@@ -260,10 +382,10 @@ else
 
 let test_parse_binary () =
   assert_expr
-    (Binary (Number 1.0, Add, Binary (Number 1.0, Mult, Number 1.0)))
+    (Binary (Number 1.0, `Add, Binary (Number 1.0, `Mult, Number 1.0)))
     {|1+1*1|};
   assert_expr
-    (Binary (Binary (Number 1.0, Add, Number 1.0), Mult, Number 1.0))
+    (Binary (Binary (Number 1.0, `Add, Number 1.0), `Mult, Number 1.0))
     {|(1+1)*1|};
   assert_expr
     (Binary
@@ -273,32 +395,33 @@ let test_parse_binary () =
                    ( Binary
                        ( Binary
                            ( Binary
-                               ( Binary (Number 1., Add, Unary (Pos, Number 1.)),
-                                 Sub,
+                               ( Binary (Number 1., `Add, Unary (Pos, Number 1.)),
+                                 `Sub,
                                  Unary
                                    ( Neg,
                                      Binary
                                        ( Binary
-                                           ( Binary (Number 1., Mult, Number 1.),
-                                             Div,
+                                           ( Binary (Number 1., `Mult, Number 1.),
+                                             `Div,
                                              Unary (Lnot, Number 1.) ),
-                                         Mod,
+                                         `Mod,
                                          Number 1. ) ) ),
-                             Lsl,
+                             `Lsl,
                              Number 1. ),
-                         Lsr,
+                         `Lsr,
                          Number 1. ),
-                     Lt,
+                     `Lt,
                      Number 1. ),
-                 Lor,
+                 `Lor,
                  Binary
                    ( True,
-                     Xor,
-                     Binary (Binary (True, Equal, Unary (Not, True)), Land, True)
+                     `Xor,
+                     Binary
+                       (Binary (True, `Equal, Unary (Not, True)), `Land, True)
                    ) ),
-             And,
+             `And,
              True ),
-         Or,
+         `Or,
          False ))
     {|1++1--1*1/~1%1<<1>>1<1|true^true==!true&true&&true||false|};
   assert_expr
@@ -309,7 +432,8 @@ let test_parse_binary () =
          ObjectMemberList
            [
              MemberField
-               (Field (FieldnameID "y", false, H 1, InSuper (String "x")));
+               (Field
+                  (FieldnameID "y", false, H 1, Binary (String "x", `In, Super)));
            ] ))
     {|{x: "a"} {y: "x" in super}|};
   ()
@@ -319,7 +443,7 @@ let test_parse_function () =
   assert_expr
     (Function
        ( [ ("x", None); ("y", Some (Number 1.0)) ],
-         Binary (Var "x", Add, Var "y") ))
+         Binary (Var "x", `Add, Var "y") ))
     {|function(x, y=1.0) x+y|};
   ()
 
@@ -341,17 +465,17 @@ let test_parse_objectseq () =
 
 let test_parse_assert () =
   assert_expr
-    (Assert ((Binary (Var "x", Equal, Number 3.0), None), Number 0.0))
+    (Assert ((Binary (Var "x", `Equal, Number 3.0), None), Number 0.0))
     {|assert x == 3.0; 0.0|};
   assert_expr
     (Assert
-       ((Binary (Var "x", Equal, Number 3.0), Some (String "s")), Number 0.0))
+       ((Binary (Var "x", `Equal, Number 3.0), Some (String "s")), Number 0.0))
     {|assert x == 3.0 : "s"; 0.0|};
   assert_expr
     (Assert
        ( ( Assert
-             ( (Binary (Var "x", Equal, Number 3.0), Some (String "s1")),
-               Binary (Number 0.0, Equal, Number 0.0) ),
+             ( (Binary (Var "x", `Equal, Number 3.0), Some (String "s1")),
+               Binary (Number 0.0, `Equal, Number 0.0) ),
            Some (String "s2") ),
          Number 0.0 ))
     {|assert assert x == 3.0 : "s1"; 0.0 == 0.0 : "s2"; 0.0|};
@@ -364,7 +488,9 @@ let test_parse_import () =
   ()
 
 let test_parse_error () =
-  assert_expr (Error (Binary (String "%d", Mod, Number 3.0))) {|error "%d" % 3|};
+  assert_expr
+    (Error (Binary (String "%d", `Mod, Number 3.0)))
+    {|error "%d" % 3|};
   ()
 
 let test_parse_std () =
@@ -374,126 +500,118 @@ let test_parse_std () =
      In_channel.input_all ic);
   ()
 
-let assert_token expected got_src =
-  let got = L.main (Lexing.from_string got_src) in
-  Logs.info (fun m ->
-      m "got %s, expected %s"
-        (Parser.string_of_token got)
-        (Parser.string_of_token expected));
-  assert (got = expected);
-  ()
+let assert_core_expr expected got =
+  match Parser.parse_string got with
+  | Error msg ->
+      Logs.err (fun m -> m "failed to parse: %s" msg);
+      Logs.info (fun m -> m "expected %s" (Syntax.Core.show_expr expected));
+      assert false
+  | Ok { expr = got } ->
+      let got = Syntax.desugar_expr false got in
+      Logs.info (fun m ->
+          m "got %s, expected %s"
+            (Syntax.Core.show_expr got)
+            (Syntax.Core.show_expr expected));
+      assert (got = expected);
+      ()
 
-let test_lexer_keyword () =
-  assert_token ASSERT "assert";
-  assert_token ELSE "else";
-  assert_token ERROR "error";
-  assert_token FALSE "false";
-  assert_token FOR "for";
-  assert_token FUNCTION "function";
-  assert_token IF "if";
-  assert_token IMPORT "import";
-  assert_token IMPORTSTR "importstr";
-  assert_token IMPORTBIN "importbin";
-  assert_token IN "in";
-  assert_token LOCAL "local";
-  assert_token NULL "null";
-  assert_token TAILSTRICT "tailstrict";
-  assert_token THEN "then";
-  assert_token SELF "self";
-  assert_token SUPER "super";
-  assert_token TRUE "true";
-  ()
-
-let test_lexer_number () =
-  assert_token (NUMBER 0.0) "0";
-  assert_token (NUMBER 1.0) "1";
-  assert_token (NUMBER 0.0) "0.0";
-  assert_token (NUMBER 1.0) "1.0";
-  assert_token (NUMBER 1.0) "1e0";
-  assert_token (NUMBER 10.0) "1e1";
-  assert_token (NUMBER 10.0) "1e+1";
-  assert_token (NUMBER 0.1) "1e-1";
-  ()
-
-let test_lexer_string () =
-  assert_token (STRING "") {|""|};
-  assert_token (STRING "abc") {|"abc"|};
-  assert_token (STRING "ab\nc") {|"ab
-c"|};
-  assert_token (STRING "\"") {|"\""|};
-  assert_token (STRING "\'") {|"\'"|};
-  assert_token (STRING "\\") {|"\\"|};
-  assert_token (STRING "/") {|"\/"|};
-  assert_token (STRING "\b") {|"\b"|};
-  assert_token (STRING "\x0c") {|"\f"|};
-  assert_token (STRING "\n") {|"\n"|};
-  assert_token (STRING "\r") {|"\r"|};
-  assert_token (STRING "\t") {|"\t"|};
-  assert_token (STRING "\u{30F9}") {|"\u30F9"|};
-
-  assert_token (STRING "") {|''|};
-  assert_token (STRING "abc") {|'abc'|};
-  assert_token (STRING "ab\nc") {|'ab
-c'|};
-  assert_token (STRING "\"") {|'\"'|};
-  assert_token (STRING "\'") {|'\''|};
-  assert_token (STRING "\\") {|'\\'|};
-  assert_token (STRING "/") {|'\/'|};
-  assert_token (STRING "\b") {|'\b'|};
-  assert_token (STRING "\x0c") {|'\f'|};
-  assert_token (STRING "\n") {|'\n'|};
-  assert_token (STRING "\r") {|'\r'|};
-  assert_token (STRING "\t") {|'\t'|};
-  assert_token (STRING "\u{30F9}") {|'\u30F9'|};
-
-  assert_token (STRING "") {|@""|};
-  assert_token (STRING "abc") {|@"abc"|};
-  assert_token (STRING "ab\nc") {|@"ab
-c"|};
-  assert_token (STRING "\\") {|@"\"|};
-  assert_token (STRING "\"") {|@""""|};
-  assert_token (STRING "\'") {|"\'"|};
-  assert_token (STRING "\\\\") {|@"\\"|};
-  assert_token (STRING "\\/") {|@"\/"|};
-  assert_token (STRING "\\b") {|@"\b"|};
-  assert_token (STRING "\\f") {|@"\f"|};
-  assert_token (STRING "\\n") {|@"\n"|};
-  assert_token (STRING "\\r") {|@"\r"|};
-  assert_token (STRING "\\t") {|@"\t"|};
-  assert_token (STRING "\\u30F9") {|@"\u30F9"|};
-
-  assert_token (STRING "") {|@''|};
-  assert_token (STRING "abc") {|@'abc'|};
-  assert_token (STRING "ab\nc") {|@'ab
-c'|};
-  assert_token (STRING "\\\"") {|@'\"'|};
-  assert_token (STRING "\\") {|@'\'|};
-  assert_token (STRING "'") {|@''''|};
-  assert_token (STRING "\\\\") {|@'\\'|};
-  assert_token (STRING "\\/") {|@'\/'|};
-  assert_token (STRING "\\b") {|@'\b'|};
-  assert_token (STRING "\\f") {|@'\f'|};
-  assert_token (STRING "\\n") {|@'\n'|};
-  assert_token (STRING "\\r") {|@'\r'|};
-  assert_token (STRING "\\t") {|@'\t'|};
-  assert_token (STRING "\\u30F9") {|@'\u30F9'|};
-
-  assert_token (STRING "\nabc\n\ndef\n  gh\n\n|||\n |||\n")
+let test_desugar_object () =
+  assert_core_expr (Object ([], [])) "{}";
+  assert_core_expr
+    (Object ([], [ (String "x", H 1, Local ([ ("$", Self) ], Number 1.)) ]))
+    "{x: 1}";
+  assert_core_expr
+    (Object
+       ( [],
+         [
+           ( String "foo",
+             H 1,
+             Local ([ ("$", Self); ("a", String "b") ], String "bar") );
+         ] ))
     {|
+{
+  local a = "b",
+  ["foo"]: "bar",
+}|};
+  assert_core_expr
+    (Object
+       ( [],
+         [
+           ( String "foo",
+             H 1,
+             Local
+               ( [ ("$", Self); ("a", String "b") ],
+                 If
+                   ( Call
+                       ( ArrayIndex (Var "std", String "objectHasEx"),
+                         [ Super; String "foo"; True ],
+                         [] ),
+                     Binary
+                       (ArrayIndex (Super, String "foo"), `Add, String "bar"),
+                     String "bar" ) ) );
+         ] ))
+    {|
+{
+  local a = "b",
+  ["foo"]+: "bar",
+}|};
+  assert_core_expr
+    (Object
+       ( [
+           Local
+             ( [ ("$", Self) ],
+               If
+                 ( Call
+                     ( ArrayIndex (Var "std", String "equals"),
+                       [ Var "x"; Number 1. ],
+                       [] ),
+                   Null,
+                   Error (String "Assertion failed") ) );
+         ],
+         [ (String "x", H 1, Local ([ ("$", Self) ], Number 1.)) ] ))
+    "{x: 1, assert x == 1}";
+  assert_core_expr
+    (Object
+       ( [],
+         [
+           ( String "x",
+             Syntax.H 1,
+             Local
+               ( [ ("$", Self) ],
+                 Local
+                   ( [ ("$outerself", Self); ("$outersuper", Super) ],
+                     Object
+                       ([], [ (String "y", Syntax.H 1, Local ([], Number 1.)) ])
+                   ) ) );
+         ] ))
+    "{x: {y: 1}}";
+  ()
 
- |||
-
-  abc
-
-  def
-    gh
-
-  |||
-   |||
- |||
-
-|};
-
+let test_desugar_array () =
+  assert_core_expr
+    (Local
+       ( [ ("$v1", Var "xs") ],
+         Call
+           ( ArrayIndex (Var "std", String "join"),
+             [
+               Array [];
+               Call
+                 ( ArrayIndex (Var "std", String "makeArray"),
+                   [
+                     Call
+                       ( ArrayIndex (Var "std", String "length"),
+                         [ Var "$v1" ],
+                         [] );
+                     Function
+                       ( [ ("$v2", Error (String "Parameter not bound")) ],
+                         Local
+                           ( [ ("x", ArrayIndex (Var "$v1", Var "$v2")) ],
+                             Array [ Var "x" ] ) );
+                   ],
+                   [] );
+             ],
+             [] ) ))
+    {|[x for x in xs]|};
   ()
 
 let () =
@@ -503,6 +621,12 @@ let () =
   Logs.set_level (Some Logs.Debug);
   run "jitsonnet"
     [
+      ( "lexer",
+        [
+          test_case "keyword" `Quick test_lexer_keyword;
+          test_case "number" `Quick test_lexer_number;
+          test_case "string" `Quick test_lexer_string;
+        ] );
       ( "parse",
         [
           test_case "atoms" `Quick test_parse_atoms;
@@ -523,10 +647,9 @@ let () =
           test_case "error" `Quick test_parse_error;
           test_case "std" `Quick test_parse_std;
         ] );
-      ( "lexer",
+      ( "desugar",
         [
-          test_case "keyword" `Quick test_lexer_keyword;
-          test_case "number" `Quick test_lexer_number;
-          test_case "string" `Quick test_lexer_string;
+          test_case "object" `Quick test_desugar_object;
+          test_case "array" `Quick test_desugar_array;
         ] );
     ]
