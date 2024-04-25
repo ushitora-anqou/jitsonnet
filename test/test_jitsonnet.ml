@@ -614,6 +614,35 @@ let test_desugar_array () =
     {|[x for x in xs]|};
   ()
 
+let assert_static_check good src =
+  match Parser.parse_string src with
+  | Error msg ->
+      Logs.err (fun m -> m "failed to parse: %s" msg);
+      assert false
+  | Ok { expr = got } -> (
+      let desugared = Syntax.desugar_expr false got in
+      match Static_check.f desugared with
+      | Ok () when good -> ()
+      | Error _ when not good -> ()
+      | Ok () ->
+          Logs.err (fun m ->
+              m "failed to static check: expect error but got ok: %s" src);
+          assert false
+      | Error msg ->
+          Logs.err (fun m ->
+              m "failed to static check: expect ok but got error: %s: %s" src
+                msg);
+          assert false)
+
+let test_static_check_basics () =
+  assert_static_check true "null";
+  assert_static_check false "x";
+  assert_static_check false "self";
+  assert_static_check true "{ x: self }";
+  assert_static_check false "{ x: 1, x: 2 }";
+  assert_static_check false "local x = 1, x = 2; x";
+  ()
+
 let () =
   let open Alcotest in
   Fmt.set_style_renderer Fmt.stderr `Ansi_tty;
@@ -652,4 +681,5 @@ let () =
           test_case "object" `Quick test_desugar_object;
           test_case "array" `Quick test_desugar_array;
         ] );
+      ("static check", [ test_case "basics" `Quick test_static_check_basics ]);
     ]
