@@ -643,6 +643,18 @@ let test_static_check_basics () =
   assert_static_check false "local x = 1, x = 2; x";
   ()
 
+let test_executor_basics () =
+  let open Ppxlib in
+  let loc = !Ast_helper.default_loc in
+  assert (
+    Executor.execute
+      [%str
+        module M = struct
+          let () = print_string "hello"
+        end]
+    = "hello");
+  ()
+
 let () =
   let open Alcotest in
   Fmt.set_style_renderer Fmt.stderr `Ansi_tty;
@@ -682,4 +694,5 @@ let () =
           test_case "array" `Quick test_desugar_array;
         ] );
       ("static check", [ test_case "basics" `Quick test_static_check_basics ]);
+      ("executor", [ test_case "basics" `Quick test_executor_basics ]);
     ]

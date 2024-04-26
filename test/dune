@@ -1,3 +1,5 @@
 (test
  (name test_jitsonnet)
- (libraries alcotest jitsonnet logs logs.fmt))
+ (preprocess
+  (pps ppxlib.metaquot))
+ (libraries alcotest jitsonnet logs logs.fmt ppxlib))
