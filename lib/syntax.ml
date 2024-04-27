@@ -91,21 +91,21 @@ exception General_parse_error of string
 
 module Core = struct
   type binop =
-    [ `Add
+    [ `Add (* + *)
     | `And (* && *)
-    | `Div
-    | `Ge
-    | `Gt
-    | `Land
-    | `Le
-    | `Lor
-    | `Lsl
-    | `Lsr
-    | `Lt
-    | `Mult
+    | `Div (* / *)
+    | `Ge (* >= *)
+    | `Gt (* > *)
+    | `Land (* & *)
+    | `Le (* <= *)
+    | `Lor (* | *)
+    | `Lsl (* << *)
+    | `Lsr (* >> *)
+    | `Lt (* < *)
+    | `Mult (* * *)
     | `Or (* || *)
-    | `Sub
-    | `Xor ]
+    | `Sub (* - *)
+    | `Xor (* ^ *) ]
   [@@deriving show]
 
   type expr =

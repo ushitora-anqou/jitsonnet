@@ -21,6 +21,12 @@ let rec compile_expr loc : Syntax.Core.expr -> Parsetree.expression =
         match ([%e compile_expr loc e1], [%e compile_expr loc e2]) with
         | (lazy (Double f1)), (lazy (Double f2)) -> lazy (Double (f1 +. f2))
         | _ -> failwith "invalid add"]
+  | Binary (e1, `Sub, e2) ->
+      [%expr
+        lazy
+          (I.Double
+             (I.get_double [%e compile_expr loc e1]
+             -. I.get_double [%e compile_expr loc e2]))]
   | Binary (e1, `Mult, e2) ->
       [%expr
         lazy
@@ -45,6 +51,34 @@ let rec compile_expr loc : Syntax.Core.expr -> Parsetree.expression =
           (match I.get_bool [%e compile_expr loc e1] with
           | true -> I.True
           | false -> I.get_bool [%e compile_expr loc e2] |> I.value_of_bool)]
+  | Binary (e1, `Land, e2) ->
+      [%expr
+        lazy
+          (I.Double
+             ((I.get_double [%e compile_expr loc e1] |> int_of_float)
+              land (I.get_double [%e compile_expr loc e2] |> int_of_float)
+             |> float_of_int))]
+  | Binary (e1, `Lor, e2) ->
+      [%expr
+        lazy
+          (I.Double
+             ((I.get_double [%e compile_expr loc e1] |> int_of_float)
+              lor (I.get_double [%e compile_expr loc e2] |> int_of_float)
+             |> float_of_int))]
+  | Binary (e1, `Lsl, e2) ->
+      [%expr
+        lazy
+          (I.Double
+             ((I.get_double [%e compile_expr loc e1] |> int_of_float)
+              lsl (I.get_double [%e compile_expr loc e2] |> int_of_float)
+             |> float_of_int))]
+  | Binary (e1, `Lsr, e2) ->
+      [%expr
+        lazy
+          (I.Double
+             ((I.get_double [%e compile_expr loc e1] |> int_of_float)
+              lsr (I.get_double [%e compile_expr loc e2] |> int_of_float)
+             |> float_of_int))]
   | Unary (Not, e) ->
       [%expr
         lazy (I.get_bool [%e compile_expr loc e] |> not |> I.value_of_bool)]

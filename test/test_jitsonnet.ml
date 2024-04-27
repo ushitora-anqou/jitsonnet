@@ -681,7 +681,7 @@ let test_compiler_array () =
   ()
 
 let test_compiler_binary () =
-  assert_compile_expr "6" "2*(1+2)";
+  assert_compile_expr "6" "2*(1+(8>>1)-(1<<(1|1&1)))";
   assert_compile_expr "true" "!false && false || true";
   ()
 
