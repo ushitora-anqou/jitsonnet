@@ -27,6 +27,12 @@ let rec compile_expr loc : Syntax.Core.expr -> Parsetree.expression =
           (I.Double
              (I.get_double [%e compile_expr loc e1]
              *. I.get_double [%e compile_expr loc e2]))]
+  | Binary (e1, `Div, e2) ->
+      [%expr
+        lazy
+          (I.Double
+             (I.get_double [%e compile_expr loc e1]
+             /. I.get_double [%e compile_expr loc e2]))]
   | Binary (e1, `And, e2) ->
       [%expr
         lazy
@@ -39,6 +45,9 @@ let rec compile_expr loc : Syntax.Core.expr -> Parsetree.expression =
           (match I.get_bool [%e compile_expr loc e1] with
           | true -> I.True
           | false -> I.get_bool [%e compile_expr loc e2] |> I.value_of_bool)]
+  | Unary (Not, e) ->
+      [%expr
+        lazy (I.get_bool [%e compile_expr loc e] |> not |> I.value_of_bool)]
   | _ -> assert false
 
 let compile Syntax.{ expr } =
