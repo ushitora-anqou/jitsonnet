@@ -669,37 +669,92 @@ let assert_compile_expr ?(remove_tmp_dir = true) expected got =
       Alcotest.(check string) "" expected got;
       ()
 
-let test_compiler_literals () =
-  assert_compile_expr "true" "true";
-  assert_compile_expr "false" "false";
-  assert_compile_expr "null" "null";
-  assert_compile_expr {|"foo"|} "'foo'";
-  assert_compile_expr "0" "0.0";
-  ()
-
-let test_compiler_array () =
-  assert_compile_expr "[]" "[]";
-  assert_compile_expr "[1,2,3]" "[1,2,3]";
-  assert_compile_expr "4" "[1,2,[3,[4,5,6][0],7][1]][2]";
-  ()
-
-let test_compiler_binary () =
-  assert_compile_expr "6" "2*(1+(8>>1)-(1<<(1|1&1^0)))";
-  assert_compile_expr "true" "!false && false || true";
-  assert_compile_expr
-    "[true,true,true,false,false,false,false,false,false,true,true,true,true,true,false,false,false,false,true,true]"
+let test_compiler () =
+  let code =
     {|
 [
-  1 < 2,  "a" < "b",  [] < ["a"],  [] < [],  ["a"] < [],
-  1 > 2,  "a" > "b",  [] > ["a"],  [] > [],  ["a"] > [],
-  1 <= 2, "a" <= "b", [] <= ["a"], [] <= [], ["a"] <= [],
-  1 >= 2, "a" >= "b", [] >= ["a"], [] >= [], ["a"] >= [],
-]|};
-  assert_compile_expr {|[[1,2],"ab"]|} {|[[1]+[2],"a"+"b"]|};
-  ()
-
-let test_compiler_unary () =
-  assert_compile_expr "[true,-2,-1,1]" {|[!false, ~1, -1, +1]|};
+  true,
+  false,
+  null,
+  'foo',
+  0.0,
+  [],
+  [1,2,3],
+  [1,2,[3,[4,5,6][0],7][1]][2],
+  2*(1+(8>>1)-(1<<(1|1&1^0))),
+  !false && false || true,
+  [
+    1 < 2,  "a" < "b",  [] < ["a"],  [] < [],  ["a"] < [],
+    1 > 2,  "a" > "b",  [] > ["a"],  [] > [],  ["a"] > [],
+    1 <= 2, "a" <= "b", [] <= ["a"], [] <= [], ["a"] <= [],
+    1 >= 2, "a" >= "b", [] >= ["a"], [] >= [], ["a"] >= [],
+  ],
+  [[1]+[2],"a"+"b"],
+  [!false, ~1, -1, +1],
+  if 1 < 2 then 10 else 20,
+  if 1 > 2 then 10,
+]
+|}
+  in
+  let expected =
+    String.trim
+      {|
+[
+   true,
+   false,
+   null,
+   "foo",
+   0,
+   [ ],
+   [
+      1,
+      2,
+      3
+   ],
+   4,
+   6,
+   true,
+   [
+      true,
+      true,
+      true,
+      false,
+      false,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true,
+      true,
+      true,
+      true,
+      false,
+      false,
+      false,
+      false,
+      true,
+      true
+   ],
+   [
+      [
+         1,
+         2
+      ],
+      "ab"
+   ],
+   [
+      true,
+      -2,
+      -1,
+      1
+   ],
+   10,
+   null
+]
+  |}
+  in
+  assert_compile_expr expected code;
   ()
 
 let () =
@@ -742,11 +797,5 @@ let () =
         ] );
       ("static check", [ test_case "basics" `Quick test_static_check_basics ]);
       ("executor", [ test_case "basics" `Quick test_executor_basics ]);
-      ( "compiler",
-        [
-          test_case "literals" `Quick test_compiler_literals;
-          test_case "array" `Quick test_compiler_array;
-          test_case "binary" `Quick test_compiler_binary;
-          test_case "unary" `Quick test_compiler_unary;
-        ] );
+      ("compiler", [ test_case "all" `Quick test_compiler ]);
     ]

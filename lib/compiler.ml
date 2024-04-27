@@ -130,6 +130,13 @@ let rec compile_expr loc : Syntax.Core.expr -> Parsetree.expression =
       [%expr lazy (I.Double (-.I.get_double [%e compile_expr loc e]))]
   | Unary (Pos, e) ->
       [%expr lazy (I.Double (+.I.get_double [%e compile_expr loc e]))]
+  | If (e1, e2, e3) ->
+      [%expr
+        lazy
+          (match [%e compile_expr loc e1] with
+          | (lazy True) -> Lazy.force [%e compile_expr loc e2]
+          | (lazy False) -> Lazy.force [%e compile_expr loc e3]
+          | _ -> failwith "invalid if condition")]
   | _ -> assert false
 
 let compile expr =
@@ -175,21 +182,28 @@ let compile expr =
         | (lazy (Double n1)), (lazy (Double n2)) -> Float.compare n1 n2
         | _ -> failwith "std_cmp: invalid arguments"
 
-      let rec manifestation = function
-        | (lazy Null) -> "null"
-        | (lazy True) -> "true"
-        | (lazy False) -> "false"
-        | (lazy (String s)) -> {|"|} ^ s ^ {|"|} (* FIXME: escape *)
-        | (lazy (Double f)) ->
-            if f |> int_of_float |> float_of_int = f then
-              f |> int_of_float |> string_of_int
-            else string_of_float f
-        | (lazy (Array xs)) ->
-            "[" ^ (xs |> List.map manifestation |> String.concat ",") ^ "]"
-        | _ -> assert false
+      let manifestation =
+        let open Format in
+        let rec aux ppf = function
+          | (lazy Null) -> fprintf ppf "null"
+          | (lazy True) -> fprintf ppf "true"
+          | (lazy False) -> fprintf ppf "false"
+          | (lazy (String s)) -> fprintf ppf "\"%s\"" s (* FIXME: escape *)
+          | (lazy (Double f)) when f = (f |> int_of_float |> float_of_int) ->
+              fprintf ppf "%d" (int_of_float f)
+          | (lazy (Double f)) -> fprintf ppf "%f" f
+          | (lazy (Array [])) -> fprintf ppf "[ ]"
+          | (lazy (Array xs)) ->
+              fprintf ppf "@[<v 3>[@,%a@]@,]"
+                (pp_print_list ~pp_sep:(fun ppf () -> fprintf ppf ",@,") aux)
+                xs
+          | (lazy (Function _)) -> ()
+          | (lazy (Object _)) -> assert false
+        in
+        aux Format.std_formatter
     end
 
     module Compiled = struct
       let e : I.value Lazy.t = [%e e]
-      let () = e |> I.manifestation |> print_string
+      let () = I.manifestation e
     end]
