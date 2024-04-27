@@ -672,6 +672,8 @@ let test_compiler_literals () =
   assert_compile_expr "null" "null";
   assert_compile_expr {|"foo"|} "'foo'";
   assert_compile_expr "0" "0.0";
+  assert_compile_expr "[]" "[]";
+  assert_compile_expr "[1,2,3]" "[1,2,3]";
   ()
 
 let () =
