@@ -22,6 +22,9 @@ let rec compile_expr loc : Syntax.Core.expr -> Parsetree.expression =
         | (lazy (Double f1)), (lazy (Double f2)) -> lazy (Double (f1 +. f2))
         | (lazy (Array xs)), (lazy (Array ys)) -> lazy (Array (xs @ ys))
         | (lazy (String s1)), (lazy (String s2)) -> lazy (String (s1 ^ s2))
+        | (lazy (Object (assrts1, fields1))), (lazy (Object (assrts2, fields2)))
+          ->
+            assert false (* FIXME *)
         | _ -> failwith "invalid add"]
   | Binary (e1, `Sub, e2) ->
       [%expr
@@ -117,6 +120,16 @@ let rec compile_expr loc : Syntax.Core.expr -> Parsetree.expression =
   | Unary (Not, e) ->
       [%expr
         lazy (I.get_bool [%e compile_expr loc e] |> not |> I.value_of_bool)]
+  | Unary (Lnot, e) ->
+      [%expr
+        lazy
+          (I.Double
+             (I.get_double [%e compile_expr loc e]
+             |> int_of_float |> lnot |> float_of_int))]
+  | Unary (Neg, e) ->
+      [%expr lazy (I.Double (-.I.get_double [%e compile_expr loc e]))]
+  | Unary (Pos, e) ->
+      [%expr lazy (I.Double (+.I.get_double [%e compile_expr loc e]))]
   | _ -> assert false
 
 let compile expr =

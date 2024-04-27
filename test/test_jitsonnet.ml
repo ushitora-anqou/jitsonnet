@@ -698,6 +698,10 @@ let test_compiler_binary () =
   assert_compile_expr {|[[1,2],"ab"]|} {|[[1]+[2],"a"+"b"]|};
   ()
 
+let test_compiler_unary () =
+  assert_compile_expr "[true,-2,-1,1]" {|[!false, ~1, -1, +1]|};
+  ()
+
 let () =
   let open Alcotest in
   Fmt.set_style_renderer Fmt.stderr `Ansi_tty;
@@ -743,5 +747,6 @@ let () =
           test_case "literals" `Quick test_compiler_literals;
           test_case "array" `Quick test_compiler_array;
           test_case "binary" `Quick test_compiler_binary;
+          test_case "unary" `Quick test_compiler_unary;
         ] );
     ]
