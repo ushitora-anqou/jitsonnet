@@ -86,6 +86,32 @@ let rec compile_expr loc : Syntax.Core.expr -> Parsetree.expression =
              ((I.get_double [%e compile_expr loc e1] |> int_of_float)
               lsr (I.get_double [%e compile_expr loc e2] |> int_of_float)
              |> float_of_int))]
+  | Binary (e1, `Lt, e2) ->
+      [%expr
+        lazy
+          (if I.std_cmp ([%e compile_expr loc e1], [%e compile_expr loc e2]) < 0
+           then I.True
+           else I.False)]
+  | Binary (e1, `Le, e2) ->
+      [%expr
+        lazy
+          (if
+             I.std_cmp ([%e compile_expr loc e1], [%e compile_expr loc e2]) <= 0
+           then I.True
+           else I.False)]
+  | Binary (e1, `Gt, e2) ->
+      [%expr
+        lazy
+          (if I.std_cmp ([%e compile_expr loc e1], [%e compile_expr loc e2]) > 0
+           then I.True
+           else I.False)]
+  | Binary (e1, `Ge, e2) ->
+      [%expr
+        lazy
+          (if
+             I.std_cmp ([%e compile_expr loc e1], [%e compile_expr loc e2]) >= 0
+           then I.True
+           else I.False)]
   | Unary (Not, e) ->
       [%expr
         lazy (I.get_bool [%e compile_expr loc e] |> not |> I.value_of_bool)]
@@ -122,6 +148,17 @@ let compile expr =
       let get_double = function
         | (lazy (Double f)) -> f
         | _ -> failwith "expect double got something else"
+
+      let rec std_cmp = function
+        | (lazy (Array [])), (lazy (Array [])) -> 0
+        | (lazy (Array [])), (lazy (Array (_ :: _))) -> -1
+        | (lazy (Array (_ :: _))), (lazy (Array [])) -> 1
+        | (lazy (Array (a :: aa))), (lazy (Array (b :: bb))) ->
+            let r = std_cmp (a, b) in
+            if r = 0 then std_cmp (lazy (Array aa), lazy (Array bb)) else r
+        | (lazy (String s1)), (lazy (String s2)) -> String.compare s1 s2
+        | (lazy (Double n1)), (lazy (Double n2)) -> Float.compare n1 n2
+        | _ -> failwith "std_cmp: invalid arguments"
 
       let rec manifestation = function
         | (lazy Null) -> "null"

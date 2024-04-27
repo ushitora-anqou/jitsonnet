@@ -686,6 +686,15 @@ let test_compiler_array () =
 let test_compiler_binary () =
   assert_compile_expr "6" "2*(1+(8>>1)-(1<<(1|1&1^0)))";
   assert_compile_expr "true" "!false && false || true";
+  assert_compile_expr
+    "[true,true,true,false,false,false,false,false,false,true,true,true,true,true,false,false,false,false,true,true]"
+    {|
+[
+  1 < 2,  "a" < "b",  [] < ["a"],  [] < [],  ["a"] < [],
+  1 > 2,  "a" > "b",  [] > ["a"],  [] > [],  ["a"] > [],
+  1 <= 2, "a" <= "b", [] <= ["a"], [] <= [], ["a"] <= [],
+  1 >= 2, "a" >= "b", [] >= ["a"], [] >= [], ["a"] >= [],
+]|};
   ()
 
 let () =
