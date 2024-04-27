@@ -2,7 +2,7 @@ type unaryop = Lnot | Neg | Not | Pos [@@deriving show]
 
 type binop =
   [ `Add
-  | `And
+  | `And (* && *)
   | `Div
   | `Equal
   | `Ge
@@ -92,7 +92,7 @@ exception General_parse_error of string
 module Core = struct
   type binop =
     [ `Add
-    | `And
+    | `And (* && *)
     | `Div
     | `Ge
     | `Gt
@@ -103,7 +103,7 @@ module Core = struct
     | `Lsr
     | `Lt
     | `Mult
-    | `Or
+    | `Or (* || *)
     | `Sub
     | `Xor ]
   [@@deriving show]

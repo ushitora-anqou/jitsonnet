@@ -16,6 +16,29 @@ let rec compile_expr loc : Syntax.Core.expr -> Parsetree.expression =
         List.nth
           (I.get_array [%e compile_expr loc e1])
           (I.get_double [%e compile_expr loc e2] |> int_of_float)]
+  | Binary (e1, `Add, e2) ->
+      [%expr
+        match ([%e compile_expr loc e1], [%e compile_expr loc e2]) with
+        | (lazy (Double f1)), (lazy (Double f2)) -> lazy (Double (f1 +. f2))
+        | _ -> failwith "invalid add"]
+  | Binary (e1, `Mult, e2) ->
+      [%expr
+        lazy
+          (I.Double
+             (I.get_double [%e compile_expr loc e1]
+             *. I.get_double [%e compile_expr loc e2]))]
+  | Binary (e1, `And, e2) ->
+      [%expr
+        lazy
+          (match I.get_bool [%e compile_expr loc e1] with
+          | false -> I.False
+          | true -> I.get_bool [%e compile_expr loc e2] |> I.value_of_bool)]
+  | Binary (e1, `Or, e2) ->
+      [%expr
+        lazy
+          (match I.get_bool [%e compile_expr loc e1] with
+          | true -> I.True
+          | false -> I.get_bool [%e compile_expr loc e2] |> I.value_of_bool)]
   | _ -> assert false
 
 let compile Syntax.{ expr } =
@@ -34,6 +57,13 @@ let compile Syntax.{ expr } =
         | Object of (value Lazy.t list * (int * value Lazy.t list) StringMap.t)
         | Function of (value Lazy.t list -> value Lazy.t)
         | Array of value Lazy.t list
+
+      let value_of_bool = function true -> True | false -> False
+
+      let get_bool = function
+        | (lazy True) -> true
+        | (lazy False) -> false
+        | _ -> failwith "expect bool got something else"
 
       let get_array = function
         | (lazy (Array xs)) -> xs

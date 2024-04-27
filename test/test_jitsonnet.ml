@@ -677,8 +677,12 @@ let test_compiler_literals () =
 let test_compiler_array () =
   assert_compile_expr "[]" "[]";
   assert_compile_expr "[1,2,3]" "[1,2,3]";
-  assert_compile_expr "1" "[1,2,3][0]";
   assert_compile_expr "4" "[1,2,[3,[4,5,6][0],7][1]][2]";
+  ()
+
+let test_compiler_binary () =
+  assert_compile_expr "6" "2*(1+2)";
+  assert_compile_expr "true" "true && false || true";
   ()
 
 let () =
@@ -725,5 +729,6 @@ let () =
         [
           test_case "literals" `Quick test_compiler_literals;
           test_case "array" `Quick test_compiler_array;
+          test_case "binary" `Quick test_compiler_binary;
         ] );
     ]
