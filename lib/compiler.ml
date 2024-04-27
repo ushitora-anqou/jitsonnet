@@ -137,6 +137,9 @@ let rec compile_expr loc : Syntax.Core.expr -> Parsetree.expression =
           | (lazy True) -> Lazy.force [%e compile_expr loc e2]
           | (lazy False) -> Lazy.force [%e compile_expr loc e3]
           | _ -> failwith "invalid if condition")]
+  | Function ([], body) ->
+      [%expr lazy (I.Function (fun [] -> [%e compile_expr loc body]))]
+  | Call (e, [], []) -> [%expr I.get_function [%e compile_expr loc e] []]
   | _ -> assert false
 
 let compile expr =
@@ -170,6 +173,10 @@ let compile expr =
       let get_double = function
         | (lazy (Double f)) -> f
         | _ -> failwith "expect double got something else"
+
+      let get_function = function
+        | (lazy (Function f)) -> f
+        | _ -> failwith "expect function got something else"
 
       let rec std_cmp = function
         | (lazy (Array [])), (lazy (Array [])) -> 0

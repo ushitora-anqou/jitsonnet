@@ -693,6 +693,7 @@ let test_compiler () =
   [!false, ~1, -1, +1],
   if 1 < 2 then 10 else 20,
   if 1 > 2 then 10,
+  (function() 10)(),
 ]
 |}
   in
@@ -750,11 +751,12 @@ let test_compiler () =
       1
    ],
    10,
-   null
+   null,
+   10
 ]
   |}
   in
-  assert_compile_expr expected code;
+  assert_compile_expr ~remove_tmp_dir:false expected code;
   ()
 
 let () =
