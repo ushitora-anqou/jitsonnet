@@ -20,6 +20,8 @@ let rec compile_expr loc : Syntax.Core.expr -> Parsetree.expression =
       [%expr
         match ([%e compile_expr loc e1], [%e compile_expr loc e2]) with
         | (lazy (Double f1)), (lazy (Double f2)) -> lazy (Double (f1 +. f2))
+        | (lazy (Array xs)), (lazy (Array ys)) -> lazy (Array (xs @ ys))
+        | (lazy (String s1)), (lazy (String s2)) -> lazy (String (s1 ^ s2))
         | _ -> failwith "invalid add"]
   | Binary (e1, `Sub, e2) ->
       [%expr
