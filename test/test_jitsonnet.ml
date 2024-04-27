@@ -655,6 +655,25 @@ let test_executor_basics () =
     = "hello");
   ()
 
+let assert_compile_expr ?(remove_tmp_dir = true) expected got =
+  match Parser.parse_string got with
+  | Error msg ->
+      Logs.err (fun m -> m "failed to parse: %s" msg);
+      Logs.info (fun m -> m "expected %s" expected);
+      assert false
+  | Ok prog ->
+      let got = prog |> Compiler.compile |> Executor.execute ~remove_tmp_dir in
+      Alcotest.(check string) "" expected got;
+      ()
+
+let test_compiler_literals () =
+  assert_compile_expr "true" "true";
+  assert_compile_expr "false" "false";
+  assert_compile_expr "null" "null";
+  assert_compile_expr {|"foo"|} "'foo'";
+  assert_compile_expr "0" "0.0";
+  ()
+
 let () =
   let open Alcotest in
   Fmt.set_style_renderer Fmt.stderr `Ansi_tty;
@@ -695,4 +714,5 @@ let () =
         ] );
       ("static check", [ test_case "basics" `Quick test_static_check_basics ]);
       ("executor", [ test_case "basics" `Quick test_executor_basics ]);
+      ("compiler", [ test_case "literals" `Quick test_compiler_literals ]);
     ]

@@ -66,9 +66,13 @@ let execute' ~dir_name ~ocamlopt_path ~redirect ast =
   | _ -> failwith "compiled executable failed");
   ()
 
-let execute ast =
-  let dir_name = Filename.temp_dir "jitsonnet" "" in
-  Fun.protect ~finally:(fun () -> rm_rf dir_name) @@ fun () ->
+let execute ?(remove_tmp_dir = true) ast =
+  let temp_dir =
+    if remove_tmp_dir then None else Some "/tmp" (* for dune runtest *)
+  in
+  let dir_name = Filename.temp_dir ?temp_dir "jitsonnet" "" in
+  Fun.protect ~finally:(fun () -> if remove_tmp_dir then rm_rf dir_name)
+  @@ fun () ->
   execute' ~dir_name ~ocamlopt_path:"ocamlopt" ~redirect:true ast;
   let ic = open_in_bin (Filename.concat dir_name main_exe_stdout_file_name) in
   Fun.protect ~finally:(fun () -> close_in ic) @@ fun () ->
