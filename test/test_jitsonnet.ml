@@ -697,6 +697,7 @@ let test_compiler () =
   true || error "unreachable",
   false && error "unreachable",
   [0, error "unreachable"][0],
+  local x = 3; 10,
 ]
 |}
   in
@@ -758,7 +759,8 @@ let test_compiler () =
    10,
    true,
    false,
-   0
+   0,
+   10
 ]
   |}
   in

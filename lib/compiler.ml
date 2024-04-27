@@ -120,6 +120,14 @@ let rec compile_expr loc : Syntax.Core.expr -> Parsetree.expression =
   | Call (e, [], []) ->
       [%expr I.get_function [%e compile_expr loc e] [] |> Lazy.force]
   | Error _ -> [%expr failwith "fixme: error"]
+  | Local (binds, e) ->
+      pexp_let ~loc Recursive
+        (binds
+        |> List.map @@ fun (id, e) ->
+           value_binding ~loc
+             ~pat:(ppat_var ~loc { loc; txt = id (* FIXME *) })
+             ~expr:(compile_expr_lazy loc e))
+        (compile_expr loc e)
   | _ -> assert false
 
 and compile_expr_lazy loc e = [%expr lazy [%e compile_expr loc e]]
