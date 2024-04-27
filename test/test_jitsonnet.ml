@@ -698,6 +698,7 @@ let test_compiler () =
   false && error "unreachable",
   [0, error "unreachable"][0],
   local x = 3; 10,
+  local x = y * 2, y = z + 3, z = 5; x,
 ]
 |}
   in
@@ -760,7 +761,8 @@ let test_compiler () =
    true,
    false,
    0,
-   10
+   10,
+   16
 ]
   |}
   in
