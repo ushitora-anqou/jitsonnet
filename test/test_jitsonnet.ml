@@ -694,6 +694,9 @@ let test_compiler () =
   if 1 < 2 then 10 else 20,
   if 1 > 2 then 10,
   (function() 10)(),
+  true || error "unreachable",
+  false && error "unreachable",
+  [0, error "unreachable"][0],
 ]
 |}
   in
@@ -752,7 +755,10 @@ let test_compiler () =
    ],
    10,
    null,
-   10
+   10,
+   true,
+   false,
+   0
 ]
   |}
   in
