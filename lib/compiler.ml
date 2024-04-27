@@ -65,6 +65,13 @@ let rec compile_expr loc : Syntax.Core.expr -> Parsetree.expression =
              ((I.get_double [%e compile_expr loc e1] |> int_of_float)
               lor (I.get_double [%e compile_expr loc e2] |> int_of_float)
              |> float_of_int))]
+  | Binary (e1, `Xor, e2) ->
+      [%expr
+        lazy
+          (I.Double
+             ((I.get_double [%e compile_expr loc e1] |> int_of_float)
+              lxor (I.get_double [%e compile_expr loc e2] |> int_of_float)
+             |> float_of_int))]
   | Binary (e1, `Lsl, e2) ->
       [%expr
         lazy
