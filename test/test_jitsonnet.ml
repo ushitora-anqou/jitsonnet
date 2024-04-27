@@ -672,8 +672,13 @@ let test_compiler_literals () =
   assert_compile_expr "null" "null";
   assert_compile_expr {|"foo"|} "'foo'";
   assert_compile_expr "0" "0.0";
+  ()
+
+let test_compiler_array () =
   assert_compile_expr "[]" "[]";
   assert_compile_expr "[1,2,3]" "[1,2,3]";
+  assert_compile_expr "1" "[1,2,3][0]";
+  assert_compile_expr "4" "[1,2,[3,[4,5,6][0],7][1]][2]";
   ()
 
 let () =
@@ -716,5 +721,9 @@ let () =
         ] );
       ("static check", [ test_case "basics" `Quick test_static_check_basics ]);
       ("executor", [ test_case "basics" `Quick test_executor_basics ]);
-      ("compiler", [ test_case "literals" `Quick test_compiler_literals ]);
+      ( "compiler",
+        [
+          test_case "literals" `Quick test_compiler_literals;
+          test_case "array" `Quick test_compiler_array;
+        ] );
     ]

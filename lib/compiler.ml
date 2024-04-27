@@ -11,6 +11,11 @@ let rec compile_expr loc : Syntax.Core.expr -> Parsetree.expression =
   | Array xs ->
       [%expr
         lazy (I.Array [%e xs |> List.map (compile_expr loc) |> elist ~loc])]
+  | ArrayIndex (e1, e2) ->
+      [%expr
+        List.nth
+          (I.get_array [%e compile_expr loc e1])
+          (I.get_double [%e compile_expr loc e2] |> int_of_float)]
   | _ -> assert false
 
 let compile Syntax.{ expr } =
@@ -29,6 +34,14 @@ let compile Syntax.{ expr } =
         | Object of (value Lazy.t list * (int * value Lazy.t list) StringMap.t)
         | Function of (value Lazy.t list -> value Lazy.t)
         | Array of value Lazy.t list
+
+      let get_array = function
+        | (lazy (Array xs)) -> xs
+        | _ -> failwith "expect array got something else"
+
+      let get_double = function
+        | (lazy (Double f)) -> f
+        | _ -> failwith "expect double got something else"
 
       let rec manifestation = function
         | (lazy Null) -> "null"
