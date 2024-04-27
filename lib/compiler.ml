@@ -91,9 +91,9 @@ let rec compile_expr loc : Syntax.Core.expr -> Parsetree.expression =
         lazy (I.get_bool [%e compile_expr loc e] |> not |> I.value_of_bool)]
   | _ -> assert false
 
-let compile Syntax.{ expr } =
+let compile expr =
   let loc = !Ast_helper.default_loc in
-  let e = Syntax.desugar_expr false expr |> compile_expr loc in
+  let e = compile_expr loc expr in
   [%str
     module I = struct
       module StringMap = Map.Make (String)

@@ -661,8 +661,11 @@ let assert_compile_expr ?(remove_tmp_dir = true) expected got =
       Logs.err (fun m -> m "failed to parse: %s" msg);
       Logs.info (fun m -> m "expected %s" expected);
       assert false
-  | Ok prog ->
-      let got = prog |> Compiler.compile |> Executor.execute ~remove_tmp_dir in
+  | Ok { expr } ->
+      let got =
+        expr |> Syntax.desugar_expr false |> Compiler.compile
+        |> Executor.execute ~remove_tmp_dir
+      in
       Alcotest.(check string) "" expected got;
       ()
 
