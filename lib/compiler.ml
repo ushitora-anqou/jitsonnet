@@ -2,7 +2,13 @@ open Ppxlib
 
 type env = { vars : (string, string) Hashtbl.t; loc : location }
 
-let gensym suffix = gen_symbol ~prefix:"var_" () ^ "_" ^ suffix
+let gensym suffix =
+  gen_symbol ~prefix:"var_" ()
+  ^ "_"
+  ^
+  if String.starts_with ~prefix:"$" suffix then
+    String.sub suffix 1 (String.length suffix - 1)
+  else suffix
 
 let with_binds env ids f =
   ids |> List.iter (fun id -> Hashtbl.add env.vars id (gensym id));
@@ -13,6 +19,9 @@ let with_binds env ids f =
 let rec compile_expr ({ loc; _ } as env) :
     Syntax.Core.expr -> Parsetree.expression =
   let open Ast_builder.Default in
+  let pexp_let ~loc recflag binds body =
+    match binds with [] -> body | _ -> pexp_let ~loc recflag binds body
+  in
   function
   | Null -> [%expr I.Null]
   | True -> [%expr I.True]
@@ -128,9 +137,9 @@ let rec compile_expr ({ loc; _ } as env) :
         | True -> [%e compile_expr env e2]
         | False -> [%e compile_expr env e3]
         | _ -> failwith "invalid if condition"]
-  | Function (params, body) -> (
+  | Function (params, body) ->
       with_binds env (params |> List.map fst) @@ fun () ->
-      match
+      let binds =
         params
         |> List.mapi @@ fun i (id, e) ->
            value_binding ~loc
@@ -143,14 +152,11 @@ let rec compile_expr ({ loc; _ } as env) :
                    match List.assoc_opt [%e estring ~loc id] named with
                    | Some x -> x
                    | None -> lazy [%e compile_expr env e]]
-      with
-      | [] -> [%expr I.Function (fun (_, _) -> [%e compile_expr_lazy env body])]
-      | binds ->
-          [%expr
-            I.Function
-              (fun (positional, named) ->
-                [%e pexp_let ~loc Recursive binds (compile_expr_lazy env body)])]
-      )
+      in
+      [%expr
+        I.Function
+          (fun (positional, named) ->
+            [%e pexp_let ~loc Recursive binds (compile_expr_lazy env body)])]
   | Call (e, positional, named) ->
       [%expr
         I.get_function [%e compile_expr env e]
@@ -172,6 +178,8 @@ let rec compile_expr ({ loc; _ } as env) :
              ~pat:(ppat_var ~loc { loc; txt = Hashtbl.find env.vars id })
              ~expr:(compile_expr_lazy env e))
         (compile_expr env e)
+  | Self -> [%expr self]
+  | Super -> [%expr super]
   | Var id ->
       [%expr
         Lazy.force
@@ -180,10 +188,27 @@ let rec compile_expr ({ loc; _ } as env) :
               (match Hashtbl.find_opt env.vars id with
               | Some s -> s
               | None -> failwith ("missing variable: " ^ id))]]
-  | Object _ -> [%expr I.Object ([], Hashtbl.create 0)]
+  | Object (assrts, fields) ->
+      [%expr
+        I.Object
+          ( [%e assrts |> List.map (compile_expr_lazy env) |> elist ~loc],
+            let tbl = Hashtbl.create 0 in
+            [%e
+              fields
+              |> List.fold_left
+                   (fun e (e1, Syntax.H h, e2) ->
+                     [%expr
+                       match [%e compile_expr env e1] with
+                       | I.Null -> [%e e]
+                       | I.String k ->
+                           Hashtbl.add tbl k
+                             ([%e eint ~loc h], lazy [%e compile_expr env e2]);
+                           [%e e]
+                       | _ ->
+                           failwith
+                             "field name must be string, got something else"])
+                   [%expr tbl]] )]
   | ObjectFor _ -> assert false
-  | Self -> assert false
-  | Super -> assert false
 
 and compile_expr_lazy ({ loc; _ } as env) e =
   [%expr lazy [%e compile_expr env e]]
@@ -200,8 +225,7 @@ let compile expr =
         | False
         | String of string
         | Double of float
-        | Object of
-            (value Lazy.t list * (string, int * value Lazy.t list) Hashtbl.t)
+        | Object of (value Lazy.t list * (string, int * value Lazy.t) Hashtbl.t)
         | Function of
             (value Lazy.t array * (string * value Lazy.t) list -> value Lazy.t)
         | Array of value Lazy.t array
@@ -259,13 +283,27 @@ let compile expr =
                    (fun ppf (lazy x) -> aux ppf x))
                 xs
           | Function _ -> ()
-          | Object (_, h) when Hashtbl.length h = 0 -> fprintf ppf "{ }"
-          | Object _ -> assert false
+          | Object (_ (* FIXME *), h) when Hashtbl.length h = 0 ->
+              fprintf ppf "{ }"
+          | Object (_ (* FIXME *), tbl) ->
+              let xs =
+                tbl |> Hashtbl.to_seq |> List.of_seq
+                |> List.filter_map (fun (k, (h, v)) ->
+                       if h = 2 then None else Some (k, v))
+              in
+              fprintf ppf "@[<v 3>{@,%a@]@,}"
+                (pp_print_list
+                   ~pp_sep:(fun ppf () -> fprintf ppf ",@,")
+                   (fun ppf (k, (lazy v)) ->
+                     fprintf ppf "@<0>\"@<0>%s@<0>\"@<0>:@<0> %a" k aux v))
+                xs
         in
         aux Format.std_formatter
     end
 
     module Compiled = struct
+      let self = I.Null
+      let super = I.Null
       let e : I.value = [%e e]
       let () = I.manifestation e
     end]
