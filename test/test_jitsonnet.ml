@@ -699,6 +699,11 @@ let test_compiler () =
   [0, error "unreachable"][0],
   local x = 3; 10,
   local x = y * 2, y = z + 3, z = 5; x,
+  (function(a) a)(10),
+  (function(a) a)(a=10),
+  (function(a=10) a)(),
+  (function(a, b) a-b)(b=1,a=2),
+  (function(y) (function(x) function(y) x+y)(y))(2)(1),
 ]
 |}
   in
@@ -766,7 +771,12 @@ let test_compiler () =
    false,
    0,
    10,
-   16
+   16,
+   10,
+   10,
+   10,
+   1,
+   3
 ]
   |}
   in

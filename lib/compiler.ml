@@ -128,10 +128,40 @@ let rec compile_expr ({ loc; _ } as env) :
         | True -> [%e compile_expr env e2]
         | False -> [%e compile_expr env e3]
         | _ -> failwith "invalid if condition"]
-  | Function ([], body) ->
-      [%expr I.Function (fun ([||], []) -> lazy [%e compile_expr env body])]
-  | Call (e, [], []) ->
-      [%expr I.get_function [%e compile_expr env e] ([||], []) |> Lazy.force]
+  | Function (params, body) -> (
+      with_binds env (params |> List.map fst) @@ fun () ->
+      match
+        params
+        |> List.mapi @@ fun i (id, e) ->
+           value_binding ~loc
+             ~pat:(ppat_var ~loc { loc; txt = Hashtbl.find env.vars id })
+             ~expr:
+               [%expr
+                 if [%e eint ~loc i] < Array.length positional then
+                   positional.([%e eint ~loc i])
+                 else
+                   match List.assoc_opt [%e estring ~loc id] named with
+                   | Some x -> x
+                   | None -> lazy [%e compile_expr env e]]
+      with
+      | [] -> [%expr I.Function (fun (_, _) -> [%e compile_expr_lazy env body])]
+      | binds ->
+          [%expr
+            I.Function
+              (fun (positional, named) ->
+                [%e pexp_let ~loc Recursive binds (compile_expr_lazy env body)])]
+      )
+  | Call (e, positional, named) ->
+      [%expr
+        I.get_function [%e compile_expr env e]
+          ( [%e pexp_array ~loc (positional |> List.map (compile_expr_lazy env))],
+            [%e
+              named
+              |> List.map (fun (id, e) ->
+                     pexp_tuple ~loc
+                       [ estring ~loc id; compile_expr_lazy env e ])
+              |> elist ~loc] )
+        |> Lazy.force]
   | Error _ -> [%expr failwith "fixme: error"]
   | Local (binds, e) ->
       with_binds env (binds |> List.map fst) @@ fun () ->
