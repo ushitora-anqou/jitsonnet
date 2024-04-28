@@ -156,7 +156,7 @@ let rec compile_expr ({ loc; _ } as env) :
       [%expr
         I.Function
           (fun (positional, named) ->
-            [%e pexp_let ~loc Recursive binds (compile_expr_lazy env body)])]
+            [%e pexp_let ~loc Nonrecursive binds (compile_expr_lazy env body)])]
   | Call (e, positional, named) ->
       [%expr
         I.get_function [%e compile_expr env e]
@@ -178,8 +178,8 @@ let rec compile_expr ({ loc; _ } as env) :
              ~pat:(ppat_var ~loc { loc; txt = Hashtbl.find env.vars id })
              ~expr:(compile_expr_lazy env e))
         (compile_expr env e)
-  | Self -> [%expr self]
-  | Super -> [%expr super]
+  | Self -> compile_expr env (Var "self")
+  | Super -> compile_expr env (Var "super")
   | Var id ->
       [%expr
         Lazy.force
@@ -189,25 +189,44 @@ let rec compile_expr ({ loc; _ } as env) :
               | Some s -> s
               | None -> failwith ("missing variable: " ^ id))]]
   | Object (assrts, fields) ->
+      let fields (* compile keys with outer env *) =
+        fields
+        |> List.map (fun (e1, Syntax.H h, e2) -> (compile_expr env e1, h, e2))
+      in
+      let outer_self = Hashtbl.find_opt env.vars "self" in
+
+      with_binds env [ "self"; "super" ] @@ fun () ->
       [%expr
-        I.Object
-          ( [%e assrts |> List.map (compile_expr_lazy env) |> elist ~loc],
-            let tbl = Hashtbl.create 0 in
-            [%e
-              fields
-              |> List.fold_left
-                   (fun e (e1, Syntax.H h, e2) ->
-                     [%expr
-                       match [%e compile_expr env e1] with
-                       | I.Null -> [%e e]
-                       | I.String k ->
-                           Hashtbl.add tbl k
-                             ([%e eint ~loc h], lazy [%e compile_expr env e2]);
-                           [%e e]
-                       | _ ->
-                           failwith
-                             "field name must be string, got something else"])
-                   [%expr tbl]] )]
+        let [%p pvar ~loc (Hashtbl.find env.vars "super")] =
+          [%e
+            match outer_self with
+            | Some outer_self -> evar ~loc outer_self
+            | None -> [%expr lazy (I.Object ([], Hashtbl.create 0))]]
+        in
+        let rec [%p pvar ~loc (Hashtbl.find env.vars "self")] =
+          lazy
+            (I.Object
+               ( [%e assrts |> List.map (compile_expr_lazy env) |> elist ~loc],
+                 let tbl = Hashtbl.create 0 in
+                 [%e
+                   fields
+                   |> List.fold_left
+                        (fun e (e1, h, e2) ->
+                          [%expr
+                            match [%e e1] with
+                            | I.Null -> [%e e]
+                            | I.String k ->
+                                Hashtbl.add tbl k
+                                  ( [%e eint ~loc h],
+                                    lazy [%e compile_expr env e2] );
+                                [%e e]
+                            | _ ->
+                                failwith
+                                  "field name must be string, got something \
+                                   else"])
+                        [%expr tbl]] ))
+        in
+        Lazy.force [%e evar ~loc (Hashtbl.find env.vars "self")]]
   | ObjectFor _ -> assert false
 
 and compile_expr_lazy ({ loc; _ } as env) e =
@@ -302,8 +321,6 @@ let compile expr =
     end
 
     module Compiled = struct
-      let self = I.Null
-      let super = I.Null
       let e : I.value = [%e e]
       let () = I.manifestation e
     end]
