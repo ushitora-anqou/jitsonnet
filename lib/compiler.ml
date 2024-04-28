@@ -20,18 +20,20 @@ let rec compile_expr ({ loc; _ } as env) :
   | String s -> [%expr I.String [%e estring ~loc s]]
   | Number n -> [%expr I.Double [%e efloat ~loc (string_of_float n)]]
   | Array xs ->
-      [%expr I.Array [%e xs |> List.map (compile_expr_lazy env) |> elist ~loc]]
+      [%expr
+        I.Array [%e xs |> List.map (compile_expr_lazy env) |> pexp_array ~loc]]
   | ArrayIndex (e1, e2) ->
       [%expr
-        List.nth
-          (I.get_array [%e compile_expr env e1])
-          (I.get_double [%e compile_expr env e2] |> int_of_float)
-        |> Lazy.force]
+        match [%e compile_expr env e1] with
+        | Array a ->
+            a.(I.get_double [%e compile_expr env e2] |> int_of_float)
+            |> Lazy.force
+        | _ -> failwith "ArrayIndex: expect array got something else"]
   | Binary (e1, `Add, e2) ->
       [%expr
         match ([%e compile_expr env e1], [%e compile_expr env e2]) with
         | I.Double f1, I.Double f2 -> I.Double (f1 +. f2)
-        | I.Array xs, I.Array ys -> I.Array (xs @ ys)
+        | I.Array xs, I.Array ys -> I.Array (Array.append xs ys)
         | I.String s1, I.String s2 -> I.String (s1 ^ s2)
         | I.Object (assrts1, fields1), I.Object (assrts2, fields2) ->
             assert false (* FIXME *)
@@ -162,7 +164,7 @@ let compile expr =
         | Double of float
         | Object of (value Lazy.t list * (int * value Lazy.t list) StringMap.t)
         | Function of (value Lazy.t list -> value Lazy.t)
-        | Array of value Lazy.t list
+        | Array of value Lazy.t array
 
       let value_of_bool = function true -> True | false -> False
 
@@ -184,12 +186,17 @@ let compile expr =
         | _ -> failwith "expect function got something else"
 
       let rec std_cmp = function
-        | Array [], Array [] -> 0
-        | Array [], Array (_ :: _) -> -1
-        | Array (_ :: _), Array [] -> 1
-        | Array ((lazy a) :: aa), Array ((lazy b) :: bb) ->
-            let r = std_cmp (a, b) in
-            if r = 0 then std_cmp (Array aa, Array bb) else r
+        | Array a, Array b ->
+            let rec aux ia ib =
+              match (ia = Array.length a, ib = Array.length b) with
+              | true, true -> 0
+              | true, false -> -1
+              | false, true -> 1
+              | false, false ->
+                  let r = std_cmp (Lazy.force a.(ia), Lazy.force b.(ib)) in
+                  if r = 0 then aux (ia + 1) (ib + 1) else r
+            in
+            aux 0 0
         | String s1, String s2 -> String.compare s1 s2
         | Double n1, Double n2 -> Float.compare n1 n2
         | _ -> failwith "std_cmp: invalid arguments"
@@ -204,10 +211,10 @@ let compile expr =
           | Double f when f = (f |> int_of_float |> float_of_int) ->
               fprintf ppf "%d" (int_of_float f)
           | Double f -> fprintf ppf "%f" f
-          | Array [] -> fprintf ppf "[ ]"
+          | Array [||] -> fprintf ppf "[ ]"
           | Array xs ->
               fprintf ppf "@[<v 3>[@,%a@]@,]"
-                (pp_print_list
+                (pp_print_array
                    ~pp_sep:(fun ppf () -> fprintf ppf ",@,")
                    (fun ppf (lazy x) -> aux ppf x))
                 xs
