@@ -172,7 +172,14 @@ let rec compile_expr ({ loc; _ } as env) :
              ~pat:(ppat_var ~loc { loc; txt = Hashtbl.find env.vars id })
              ~expr:(compile_expr_lazy env e))
         (compile_expr env e)
-  | Var id -> [%expr Lazy.force [%e evar ~loc (Hashtbl.find env.vars id)]]
+  | Var id ->
+      [%expr
+        Lazy.force
+          [%e
+            evar ~loc
+              (match Hashtbl.find_opt env.vars id with
+              | Some s -> s
+              | None -> failwith ("missing variable: " ^ id))]]
   | _ -> assert false
 
 and compile_expr_lazy ({ loc; _ } as env) e =

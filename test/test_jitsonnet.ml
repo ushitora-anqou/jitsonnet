@@ -662,9 +662,14 @@ let assert_compile_expr ?(remove_tmp_dir = true) expected got =
       Logs.info (fun m -> m "expected %s" expected);
       assert false
   | Ok { expr } ->
+      let desugared = Syntax.desugar_expr false expr in
+      (match Static_check.f desugared with
+      | Ok () -> ()
+      | Error msg ->
+          Logs.err (fun m -> m "failed to static check: %s" msg);
+          assert false);
       let got =
-        expr |> Syntax.desugar_expr false |> Compiler.compile
-        |> Executor.execute ~remove_tmp_dir
+        desugared |> Compiler.compile |> Executor.execute ~remove_tmp_dir
       in
       Alcotest.(check string) "" expected got;
       ()
@@ -702,7 +707,7 @@ let test_compiler () =
   (function(a) a)(10),
   (function(a) a)(a=10),
   (function(a=10) a)(),
-  (function(a, b) a-b)(b=1,a=2),
+  (function(a, b) a-b)(b=1,a=2,c=3),
   (function(y) (function(x) function(y) x+y)(y))(2)(1),
 ]
 |}
