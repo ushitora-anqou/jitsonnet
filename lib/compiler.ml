@@ -129,9 +129,9 @@ let rec compile_expr ({ loc; _ } as env) :
         | False -> [%e compile_expr env e3]
         | _ -> failwith "invalid if condition"]
   | Function ([], body) ->
-      [%expr I.Function (fun [] -> lazy [%e compile_expr env body])]
+      [%expr I.Function (fun ([||], []) -> lazy [%e compile_expr env body])]
   | Call (e, [], []) ->
-      [%expr I.get_function [%e compile_expr env e] [] |> Lazy.force]
+      [%expr I.get_function [%e compile_expr env e] ([||], []) |> Lazy.force]
   | Error _ -> [%expr failwith "fixme: error"]
   | Local (binds, e) ->
       with_binds env (binds |> List.map fst) @@ fun () ->
@@ -163,7 +163,8 @@ let compile expr =
         | String of string
         | Double of float
         | Object of (value Lazy.t list * (int * value Lazy.t list) StringMap.t)
-        | Function of (value Lazy.t list -> value Lazy.t)
+        | Function of
+            (value Lazy.t array * (string * value Lazy.t) list -> value Lazy.t)
         | Array of value Lazy.t array
 
       let value_of_bool = function true -> True | false -> False
