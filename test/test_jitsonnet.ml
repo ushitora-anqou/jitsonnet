@@ -707,10 +707,11 @@ let test_compiler () =
   (function(a) a)(10),
   (function(a) a)(a=10),
   (function(a=10) a)(),
-  (function(a, b) a-b)(b=1,a=2,c=3),
+  (function(a, b) a-b)(b=1,a=2),
   (function(y) (function(x) function(y) x+y)(y))(2)(1),
   {},
   {a: {b: 1}, [null]: 42, c:: 43},
+  {a: {b: 1}, [null]: 42, c:: 43}.a["b"],
 ]
 |}
   in
@@ -789,7 +790,8 @@ let test_compiler () =
       "a": {
          "b": 1
       }
-   }
+   },
+   1
 ]
   |}
   in

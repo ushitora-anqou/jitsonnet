@@ -37,6 +37,11 @@ let rec compile_expr ({ loc; _ } as env) :
         | Array a ->
             a.(I.get_double [%e compile_expr env e2] |> int_of_float)
             |> Lazy.force
+        | Object (_, tbl) -> (
+            let key = I.get_string [%e compile_expr env e2] in
+            match Hashtbl.find_opt tbl key with
+            | None -> failwith ("field does not exist: " ^ key)
+            | Some (_, (lazy v)) -> v)
         | _ -> failwith "ArrayIndex: expect array got something else"]
   | Binary (e1, `Add, e2) ->
       [%expr
@@ -267,6 +272,10 @@ let compile expr =
       let get_function = function
         | Function f -> f
         | _ -> failwith "expect function got something else"
+
+      let get_string = function
+        | String s -> s
+        | _ -> failwith "expect string got something else"
 
       let rec std_cmp = function
         | Array a, Array b ->
