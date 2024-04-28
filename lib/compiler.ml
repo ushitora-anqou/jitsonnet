@@ -180,7 +180,10 @@ let rec compile_expr ({ loc; _ } as env) :
               (match Hashtbl.find_opt env.vars id with
               | Some s -> s
               | None -> failwith ("missing variable: " ^ id))]]
-  | _ -> assert false
+  | Object _ -> [%expr I.Object ([], Hashtbl.create 0)]
+  | ObjectFor _ -> assert false
+  | Self -> assert false
+  | Super -> assert false
 
 and compile_expr_lazy ({ loc; _ } as env) e =
   [%expr lazy [%e compile_expr env e]]
@@ -191,15 +194,14 @@ let compile expr =
   let e = compile_expr env expr in
   [%str
     module I = struct
-      module StringMap = Map.Make (String)
-
       type value =
         | Null
         | True
         | False
         | String of string
         | Double of float
-        | Object of (value Lazy.t list * (int * value Lazy.t list) StringMap.t)
+        | Object of
+            (value Lazy.t list * (string, int * value Lazy.t list) Hashtbl.t)
         | Function of
             (value Lazy.t array * (string * value Lazy.t) list -> value Lazy.t)
         | Array of value Lazy.t array
@@ -257,6 +259,7 @@ let compile expr =
                    (fun ppf (lazy x) -> aux ppf x))
                 xs
           | Function _ -> ()
+          | Object (_, h) when Hashtbl.length h = 0 -> fprintf ppf "{ }"
           | Object _ -> assert false
         in
         aux Format.std_formatter

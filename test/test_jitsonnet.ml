@@ -709,6 +709,7 @@ let test_compiler () =
   (function(a=10) a)(),
   (function(a, b) a-b)(b=1,a=2,c=3),
   (function(y) (function(x) function(y) x+y)(y))(2)(1),
+  {},
 ]
 |}
   in
@@ -781,7 +782,8 @@ let test_compiler () =
    10,
    10,
    1,
-   3
+   3,
+   { }
 ]
   |}
   in
