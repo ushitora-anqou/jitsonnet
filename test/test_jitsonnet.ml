@@ -748,6 +748,7 @@ let test_compiler () =
   {a: {b: 1}, [null]: 42, c:: 43},
   {a: {b: 1}, [null]: 42, c:: 43}.a["b"],
   {[x]:0 for x in ["a","b","c"]},
+  {a: self.b, b: self.c, c: 10}.a,
 ]
 |}
   in
@@ -832,7 +833,8 @@ let test_compiler () =
       "a": 0,
       "b": 0,
       "c": 0
-   }
+   },
+   10
 ]
   |}
   in
