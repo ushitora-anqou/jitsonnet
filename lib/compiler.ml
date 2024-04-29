@@ -173,7 +173,11 @@ let rec compile_expr ({ loc; _ } as env) :
                        [ estring ~loc id; compile_expr_lazy env e ])
               |> elist ~loc] )
         |> Lazy.force]
-  | Error _ -> [%expr failwith "fixme: error"]
+  | Error e ->
+      [%expr
+        let v = [%e compile_expr env e] in
+        I.manifestation Format.str_formatter v;
+        failwith (Format.flush_str_formatter ())]
   | Local (binds, e) ->
       with_binds env (binds |> List.map fst) @@ fun () ->
       pexp_let ~loc Recursive
@@ -366,10 +370,10 @@ let compile expr =
                      fprintf ppf "@<0>\"@<0>%s@<0>\"@<0>:@<0> %a" k aux v))
                 xs
         in
-        aux Format.std_formatter
+        aux
     end
 
     module Compiled = struct
       let e : I.value = [%e e]
-      let () = I.manifestation e
+      let () = I.manifestation Format.std_formatter e
     end]
