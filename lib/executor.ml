@@ -17,6 +17,14 @@ let rm_rf dir_name =
   (try Unix.rmdir dir_name with _ -> ());
   ()
 
+let read_all file_path =
+  match open_in_bin file_path with
+  | exception _ -> Error "can't open the file"
+  | ic ->
+      Fun.protect
+        ~finally:(fun () -> close_in ic)
+        (fun () -> Ok (In_channel.input_all ic))
+
 let main_ml_file_name = "main.ml"
 let main_exe_file_name = "main.exe"
 let ocamlc_stdout_file_name = "ocamlc.stdout"
@@ -25,17 +33,20 @@ let main_exe_stdout_file_name = "main.exe.stdout"
 let main_exe_stderr_file_name = "main.exe.stderr"
 
 exception Compiled_executable_failed of (Unix.process_status * string)
+exception Compilation_failed of (Unix.process_status * string)
 
 let execute' ~dir_name ~ocamlc_path ~redirect ast =
   let main_ml = Filename.concat dir_name main_ml_file_name in
   let main_exe = Filename.concat dir_name main_exe_file_name in
   let main_exe_stdout = Filename.concat dir_name main_exe_stdout_file_name in
   let main_exe_stderr = Filename.concat dir_name main_exe_stderr_file_name in
+  let ocamlc_stdout = Filename.concat dir_name ocamlc_stdout_file_name in
+  let ocamlc_stderr = Filename.concat dir_name ocamlc_stderr_file_name in
   let redirect_ocamlc =
     if redirect then
       Printf.sprintf "> %s 2> %s"
-        (Filename.quote (Filename.concat dir_name ocamlc_stdout_file_name))
-        (Filename.quote (Filename.concat dir_name ocamlc_stderr_file_name))
+        (Filename.quote ocamlc_stdout)
+        (Filename.quote ocamlc_stderr)
     else ""
   in
   let redirect_main_exe =
@@ -58,7 +69,9 @@ let execute' ~dir_name ~ocamlc_path ~redirect ast =
      Unix.system com
    with
   | WEXITED 0 -> ()
-  | _ -> failwith "ocamlc failed");
+  | status ->
+      let stderr_msg = read_all ocamlc_stderr |> Result.value ~default:"" in
+      raise (Compilation_failed (status, stderr_msg)));
   (match
      let com = Filename.quote_command main_exe [] in
      let com = com ^ redirect_main_exe in
@@ -66,14 +79,7 @@ let execute' ~dir_name ~ocamlc_path ~redirect ast =
    with
   | WEXITED 0 -> ()
   | status ->
-      let stderr_msg =
-        try
-          let ic = open_in_bin main_exe_stderr in
-          Fun.protect
-            ~finally:(fun () -> close_in ic)
-            (fun () -> In_channel.input_all ic)
-        with _ -> ""
-      in
+      let stderr_msg = read_all main_exe_stderr |> Result.value ~default:"" in
       raise (Compiled_executable_failed (status, stderr_msg)));
   ()
 
@@ -85,9 +91,7 @@ let execute ?(remove_tmp_dir = true) ast =
   Fun.protect ~finally:(fun () -> if remove_tmp_dir then rm_rf dir_name)
   @@ fun () ->
   execute' ~dir_name ~ocamlc_path:"ocamlc" ~redirect:true ast;
-  let ic = open_in_bin (Filename.concat dir_name main_exe_stdout_file_name) in
-  Fun.protect ~finally:(fun () -> close_in ic) @@ fun () ->
-  In_channel.input_all ic
+  read_all (Filename.concat dir_name main_exe_stdout_file_name) |> Result.get_ok
 
 let execute_from_cli ast =
   let dir_name = Filename.temp_dir "jitsonnet" "" in
