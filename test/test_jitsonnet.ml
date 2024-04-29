@@ -753,6 +753,19 @@ let test_compiler () =
   {
     y: {z: 10} + {a:: 1, d:: 3} + {a::: self.d, b: super.a, c: super.z, d: 10}
   },
+  std.primitiveEquals(true, true),
+  std.primitiveEquals(false, true),
+  std.primitiveEquals(false, false),
+  std.primitiveEquals(true, false),
+  std.primitiveEquals(null, null),
+  std.primitiveEquals(1, null),
+  std.primitiveEquals(1, 1),
+  std.primitiveEquals(2, 1),
+  std.primitiveEquals("a", "a"),
+  std.primitiveEquals("b", "a"),
+  std.length([1,2,3]),
+  std.length("abc"),
+  std.makeArray(3, function(x) x+1),
 ]
 |}
   in
@@ -850,7 +863,24 @@ let test_compiler () =
          "c": 10,
          "z": 10
       }
-   }
+   },
+   true,
+   false,
+   true,
+   false,
+   true,
+   false,
+   true,
+   false,
+   true,
+   false,
+   3,
+   3,
+   [
+      1,
+      2,
+      3
+   ]
 ]
   |}
   in

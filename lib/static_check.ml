@@ -89,4 +89,4 @@ let rec f g =
       Ok ()
   | Error e -> f g e
 
-let f = f G.empty
+let f = f (G.empty |> add (Var "std"))

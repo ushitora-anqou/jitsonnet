@@ -297,7 +297,7 @@ and compile_expr_lazy ({ loc; _ } as env) e =
 let compile expr =
   let loc = !Ast_helper.default_loc in
   let env = { loc; vars = Hashtbl.create 0 } in
-  with_binds env [ "super" ] @@ fun () ->
+  with_binds env [ "super"; "std" ] @@ fun () ->
   let e = compile_expr env expr in
   let open Ast_builder.Default in
   [%str
@@ -391,11 +391,49 @@ let compile expr =
                 xs
         in
         aux
+
+      let std_primitive_equals ([| v; v' |], []) =
+        lazy
+          ((match (Lazy.force v, Lazy.force v') with
+           | String lhs, String rhs -> lhs = rhs
+           | Double lhs, Double rhs -> lhs = rhs
+           | True, True | False, False | Null, Null -> true
+           | _ -> false)
+          |> value_of_bool)
+
+      let std_length ([| v |], []) =
+        (* FIXME: support std.objectFieldsEx *)
+        lazy
+          (match v with
+          | (lazy (Array xs)) -> Double (xs |> Array.length |> float_of_int)
+          | (lazy (String s)) -> Double (s |> String.length |> float_of_int)
+          | _ -> failwith "std.length: invalid type argument")
+
+      let std_make_array ([| n; f |], []) =
+        lazy
+          (match (n, f) with
+          | (lazy (Double n)), (lazy (Function f)) ->
+              Array
+                (Array.init (int_of_float n) (fun i ->
+                     f ([| lazy (Double (float_of_int i)) |], [])))
+          | _ -> failwith "std.makeArray: invalid type argument")
     end
 
     module Compiled = struct
       let [%p pvar ~loc (Hashtbl.find env.vars "super")] =
         lazy (I.Object ([], Hashtbl.create 0))
+
+      let [%p pvar ~loc (Hashtbl.find env.vars "std")] =
+        lazy
+          (I.Object
+             ( [],
+               let tbl = Hashtbl.create 10 in
+               Hashtbl.add tbl "primitiveEquals"
+                 (1, lazy (I.Function I.std_primitive_equals));
+               Hashtbl.add tbl "length" (1, lazy (I.Function I.std_length));
+               Hashtbl.add tbl "makeArray"
+                 (1, lazy (I.Function I.std_make_array));
+               tbl ))
 
       let e : I.value = [%e e]
       let () = I.manifestation Format.std_formatter e
