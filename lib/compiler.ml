@@ -428,6 +428,15 @@ let compile expr =
           | (lazy (Double _)) -> String "number"
           | (lazy (Object _)) -> String "object"
           | (lazy (Array _)) -> String "array")
+
+      let std_filter ([| f; ary |], []) =
+        lazy
+          (let f = f |> Lazy.force |> get_function in
+           let xs = ary |> Lazy.force |> get_array in
+           Array
+             (xs |> Array.to_list
+             |> List.filter (fun x -> f ([| x |], []) |> Lazy.force |> get_bool)
+             |> Array.of_list))
     end
 
     module Compiled = struct
@@ -445,6 +454,7 @@ let compile expr =
                Hashtbl.add tbl "makeArray"
                  (1, lazy (I.Function I.std_make_array));
                Hashtbl.add tbl "type" (1, lazy (I.Function I.std_type));
+               Hashtbl.add tbl "filter" (1, lazy (I.Function I.std_filter));
                tbl ))
 
       let e : I.value = [%e e]

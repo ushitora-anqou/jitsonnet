@@ -774,6 +774,7 @@ let test_compiler () =
   std.type({}),
   std.type(function(x) x),
   std.type([]),
+  std.filter(function(x) x, [true, false]),
 ]
 |}
   in
@@ -896,7 +897,10 @@ let test_compiler () =
    "string",
    "object",
    "function",
-   "array"
+   "array",
+   [
+      true
+   ]
 ]
   |}
   in
