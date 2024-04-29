@@ -29,7 +29,9 @@ let rec f g =
   let open Syntax.Core in
   let ( let* ) = Result.bind in
   function
-  | Null | True | False | String _ | Number _ -> Ok ()
+  | Null | True | False | String _ | Number _ | Import _ | Importstr _
+  | Importbin _ ->
+      Ok ()
   | Self -> is_in g Self
   | Super -> is_in g Super
   | Object (assrts, fields) ->

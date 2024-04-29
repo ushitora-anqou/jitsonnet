@@ -1,4 +1,5 @@
 open Ppxlib
+open Ast_builder.Default
 
 type env = { vars : (string, string) Hashtbl.t; loc : location }
 
@@ -6,9 +7,11 @@ let gensym suffix =
   gen_symbol ~prefix:"var_" ()
   ^ "_"
   ^
-  if String.starts_with ~prefix:"$" suffix then
-    String.sub suffix 1 (String.length suffix - 1)
-  else suffix
+  let suffix =
+    if String.length suffix < 10 then suffix else String.sub suffix 0 10
+  in
+  let suffix = suffix |> Str.(global_replace (regexp {|[^a-zA-Z0-9]|}) "_") in
+  suffix
 
 let with_binds env ids f =
   ids |> List.iter (fun id -> Hashtbl.add env.vars id (gensym id));
@@ -16,13 +19,18 @@ let with_binds env ids f =
     ~finally:(fun () -> ids |> List.iter (fun id -> Hashtbl.remove env.vars id))
     f
 
+let get_import_id kind file_path =
+  (match kind with
+  | `Import -> "prog/"
+  | `Importbin -> "bin/"
+  | `Importstr -> "str/")
+  ^ file_path
+
+let pexp_let ~loc recflag binds body =
+  match binds with [] -> body | _ -> pexp_let ~loc recflag binds body
+
 let rec compile_expr ({ loc; _ } as env) :
-    Syntax.Core.expr -> Parsetree.expression =
-  let open Ast_builder.Default in
-  let pexp_let ~loc recflag binds body =
-    match binds with [] -> body | _ -> pexp_let ~loc recflag binds body
-  in
-  function
+    Syntax.Core.expr -> Parsetree.expression = function
   | Null -> [%expr I.Null]
   | True -> [%expr I.True]
   | False -> [%expr I.False]
@@ -290,16 +298,99 @@ let rec compile_expr ({ loc; _ } as env) :
                  |> Hashtbl.of_seq ))
         in
         Lazy.force [%e evar ~loc (Hashtbl.find env.vars "self")]]
+  | (Import file_path | Importbin file_path | Importstr file_path) as node ->
+      let import_id =
+        get_import_id
+          (match node with
+          | Import _ -> `Import
+          | Importbin _ -> `Importbin
+          | Importstr _ -> `Importstr
+          | _ -> assert false)
+          file_path
+      in
+      [%expr Lazy.force [%e evar ~loc (Hashtbl.find env.vars import_id)]]
 
 and compile_expr_lazy ({ loc; _ } as env) e =
   [%expr lazy [%e compile_expr env e]]
 
-let compile expr =
+let compile root_prog_path progs bins strs =
   let loc = !Ast_helper.default_loc in
   let env = { loc; vars = Hashtbl.create 0 } in
-  with_binds env [ "super"; "std" ] @@ fun () ->
-  let e = compile_expr env expr in
-  let open Ast_builder.Default in
+
+  let bind_ids =
+    "super" :: "std"
+    :: ((progs |> List.map (fun (path, _) -> get_import_id `Import path))
+       @ (bins |> List.map (get_import_id `Importbin))
+       @ (strs |> List.map (get_import_id `Importstr)))
+  in
+  with_binds env bind_ids @@ fun () ->
+  let progs_bindings =
+    progs
+    |> List.map (fun (path, e) ->
+           value_binding ~loc
+             ~pat:
+               (ppat_var ~loc
+                  {
+                    loc;
+                    txt = Hashtbl.find env.vars (get_import_id `Import path);
+                  })
+             ~expr:[%expr lazy [%e compile_expr env e]])
+  in
+  let bins_bindings =
+    bins
+    |> List.map (fun path ->
+           value_binding ~loc
+             ~pat:
+               (ppat_var ~loc
+                  {
+                    loc;
+                    txt = Hashtbl.find env.vars (get_import_id `Importbin path);
+                  })
+             ~expr:
+               [%expr
+                 lazy
+                   (I.Array
+                      (let path = [%e estring ~loc path] in
+                       let ic =
+                         try open_in_bin path
+                         with _ -> failwith ("cannot open file: " ^ path)
+                       in
+                       Fun.protect
+                         ~finally:(fun () -> close_in ic)
+                         (fun () ->
+                           let rec loop acc =
+                             match In_channel.input_byte ic with
+                             | None -> acc
+                             | Some b ->
+                                 loop (lazy (I.Double (float_of_int b)) :: acc)
+                           in
+                           loop [] |> List.rev |> Array.of_list)))])
+  in
+  let strs_bindings =
+    (* FIXME: UTF-8 check *)
+    strs
+    |> List.map (fun path ->
+           value_binding ~loc
+             ~pat:
+               (ppat_var ~loc
+                  {
+                    loc;
+                    txt = Hashtbl.find env.vars (get_import_id `Importstr path);
+                  })
+             ~expr:
+               [%expr
+                 lazy
+                   (I.String
+                      (let path = [%e estring ~loc path] in
+                       let ic =
+                         try open_in_bin path
+                         with _ -> failwith ("cannot open file: " ^ path)
+                       in
+                       Fun.protect
+                         ~finally:(fun () -> close_in ic)
+                         (fun () -> In_channel.input_all ic)))])
+  in
+
   [%str
     module I = struct
       type value =
@@ -362,7 +453,7 @@ let compile expr =
           | Null -> fprintf ppf "null"
           | True -> fprintf ppf "true"
           | False -> fprintf ppf "false"
-          | String s -> fprintf ppf "\"%s\"" s (* FIXME: escape *)
+          | String s -> fprintf ppf "%S" s
           | Double f when f = (f |> int_of_float |> float_of_int) ->
               fprintf ppf "%d" (int_of_float f)
           | Double f -> fprintf ppf "%f" f
@@ -487,6 +578,15 @@ let compile expr =
                  (1, lazy (I.Function I.std_object_fields_ex));
                tbl ))
 
-      let e : I.value = [%e e]
-      let () = I.manifestation Format.std_formatter e
+      let () =
+        [%e
+          pexp_let ~loc Recursive
+            (progs_bindings @ bins_bindings @ strs_bindings)
+            [%expr
+              I.manifestation Format.std_formatter
+                (Lazy.force
+                   [%e
+                     evar ~loc
+                       (Hashtbl.find env.vars
+                          (get_import_id `Import root_prog_path))])]]
     end]

@@ -1,5 +1,11 @@
 open Jitsonnet
 
+let read_all file_path =
+  let ic = open_in_bin file_path in
+  Fun.protect
+    ~finally:(fun () -> close_in ic)
+    (fun () -> In_channel.input_all ic)
+
 let assert_token expected got_src =
   let got = L.main (Lexing.from_string got_src) in
   Logs.info (fun m ->
@@ -690,283 +696,53 @@ let test_executor_basics () =
     = "hello");
   ()
 
-let assert_compile_expr ?(remove_tmp_dir = true) expected got =
-  match Parser.parse_string got with
+let assert_compile ?(remove_tmp_dir = true) src_file_path result_pat =
+  let input_file_path = "../../../test/cases/" ^ src_file_path ^ ".jsonnet" in
+  let expected_file_path =
+    "../../../test/cases/" ^ src_file_path ^ ".expected"
+  in
+  match Loader.load_root input_file_path with
   | Error msg ->
-      Logs.err (fun m -> m "failed to parse: %s" msg);
-      Logs.info (fun m -> m "expected %s" expected);
+      Logs.err (fun m ->
+          m "assert_compile_expr: failed to load: %s: %s" input_file_path msg);
       assert false
-  | Ok { expr } ->
-      let desugared = Syntax.desugar_expr false expr in
-      (match Static_check.f desugared with
-      | Ok () -> ()
-      | Error msg ->
-          Logs.err (fun m -> m "failed to static check: %s" msg);
-          assert false);
-      let got =
-        try desugared |> Compiler.compile |> Executor.execute ~remove_tmp_dir
-        with Executor.Compiled_executable_failed (_, stderr_msg) ->
-          Logs.err (fun m -> m "failed to execute: expect '%s'" stderr_msg);
-          assert false
-      in
-      Alcotest.(check string) "" expected got;
-      ()
-
-let assert_compile_expr_error ?(remove_tmp_dir = true) expected code =
-  match Parser.parse_string code with
-  | Error msg ->
-      Logs.err (fun m -> m "failed to parse: %s" msg);
-      assert false
-  | Ok { expr } -> (
-      let desugared = Syntax.desugar_expr false expr in
-      (match Static_check.f desugared with
-      | Ok () -> ()
-      | Error msg ->
-          Logs.err (fun m -> m "failed to static check: %s" msg);
-          assert false);
+  | Ok t -> (
       try
-        desugared |> Compiler.compile
-        |> Executor.execute ~remove_tmp_dir
-        |> ignore;
-        assert false
-      with Executor.Compiled_executable_failed (_, stderr_msg) -> (
-        match Str.(search_forward (regexp expected) stderr_msg 0) with
-        | exception Not_found ->
-            Logs.err (fun m ->
-                m "failed to find expected substring: expect '%s', got '%s'"
-                  expected stderr_msg);
-            assert false
-        | _ -> ()))
+        let got = t |> Loader.compile |> Executor.execute ~remove_tmp_dir in
+        match result_pat with
+        | `Success ->
+            let expected = read_all expected_file_path |> String.trim in
+            Alcotest.(check string) "" expected got;
+            ()
+        | `Error -> assert false
+      with
+      | Executor.Compilation_failed (_, stderr_msg) ->
+          Logs.err (fun m -> m "failed to compile: '%s'" stderr_msg);
+          assert false
+      | Executor.Compiled_executable_failed (_, stderr_msg) -> (
+          match result_pat with
+          | `Success ->
+              Logs.err (fun m -> m "failed to execute: '%s'" stderr_msg);
+              assert false
+          | `Error -> (
+              let expected = read_all expected_file_path |> String.trim in
+              match Str.(search_forward (regexp expected) stderr_msg 0) with
+              | exception Not_found ->
+                  Logs.err (fun m ->
+                      m
+                        "failed to find expected substring: expect '%s', got \
+                         '%s'"
+                        expected stderr_msg);
+                  assert false
+              | _ -> ())))
 
 let test_compiler_error () =
-  assert_compile_expr_error "Assertion failed" "assert false; 0";
-  assert_compile_expr_error "TEST STRING FOO"
-    {|assert false : "TEST STRING FOO"; 0|};
+  assert_compile "error00" `Error;
+  assert_compile "error01" `Error;
   ()
 
 let test_compiler () =
-  let code =
-    {|
-[
-  true,
-  false,
-  null,
-  'foo',
-  0.0,
-  [],
-  [1,2,3],
-  [1,2,[3,[4,5,6][0],7][1]][2],
-  2*(1+(8>>1)-(1<<(1|1&1^0))),
-  !false && false || true,
-  [
-    1 < 2,  "a" < "b",  [] < ["a"],  [] < [],  ["a"] < [],  ["a", "b"] < ["a", "c"],
-    1 > 2,  "a" > "b",  [] > ["a"],  [] > [],  ["a"] > [],  ["a", "b"] > ["a", "c"],
-    1 <= 2, "a" <= "b", [] <= ["a"], [] <= [], ["a"] <= [], ["a", "b"] <= ["a", "c"],
-    1 >= 2, "a" >= "b", [] >= ["a"], [] >= [], ["a"] >= [], ["a", "b"] >= ["a", "c"],
-  ],
-  [[1]+[2],"a"+"b"],
-  [!false, ~1, -1, +1],
-  if 1 < 2 then 10 else 20,
-  if 1 > 2 then 10,
-  (function() 10)(),
-  true || error "unreachable",
-  false && error "unreachable",
-  [0, error "unreachable"][0],
-  local x = 3; 10,
-  local x = y * 2, y = z + 3, z = 5; x,
-  (function(a) a)(10),
-  (function(a) a)(a=10),
-  (function(a=10) a)(),
-  (function(a, b) a-b)(b=1,a=2),
-  (function(y) (function(x) function(y) x+y)(y))(2)(1),
-  {},
-  {a: {b: 1}, [null]: 42, c:: 43},
-  {a: {b: 1}, [null]: 42, c:: 43}.a["b"],
-  {[x]:0 for x in ["a","b","c"]},
-  {a: self.b, b: self.c, c: 10}.a,
-  {a: 1} + {b: 2},
-  {
-    y: {z: 10} + {a:: 1, d:: 3} + {a::: self.d, b: super.a, c: super.z, d: 10}
-  },
-  std.primitiveEquals(true, true),
-  std.primitiveEquals(false, true),
-  std.primitiveEquals(false, false),
-  std.primitiveEquals(true, false),
-  std.primitiveEquals(null, null),
-  std.primitiveEquals(1, null),
-  std.primitiveEquals(1, 1),
-  std.primitiveEquals(2, 1),
-  std.primitiveEquals("a", "a"),
-  std.primitiveEquals("b", "a"),
-  std.length([1,2,3]),
-  std.length("abc"),
-  std.length({a: 0, b: 1}),
-  std.makeArray(3, function(x) x+1),
-  std.type(null),
-  std.type(true),
-  std.type(false),
-  std.type(0),
-  std.type(""),
-  std.type({}),
-  std.type(function(x) x),
-  std.type([]),
-  std.filter(function(x) x, [true, false]),
-  std.objectHasEx({a: 1}, "a", false),
-  std.objectHasEx({a:: 1}, "a", false),
-  std.objectHasEx({a:: 1}, "a", true),
-  std.objectHasEx({a: 1}, "b", false),
-  std.objectHasEx({a:: 1}, "b", false),
-  std.objectHasEx({a:: 1}, "b", true),
-  std.objectFieldsEx({a: 1, b:: 2}, false),
-  std.objectFieldsEx({a: 1, b:: 2}, true),
-  assert true; 0,
-  assert true : "foo"; 0,
-]
-|}
-  in
-  let expected =
-    String.trim
-      {|
-[
-   true,
-   false,
-   null,
-   "foo",
-   0,
-   [ ],
-   [
-      1,
-      2,
-      3
-   ],
-   4,
-   6,
-   true,
-   [
-      true,
-      true,
-      true,
-      false,
-      false,
-      true,
-      false,
-      false,
-      false,
-      false,
-      true,
-      false,
-      true,
-      true,
-      true,
-      true,
-      false,
-      true,
-      false,
-      false,
-      false,
-      true,
-      true,
-      false
-   ],
-   [
-      [
-         1,
-         2
-      ],
-      "ab"
-   ],
-   [
-      true,
-      -2,
-      -1,
-      1
-   ],
-   10,
-   null,
-   10,
-   true,
-   false,
-   0,
-   10,
-   16,
-   10,
-   10,
-   10,
-   1,
-   3,
-   { },
-   {
-      "a": {
-         "b": 1
-      }
-   },
-   1,
-   {
-      "a": 0,
-      "b": 0,
-      "c": 0
-   },
-   10,
-   {
-      "a": 1,
-      "b": 2
-   },
-   {
-      "y": {
-         "a": 10,
-         "b": 1,
-         "c": 10,
-         "z": 10
-      }
-   },
-   true,
-   false,
-   true,
-   false,
-   true,
-   false,
-   true,
-   false,
-   true,
-   false,
-   3,
-   3,
-   2,
-   [
-      1,
-      2,
-      3
-   ],
-   "null",
-   "boolean",
-   "boolean",
-   "number",
-   "string",
-   "object",
-   "function",
-   "array",
-   [
-      true
-   ],
-   true,
-   false,
-   true,
-   false,
-   false,
-   false,
-   [
-      "a"
-   ],
-   [
-      "a",
-      "b"
-   ],
-   0,
-   0
-]
-  |}
-  in
-  assert_compile_expr ~remove_tmp_dir:false expected code;
+  assert_compile "success00" `Success;
   ()
 
 let () =

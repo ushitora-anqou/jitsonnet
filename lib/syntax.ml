@@ -117,6 +117,9 @@ module Core = struct
     | False
     | Function of ((id * expr) list * expr)
     | If of (expr * expr * expr)
+    | Import of string
+    | Importbin of string
+    | Importstr of string
     | Local of ((id * expr) list * expr)
     | Null
     | Number of float
@@ -130,6 +133,75 @@ module Core = struct
     | Var of id
 
   and id = string [@@deriving show]
+
+  let map f root =
+    let rec aux node =
+      match node with
+      | False | Import _ | Importbin _ | Importstr _ | Null | Number _ | Self
+      | String _ | Super | True | Var _ ->
+          f node
+      | Array xs -> f (Array (List.map aux xs))
+      | ArrayIndex (e1, e2) -> f (ArrayIndex (aux e1, aux e2))
+      | Binary (e1, op, e2) -> f (Binary (aux e1, op, aux e2))
+      | Call (e1, xs, ys) ->
+          f
+            (Call
+               (aux e1, List.map aux xs, List.map (fun (x, y) -> (x, aux y)) ys))
+      | Error e -> f (Error (aux e))
+      | Unary (op, e) -> f (Unary (op, aux e))
+      | Function (xs, e) ->
+          f (Function (List.map (fun (x, y) -> (x, aux y)) xs, aux e))
+      | Local (xs, e) ->
+          f (Local (List.map (fun (x, y) -> (x, aux y)) xs, aux e))
+      | If (e1, e2, e3) -> f (If (aux e1, aux e2, aux e3))
+      | ObjectFor (e1, e2, x, e3) -> f (ObjectFor (aux e1, aux e2, x, aux e3))
+      | Object (xs, ys) ->
+          f
+            (Object
+               ( List.map aux xs,
+                 List.map (fun (e1, h, e2) -> (aux e1, h, aux e2)) ys ))
+    in
+    aux root
+
+  let fold f a root =
+    let rec aux acc node =
+      match node with
+      | False | Import _ | Importbin _ | Importstr _ | Null | Number _ | Self
+      | String _ | Super | True | Var _ ->
+          f acc node
+      | Array xs ->
+          let acc = xs |> List.fold_left aux acc in
+          f acc node
+      | ArrayIndex (e1, e2) | Binary (e1, _, e2) ->
+          let acc = aux acc e1 in
+          let acc = aux acc e2 in
+          f acc node
+      | Call (e1, xs, ys) ->
+          let acc = aux acc e1 in
+          let acc = xs |> List.fold_left aux acc in
+          let acc = ys |> List.fold_left (fun acc (_, y) -> aux acc y) acc in
+          f acc node
+      | Error e | Unary (_, e) ->
+          let acc = aux acc e in
+          f acc node
+      | Function (xs, e) | Local (xs, e) ->
+          let acc = xs |> List.fold_left (fun acc (_, x) -> aux acc x) acc in
+          let acc = aux acc e in
+          f acc node
+      | If (e1, e2, e3) | ObjectFor (e1, e2, _, e3) ->
+          let acc = aux acc e1 in
+          let acc = aux acc e2 in
+          let acc = aux acc e3 in
+          f acc node
+      | Object (xs, ys) ->
+          let acc = xs |> List.fold_left aux acc in
+          let acc =
+            ys
+            |> List.fold_left (fun acc (e1, _, e2) -> aux (aux acc e1) e2) acc
+          in
+          f acc node
+    in
+    aux a root
 end
 
 let gensym_i = ref 0
@@ -178,9 +250,9 @@ let rec desugar_expr b = function
   | If (e, e', None) -> Core.If (desugar_expr b e, desugar_expr b e', Null)
   | If (e, e', Some e'') ->
       Core.If (desugar_expr b e, desugar_expr b e', desugar_expr b e'')
-  | Import _ -> assert false
-  | Importbin _ -> assert false
-  | Importstr _ -> assert false
+  | Import s -> Core.Import s
+  | Importbin s -> Core.Importbin s
+  | Importstr s -> Core.Importstr s
   | Local (binds, e) ->
       let binds = binds |> List.map (desugar_bind b) in
       let e = desugar_expr b e in
@@ -314,3 +386,5 @@ and desugar_bind b = function
 and desugar_param b = function
   | id, None -> (id, Core.Error (String "Parameter not bound"))
   | id, Some e -> (id, desugar_expr b e)
+
+let desugar { expr } = desugar_expr false expr

@@ -8,4 +8,4 @@
  (name jitsonnet)
  (preprocess
   (pps ppx_deriving.show ppxlib.metaquot))
- (libraries logs uutf ppxlib unix))
+ (libraries logs uutf ppxlib unix str))
