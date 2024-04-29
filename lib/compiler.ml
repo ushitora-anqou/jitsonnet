@@ -411,12 +411,11 @@ let compile expr =
 
       let std_make_array ([| n; f |], []) =
         lazy
-          (match (n, f) with
-          | (lazy (Double n)), (lazy (Function f)) ->
-              Array
-                (Array.init (int_of_float n) (fun i ->
-                     f ([| lazy (Double (float_of_int i)) |], [])))
-          | _ -> failwith "std.makeArray: invalid type argument")
+          (let n = n |> Lazy.force |> get_double in
+           let f = f |> Lazy.force |> get_function in
+           Array
+             (Array.init (int_of_float n) (fun i ->
+                  f ([| lazy (Double (float_of_int i)) |], []))))
 
       let std_type ([| v |], []) =
         lazy
