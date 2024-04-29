@@ -374,9 +374,11 @@ let compile expr =
                    (fun ppf (lazy x) -> aux ppf x))
                 xs
           | Function _ -> ()
-          | Object (_ (* FIXME *), h) when Hashtbl.length h = 0 ->
+          | Object (assrts, h) when Hashtbl.length h = 0 ->
+              assrts |> List.iter (fun (lazy _) -> ());
               fprintf ppf "{ }"
-          | Object (_ (* FIXME *), tbl) ->
+          | Object (assrts, tbl) ->
+              assrts |> List.iter (fun (lazy _) -> ());
               let xs =
                 tbl |> Hashtbl.to_seq |> List.of_seq
                 |> List.filter_map (fun (k, (h, v)) ->

@@ -709,6 +709,38 @@ let assert_compile_expr ?(remove_tmp_dir = true) expected got =
       Alcotest.(check string) "" expected got;
       ()
 
+let assert_compile_expr_error ?(remove_tmp_dir = true) expected code =
+  match Parser.parse_string code with
+  | Error msg ->
+      Logs.err (fun m -> m "failed to parse: %s" msg);
+      assert false
+  | Ok { expr } -> (
+      let desugared = Syntax.desugar_expr false expr in
+      (match Static_check.f desugared with
+      | Ok () -> ()
+      | Error msg ->
+          Logs.err (fun m -> m "failed to static check: %s" msg);
+          assert false);
+      try
+        desugared |> Compiler.compile
+        |> Executor.execute ~remove_tmp_dir
+        |> ignore;
+        assert false
+      with Executor.Compiled_executable_failed (_, stderr_msg) -> (
+        match Str.(search_forward (regexp expected) stderr_msg 0) with
+        | exception Not_found ->
+            Logs.err (fun m ->
+                m "failed to find expected substring: expect '%s', got '%s'"
+                  expected stderr_msg);
+            assert false
+        | _ -> ()))
+
+let test_compiler_error () =
+  assert_compile_expr_error "Assertion failed" "assert false; 0";
+  assert_compile_expr_error "TEST STRING FOO"
+    {|assert false : "TEST STRING FOO"; 0|};
+  ()
+
 let test_compiler () =
   let code =
     {|
@@ -783,6 +815,8 @@ let test_compiler () =
   std.objectHasEx({a:: 1}, "b", true),
   std.objectFieldsEx({a: 1, b:: 2}, false),
   std.objectFieldsEx({a: 1, b:: 2}, true),
+  assert true; 0,
+  assert true : "foo"; 0,
 ]
 |}
   in
@@ -921,11 +955,13 @@ let test_compiler () =
    [
       "a",
       "b"
-   ]
+   ],
+   0,
+   0
 ]
   |}
   in
-  assert_compile_expr ~remove_tmp_dir:false expected code;
+  assert_compile_expr expected code;
   ()
 
 let () =
@@ -968,5 +1004,9 @@ let () =
         ] );
       ("static check", [ test_case "basics" `Quick test_static_check_basics ]);
       ("executor", [ test_case "basics" `Quick test_executor_basics ]);
-      ("compiler", [ test_case "all" `Quick test_compiler ]);
+      ( "compiler",
+        [
+          test_case "ok" `Quick test_compiler;
+          test_case "error" `Quick test_compiler_error;
+        ] );
     ]
