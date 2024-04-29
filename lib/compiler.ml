@@ -34,22 +34,33 @@ let rec compile_expr ({ loc; _ } as env) :
   | ArrayIndex (e1, e2) ->
       [%expr
         match [%e compile_expr env e1] with
-        | Array a ->
+        | I.Array a ->
             a.(I.get_double [%e compile_expr env e2] |> int_of_float)
             |> Lazy.force
-        | Object (_, tbl) -> (
+        | I.Object (_, tbl) -> (
             let key = I.get_string [%e compile_expr env e2] in
             match Hashtbl.find_opt tbl key with
             | None -> failwith ("field does not exist: " ^ key)
             | Some (_, (lazy v)) -> v)
         | _ -> failwith "ArrayIndex: expect array got something else"]
   | Binary (e1, `Add, e2) ->
+      let new_super_id = gensym "super" in
       [%expr
-        match ([%e compile_expr env e1], [%e compile_expr env e2]) with
-        | I.Double f1, I.Double f2 -> I.Double (f1 +. f2)
-        | I.Array xs, I.Array ys -> I.Array (Array.append xs ys)
-        | I.String s1, I.String s2 -> I.String (s1 ^ s2)
-        | I.Object (assrts1, fields1), I.Object (assrts2, fields2) ->
+        let super = [%e evar ~loc (Hashtbl.find env.vars "super")] in
+        let lhs = [%e compile_expr env e1] in
+        let rhs [%p pvar ~loc new_super_id] =
+          [%e
+            Hashtbl.add env.vars "super" new_super_id;
+            Fun.protect ~finally:(fun () -> Hashtbl.remove env.vars "super")
+            @@ fun () -> compile_expr env e2]
+        in
+        match lhs with
+        | I.Double f1 -> I.Double (f1 +. I.get_double (rhs super))
+        | I.Array xs -> I.Array (Array.append xs (I.get_array (rhs super)))
+        | I.String s1 -> I.String (s1 ^ I.get_string (rhs super))
+        | I.Object (assrts1, fields1) ->
+            let super = lazy lhs in
+            let assrts2, fields2 = I.get_object (rhs super) in
             let tbl = Hashtbl.create 0 in
             let common = ref [] in
             fields1
@@ -304,6 +315,10 @@ let compile expr =
 
       let value_of_bool = function true -> True | false -> False
 
+      let get_object = function
+        | Object obj -> obj
+        | _ -> failwith "expect object got something else"
+
       let get_bool = function
         | True -> true
         | False -> false
@@ -366,6 +381,7 @@ let compile expr =
                 tbl |> Hashtbl.to_seq |> List.of_seq
                 |> List.filter_map (fun (k, (h, v)) ->
                        if h = 2 then None else Some (k, v))
+                |> List.sort (fun (k1, _) (k2, _) -> String.compare k1 k2)
               in
               fprintf ppf "@[<v 3>{@,%a@]@,}"
                 (pp_print_list

@@ -750,6 +750,9 @@ let test_compiler () =
   {[x]:0 for x in ["a","b","c"]},
   {a: self.b, b: self.c, c: 10}.a,
   {a: 1} + {b: 2},
+  {
+    y: {z: 10} + {a:: 1, d:: 3} + {a::: self.d, b: super.a, c: super.z, d: 10}
+  },
 ]
 |}
   in
@@ -839,6 +842,14 @@ let test_compiler () =
    {
       "a": 1,
       "b": 2
+   },
+   {
+      "y": {
+         "a": 10,
+         "b": 1,
+         "c": 10,
+         "z": 10
+      }
    }
 ]
   |}
