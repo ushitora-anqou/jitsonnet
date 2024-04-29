@@ -781,6 +781,8 @@ let test_compiler () =
   std.objectHasEx({a: 1}, "b", false),
   std.objectHasEx({a:: 1}, "b", false),
   std.objectHasEx({a:: 1}, "b", true),
+  std.objectFieldsEx({a: 1, b:: 2}, false),
+  std.objectFieldsEx({a: 1, b:: 2}, true),
 ]
 |}
   in
@@ -912,7 +914,14 @@ let test_compiler () =
    true,
    false,
    false,
-   false
+   false,
+   [
+      "a"
+   ],
+   [
+      "a",
+      "b"
+   ]
 ]
   |}
   in

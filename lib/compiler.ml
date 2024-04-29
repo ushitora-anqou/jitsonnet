@@ -445,6 +445,17 @@ let compile expr =
            match Hashtbl.find_opt fields f with
            | Some (h, _) when h <> 2 || b' -> True
            | _ -> False)
+
+      let std_object_fields_ex ([| obj; b' |], []) =
+        lazy
+          (let b' = b' |> Lazy.force |> get_bool in
+           let _, fields = obj |> Lazy.force |> get_object in
+           Array
+             (fields |> Hashtbl.to_seq
+             |> Seq.filter_map (fun (f, (h, _)) ->
+                    if h <> 2 || b' then Some f else None)
+             |> List.of_seq |> List.sort String.compare |> Array.of_list
+             |> Array.map (fun x -> lazy (String x))))
     end
 
     module Compiled = struct
@@ -465,6 +476,8 @@ let compile expr =
                Hashtbl.add tbl "filter" (1, lazy (I.Function I.std_filter));
                Hashtbl.add tbl "objectHasEx"
                  (1, lazy (I.Function I.std_object_has_ex));
+               Hashtbl.add tbl "objectFieldsEx"
+                 (1, lazy (I.Function I.std_object_fields_ex));
                tbl ))
 
       let e : I.value = [%e e]
