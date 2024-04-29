@@ -417,6 +417,17 @@ let compile expr =
                 (Array.init (int_of_float n) (fun i ->
                      f ([| lazy (Double (float_of_int i)) |], [])))
           | _ -> failwith "std.makeArray: invalid type argument")
+
+      let std_type ([| v |], []) =
+        lazy
+          (match v with
+          | (lazy Null) -> String "null"
+          | (lazy (True | False)) -> String "boolean"
+          | (lazy (String _)) -> String "string"
+          | (lazy (Function _)) -> String "function"
+          | (lazy (Double _)) -> String "number"
+          | (lazy (Object _)) -> String "object"
+          | (lazy (Array _)) -> String "array")
     end
 
     module Compiled = struct
@@ -433,6 +444,7 @@ let compile expr =
                Hashtbl.add tbl "length" (1, lazy (I.Function I.std_length));
                Hashtbl.add tbl "makeArray"
                  (1, lazy (I.Function I.std_make_array));
+               Hashtbl.add tbl "type" (1, lazy (I.Function I.std_type));
                tbl ))
 
       let e : I.value = [%e e]

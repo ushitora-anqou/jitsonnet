@@ -766,6 +766,14 @@ let test_compiler () =
   std.length([1,2,3]),
   std.length("abc"),
   std.makeArray(3, function(x) x+1),
+  std.type(null),
+  std.type(true),
+  std.type(false),
+  std.type(0),
+  std.type(""),
+  std.type({}),
+  std.type(function(x) x),
+  std.type([]),
 ]
 |}
   in
@@ -880,7 +888,15 @@ let test_compiler () =
       1,
       2,
       3
-   ]
+   ],
+   "null",
+   "boolean",
+   "boolean",
+   "number",
+   "string",
+   "object",
+   "function",
+   "array"
 ]
   |}
   in
