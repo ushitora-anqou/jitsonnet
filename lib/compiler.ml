@@ -50,7 +50,18 @@ let rec compile_expr ({ loc; _ } as env) :
         | I.Array xs, I.Array ys -> I.Array (Array.append xs ys)
         | I.String s1, I.String s2 -> I.String (s1 ^ s2)
         | I.Object (assrts1, fields1), I.Object (assrts2, fields2) ->
-            assert false (* FIXME *)
+            let tbl = Hashtbl.create 0 in
+            fields1
+            |> Hashtbl.iter (fun f (h, v) ->
+                   match Hashtbl.find_opt fields2 f with
+                   | Some _ -> ()
+                   | None -> Hashtbl.add tbl f (h, v));
+            fields2
+            |> Hashtbl.iter (fun f (h, v) ->
+                   match Hashtbl.find_opt fields1 f with
+                   | Some _ -> ()
+                   | None -> Hashtbl.add tbl f (h, v));
+            I.Object (assrts1 @ assrts2, tbl)
         | _ -> failwith "invalid add"]
   | Binary (e1, `Sub, e2) ->
       [%expr
