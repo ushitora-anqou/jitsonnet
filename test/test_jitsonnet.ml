@@ -775,6 +775,12 @@ let test_compiler () =
   std.type(function(x) x),
   std.type([]),
   std.filter(function(x) x, [true, false]),
+  std.objectHasEx({a: 1}, "a", false),
+  std.objectHasEx({a:: 1}, "a", false),
+  std.objectHasEx({a:: 1}, "a", true),
+  std.objectHasEx({a: 1}, "b", false),
+  std.objectHasEx({a:: 1}, "b", false),
+  std.objectHasEx({a:: 1}, "b", true),
 ]
 |}
   in
@@ -900,7 +906,13 @@ let test_compiler () =
    "array",
    [
       true
-   ]
+   ],
+   true,
+   false,
+   true,
+   false,
+   false,
+   false
 ]
   |}
   in

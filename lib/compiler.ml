@@ -436,6 +436,15 @@ let compile expr =
              (xs |> Array.to_list
              |> List.filter (fun x -> f ([| x |], []) |> Lazy.force |> get_bool)
              |> Array.of_list))
+
+      let std_object_has_ex ([| obj; f; b' |], []) =
+        lazy
+          (let _, fields = obj |> Lazy.force |> get_object in
+           let f = f |> Lazy.force |> get_string in
+           let b' = b' |> Lazy.force |> get_bool in
+           match Hashtbl.find_opt fields f with
+           | Some (h, _) when h <> 2 || b' -> True
+           | _ -> False)
     end
 
     module Compiled = struct
@@ -454,6 +463,8 @@ let compile expr =
                  (1, lazy (I.Function I.std_make_array));
                Hashtbl.add tbl "type" (1, lazy (I.Function I.std_type));
                Hashtbl.add tbl "filter" (1, lazy (I.Function I.std_filter));
+               Hashtbl.add tbl "objectHasEx"
+                 (1, lazy (I.Function I.std_object_has_ex));
                tbl ))
 
       let e : I.value = [%e e]
