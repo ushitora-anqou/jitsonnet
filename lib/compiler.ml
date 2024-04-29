@@ -51,16 +51,21 @@ let rec compile_expr ({ loc; _ } as env) :
         | I.String s1, I.String s2 -> I.String (s1 ^ s2)
         | I.Object (assrts1, fields1), I.Object (assrts2, fields2) ->
             let tbl = Hashtbl.create 0 in
+            let common = ref [] in
             fields1
             |> Hashtbl.iter (fun f (h, v) ->
                    match Hashtbl.find_opt fields2 f with
-                   | Some _ -> ()
+                   | Some (h', v') -> common := (f, h, v, h', v') :: !common
                    | None -> Hashtbl.add tbl f (h, v));
             fields2
             |> Hashtbl.iter (fun f (h, v) ->
                    match Hashtbl.find_opt fields1 f with
                    | Some _ -> ()
                    | None -> Hashtbl.add tbl f (h, v));
+            !common
+            |> List.iter (fun (f, h1, v1, h2, v2) ->
+                   let h = if h2 = 1 then h1 else h2 in
+                   Hashtbl.add tbl f (h, v2));
             I.Object (assrts1 @ assrts2, tbl)
         | _ -> failwith "invalid add"]
   | Binary (e1, `Sub, e2) ->
@@ -213,16 +218,9 @@ let rec compile_expr ({ loc; _ } as env) :
         fields
         |> List.map (fun (e1, Syntax.H h, e2) -> (compile_expr env e1, h, e2))
       in
-      let outer_self = Hashtbl.find_opt env.vars "self" in
 
-      with_binds env [ "self"; "super" ] @@ fun () ->
+      with_binds env [ "self" ] @@ fun () ->
       [%expr
-        let [%p pvar ~loc (Hashtbl.find env.vars "super")] =
-          [%e
-            match outer_self with
-            | Some outer_self -> evar ~loc outer_self
-            | None -> [%expr lazy (I.Object ([], Hashtbl.create 0))]]
-        in
         let rec [%p pvar ~loc (Hashtbl.find env.vars "self")] =
           lazy
             (I.Object
@@ -251,16 +249,9 @@ let rec compile_expr ({ loc; _ } as env) :
       let compiled_e3 (* with env *) = compile_expr env e3 in
       with_binds env [ x ] @@ fun () ->
       let compiled_e1 (* with env + x *) = compile_expr env e1 in
-      let outer_self = Hashtbl.find_opt env.vars "self" in
-      with_binds env [ "self"; "super" ] @@ fun () ->
-      let compiled_e2 (* with env + x, self, super *) = compile_expr env e2 in
+      with_binds env [ "self" ] @@ fun () ->
+      let compiled_e2 (* with env + x, self *) = compile_expr env e2 in
       [%expr
-        let [%p pvar ~loc (Hashtbl.find env.vars "super")] =
-          [%e
-            match outer_self with
-            | Some outer_self -> evar ~loc outer_self
-            | None -> [%expr lazy (I.Object ([], Hashtbl.create 0))]]
-        in
         let rec [%p pvar ~loc (Hashtbl.find env.vars "self")] =
           lazy
             (I.Object
@@ -295,7 +286,9 @@ and compile_expr_lazy ({ loc; _ } as env) e =
 let compile expr =
   let loc = !Ast_helper.default_loc in
   let env = { loc; vars = Hashtbl.create 0 } in
+  with_binds env [ "super" ] @@ fun () ->
   let e = compile_expr env expr in
+  let open Ast_builder.Default in
   [%str
     module I = struct
       type value =
@@ -385,6 +378,9 @@ let compile expr =
     end
 
     module Compiled = struct
+      let [%p pvar ~loc (Hashtbl.find env.vars "super")] =
+        lazy (I.Object ([], Hashtbl.create 0))
+
       let e : I.value = [%e e]
       let () = I.manifestation Format.std_formatter e
     end]
