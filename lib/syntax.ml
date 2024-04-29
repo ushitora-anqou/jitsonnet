@@ -132,11 +132,12 @@ module Core = struct
   and id = string [@@deriving show]
 end
 
-let gensym =
-  let i = ref 0 in
-  fun () ->
-    i := !i + 1;
-    "$v" ^ string_of_int !i
+let gensym_i = ref 0
+let reset_gensym_i () = gensym_i := 0 (* for tests *)
+
+let gensym () =
+  gensym_i := !gensym_i + 1;
+  "$v" ^ string_of_int !gensym_i
 
 let rec desugar_expr b = function
   | Array xs -> Core.Array (xs |> List.map (desugar_expr b))
@@ -209,19 +210,29 @@ let rec desugar_expr b = function
         Core.Local
           ([ ("$outerself", Core.Self); ("$outersuper", Core.Super) ], obj)
       else obj
+  | Object (ObjectFor ([], Var x1, e1, [], (x2, e2), [])) when x1 = x2 ->
+      (* Optimized desugaring *)
+      Core.ObjectFor (Var x1, desugar_expr true e1, x2, desugar_expr b e2)
   | Object (ObjectFor (binds, ef, ebody, binds', forspec, compspec)) ->
       let arr = gensym () in
-      let xs = [] in
+      let xs =
+        fst forspec
+        :: (compspec
+           |> List.filter_map (function
+                | Ifspec _ -> None
+                | Forspec (id, _) -> Some id))
+      in
       let binds_xs =
         xs
         |> List.mapi (fun i x ->
                Bind (x, ArrayIndex (Var arr, Number (float_of_int i))))
       in
+      let vars_xs = xs |> List.map (fun x -> Var x) in
       Core.ObjectFor
         ( desugar_expr b (Local (binds_xs, ef)),
           desugar_expr true (Local (binds_xs @ binds @ binds', ebody)),
           arr,
-          desugar_expr b (ArrayFor (Array xs, forspec, compspec)) )
+          desugar_expr b (ArrayFor (Array vars_xs, forspec, compspec)) )
   | ObjectSeq (e, objinside) ->
       desugar_expr b (Binary (e, `Add, Object objinside))
   | Select (e, id) -> Core.ArrayIndex (desugar_expr b e, String id)

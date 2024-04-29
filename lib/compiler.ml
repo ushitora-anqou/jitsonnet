@@ -232,7 +232,47 @@ let rec compile_expr ({ loc; _ } as env) :
                         [%expr tbl]] ))
         in
         Lazy.force [%e evar ~loc (Hashtbl.find env.vars "self")]]
-  | ObjectFor _ -> assert false
+  | ObjectFor (e1, e2, x, e3) ->
+      let compiled_e3 (* with env *) = compile_expr env e3 in
+      with_binds env [ x ] @@ fun () ->
+      let compiled_e1 (* with env + x *) = compile_expr env e1 in
+      let outer_self = Hashtbl.find_opt env.vars "self" in
+      with_binds env [ "self"; "super" ] @@ fun () ->
+      let compiled_e2 (* with env + x, self, super *) = compile_expr env e2 in
+      [%expr
+        let [%p pvar ~loc (Hashtbl.find env.vars "super")] =
+          [%e
+            match outer_self with
+            | Some outer_self -> evar ~loc outer_self
+            | None -> [%expr lazy (I.Object ([], Hashtbl.create 0))]]
+        in
+        let rec [%p pvar ~loc (Hashtbl.find env.vars "self")] =
+          lazy
+            (I.Object
+               ( [],
+                 [%e compiled_e3] |> I.get_array |> Array.to_seq
+                 |> Seq.filter_map (fun v ->
+                        [%e
+                          pexp_let ~loc Nonrecursive
+                            [
+                              value_binding ~loc
+                                ~pat:
+                                  (ppat_var ~loc
+                                     { loc; txt = Hashtbl.find env.vars x })
+                                ~expr:[%expr v];
+                            ]
+                            [%expr
+                              match [%e compiled_e1] with
+                              | I.Null -> None
+                              | I.String s ->
+                                  Some (s, (1, lazy [%e compiled_e2]))
+                              | _ ->
+                                  failwith
+                                    "field name must be string, got something \
+                                     else"]])
+                 |> Hashtbl.of_seq ))
+        in
+        Lazy.force [%e evar ~loc (Hashtbl.find env.vars "self")]]
 
 and compile_expr_lazy ({ loc; _ } as env) e =
   [%expr lazy [%e compile_expr env e]]

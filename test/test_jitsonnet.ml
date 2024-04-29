@@ -516,6 +516,7 @@ let assert_core_expr expected got =
       ()
 
 let test_desugar_object () =
+  Syntax.reset_gensym_i ();
   assert_core_expr (Object ([], [])) "{}";
   assert_core_expr
     (Object ([], [ (String "x", H 1, Local ([ ("$", Self) ], Number 1.)) ]))
@@ -585,9 +586,43 @@ let test_desugar_object () =
                    ) ) );
          ] ))
     "{x: {y: 1}}";
+  assert_core_expr
+    (ObjectFor
+       ( Local
+           ( [ ("x", ArrayIndex (Var "$v1", Number 0.)) ],
+             Binary (Var "x", `Add, String "foo") ),
+         Local ([ ("x", ArrayIndex (Var "$v1", Number 0.)) ], String "y"),
+         "$v1",
+         Local
+           ( [ ("$v2", Var "a") ],
+             Call
+               ( ArrayIndex (Var "std", String "join"),
+                 [
+                   Array [];
+                   Call
+                     ( ArrayIndex (Var "std", String "makeArray"),
+                       [
+                         Call
+                           ( ArrayIndex (Var "std", String "length"),
+                             [ Var "$v2" ],
+                             [] );
+                         Function
+                           ( [ ("$v3", Error (String "Parameter not bound")) ],
+                             Local
+                               ( [ ("x", ArrayIndex (Var "$v2", Var "$v3")) ],
+                                 Array [ Array [ Var "x" ] ] ) );
+                       ],
+                       [] );
+                 ],
+                 [] ) ) ))
+    {|{[x+"foo"]: "y" for x in a}|};
+  assert_core_expr
+    (ObjectFor (Var "x", String "y", "x", Var "a"))
+    {|{[x]: "y" for x in a}|};
   ()
 
 let test_desugar_array () =
+  Syntax.reset_gensym_i ();
   assert_core_expr
     (Local
        ( [ ("$v1", Var "xs") ],
@@ -712,6 +747,7 @@ let test_compiler () =
   {},
   {a: {b: 1}, [null]: 42, c:: 43},
   {a: {b: 1}, [null]: 42, c:: 43}.a["b"],
+  {[x]:0 for x in ["a","b","c"]},
 ]
 |}
   in
@@ -791,7 +827,12 @@ let test_compiler () =
          "b": 1
       }
    },
-   1
+   1,
+   {
+      "a": 0,
+      "b": 0,
+      "c": 0
+   }
 ]
   |}
   in
