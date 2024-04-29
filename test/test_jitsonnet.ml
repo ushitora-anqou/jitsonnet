@@ -800,6 +800,7 @@ let test_compiler () =
   std.primitiveEquals("b", "a"),
   std.length([1,2,3]),
   std.length("abc"),
+  std.length({a: 0, b: 1}),
   std.makeArray(3, function(x) x+1),
   std.type(null),
   std.type(true),
@@ -930,6 +931,7 @@ let test_compiler () =
    false,
    3,
    3,
+   2,
    [
       1,
       2,
@@ -964,7 +966,7 @@ let test_compiler () =
 ]
   |}
   in
-  assert_compile_expr expected code;
+  assert_compile_expr ~remove_tmp_dir:false expected code;
   ()
 
 let () =

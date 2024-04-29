@@ -404,11 +404,16 @@ let compile expr =
           |> value_of_bool)
 
       let std_length ([| v |], []) =
-        (* FIXME: support std.objectFieldsEx *)
         lazy
           (match v with
           | (lazy (Array xs)) -> Double (xs |> Array.length |> float_of_int)
           | (lazy (String s)) -> Double (s |> String.length |> float_of_int)
+          | (lazy (Object (_, fields))) ->
+              Double
+                (fields |> Hashtbl.to_seq
+                |> Seq.filter_map (fun (f, (h, _)) ->
+                       if h = 2 then None else Some ())
+                |> Seq.length |> float_of_int)
           | _ -> failwith "std.length: invalid type argument")
 
       let std_make_array ([| n; f |], []) =
