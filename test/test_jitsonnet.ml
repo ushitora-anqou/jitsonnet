@@ -704,7 +704,10 @@ let assert_compile_expr ?(remove_tmp_dir = true) expected got =
           Logs.err (fun m -> m "failed to static check: %s" msg);
           assert false);
       let got =
-        desugared |> Compiler.compile |> Executor.execute ~remove_tmp_dir
+        try desugared |> Compiler.compile |> Executor.execute ~remove_tmp_dir
+        with Executor.Compiled_executable_failed (_, stderr_msg) ->
+          Logs.err (fun m -> m "failed to execute: expect '%s'" stderr_msg);
+          assert false
       in
       Alcotest.(check string) "" expected got;
       ()
