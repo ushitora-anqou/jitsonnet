@@ -64,7 +64,10 @@ let execute' ~dir_name ~ocamlc_path ~redirect ast =
       Pprintast.structure f ast;
       Format.pp_print_flush f ());
   (match
-     let com = Filename.quote_command ocamlc_path [ "-o"; main_exe; main_ml ] in
+     let com =
+       Filename.quote_command ocamlc_path
+         [ "-w"; "-a"; "-o"; main_exe; main_ml ]
+     in
      let com = com ^ redirect_ocamlc in
      Unix.system com
    with

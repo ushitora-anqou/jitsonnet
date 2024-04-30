@@ -711,7 +711,7 @@ let assert_compile ?(remove_tmp_dir = true) src_file_path result_pat =
         let got = t |> Loader.compile |> Executor.execute ~remove_tmp_dir in
         match result_pat with
         | `Success ->
-            let expected = read_all expected_file_path |> String.trim in
+            let expected = read_all expected_file_path in
             Alcotest.(check string) "" expected got;
             ()
         | `Error -> assert false

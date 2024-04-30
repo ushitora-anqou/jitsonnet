@@ -447,7 +447,7 @@ let compile root_prog_path progs bins strs =
         | Double n1, Double n2 -> Float.compare n1 n2
         | _ -> failwith "std_cmp: invalid arguments"
 
-      let manifestation =
+      let manifestation ppf v =
         let open Format in
         let rec aux ppf = function
           | Null -> fprintf ppf "null"
@@ -483,7 +483,8 @@ let compile root_prog_path progs bins strs =
                      fprintf ppf "@<0>\"@<0>%s@<0>\"@<0>:@<0> %a" k aux v))
                 xs
         in
-        aux
+        aux ppf v;
+        fprintf ppf "\n"
 
       let std_primitive_equals ([| v; v' |], []) =
         lazy
