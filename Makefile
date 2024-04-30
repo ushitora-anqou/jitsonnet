@@ -4,4 +4,4 @@ build:
 
 .PHONY: test
 test:
-	dune runtest
+	dune runtest -f
