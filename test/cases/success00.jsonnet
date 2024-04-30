@@ -75,4 +75,5 @@
   (import "success00_import.jsonnet")[0],
   (importbin "success00_import.jsonnet"),
   (importstr "success00_import.jsonnet"),
+  {a: x, local x = 3, assert true},
 ]
