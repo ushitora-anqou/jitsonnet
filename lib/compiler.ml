@@ -465,9 +465,6 @@ let compile root_prog_path progs bins strs =
                    (fun ppf (lazy x) -> aux ppf x))
                 xs
           | Function _ -> ()
-          | Object (assrts, h) when Hashtbl.length h = 0 ->
-              assrts |> List.iter (fun (lazy _) -> ());
-              fprintf ppf "{ }"
           | Object (assrts, tbl) ->
               assrts |> List.iter (fun (lazy _) -> ());
               let xs =
@@ -476,12 +473,14 @@ let compile root_prog_path progs bins strs =
                        if h = 2 then None else Some (k, v))
                 |> List.sort (fun (k1, _) (k2, _) -> String.compare k1 k2)
               in
-              fprintf ppf "@[<v 3>{@,%a@]@,}"
-                (pp_print_list
-                   ~pp_sep:(fun ppf () -> fprintf ppf ",@,")
-                   (fun ppf (k, (lazy v)) ->
-                     fprintf ppf "@<0>\"@<0>%s@<0>\"@<0>:@<0> %a" k aux v))
-                xs
+              if xs = [] then fprintf ppf "{ }"
+              else
+                fprintf ppf "@[<v 3>{@,%a@]@,}"
+                  (pp_print_list
+                     ~pp_sep:(fun ppf () -> fprintf ppf ",@,")
+                     (fun ppf (k, (lazy v)) ->
+                       fprintf ppf "@<0>\"@<0>%s@<0>\"@<0>:@<0> %a" k aux v))
+                  xs
         in
         aux ppf v;
         fprintf ppf "\n"

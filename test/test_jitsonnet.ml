@@ -743,6 +743,7 @@ let test_compiler_error () =
 
 let test_compiler () =
   assert_compile "success00" `Success;
+  assert_compile ~remove_tmp_dir:false "success01" `Success;
   ()
 
 let () =
