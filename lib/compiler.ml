@@ -250,17 +250,17 @@ let rec compile_expr ({ loc; _ } as env) :
                    |> List.fold_left
                         (fun e (e1, h, e2) ->
                           [%expr
-                            match [%e e1] with
-                            | I.Null -> [%e e]
+                            (match [%e e1] with
+                            | I.Null -> ()
                             | I.String k ->
                                 Hashtbl.add tbl k
                                   ( [%e eint ~loc h],
-                                    lazy [%e compile_expr env e2] );
-                                [%e e]
+                                    lazy [%e compile_expr env e2] )
                             | _ ->
                                 failwith
                                   "field name must be string, got something \
-                                   else"])
+                                   else");
+                            [%e e]])
                         [%expr tbl]] ))
         in
         Lazy.force [%e evar ~loc (Hashtbl.find env.vars "self")]]
