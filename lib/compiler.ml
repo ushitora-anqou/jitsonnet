@@ -41,16 +41,9 @@ let rec compile_expr ({ loc; _ } as env) :
         I.Array [%e xs |> List.map (compile_expr_lazy env) |> pexp_array ~loc]]
   | ArrayIndex (e1, e2) ->
       [%expr
-        match [%e compile_expr env e1] with
-        | I.Array a ->
-            a.(I.get_double [%e compile_expr env e2] |> int_of_float)
-            |> Lazy.force
-        | I.Object (_, tbl) -> (
-            let key = I.get_string [%e compile_expr env e2] in
-            match Hashtbl.find_opt tbl key with
-            | None -> failwith ("field does not exist: " ^ key)
-            | Some (_, (lazy v)) -> v)
-        | _ -> failwith "ArrayIndex: expect array got something else"]
+        I.array_index
+          (fun () -> [%e compile_expr env e1])
+          (fun () -> [%e compile_expr env e2])]
   | Binary (e1, `Add, e2) ->
       let new_super_id = gensym "super" in
       [%expr
@@ -567,6 +560,16 @@ let compile root_prog_path progs bins strs =
                     if h <> 2 || b' then Some f else None)
              |> List.of_seq |> List.sort String.compare |> Array.of_list
              |> Array.map (fun x -> lazy (String x))))
+
+      let array_index f1 f2 =
+        match f1 () with
+        | Array a -> a.(get_double (f2 ()) |> int_of_float) |> Lazy.force
+        | Object (_, tbl) -> (
+            let key = get_string (f2 ()) in
+            match Hashtbl.find_opt tbl key with
+            | None -> failwith ("field does not exist: " ^ key)
+            | Some (_, (lazy v)) -> v)
+        | _ -> failwith "ArrayIndex: expect array got something else"
     end
 
     module Compiled = struct
