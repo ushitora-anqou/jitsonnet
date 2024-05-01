@@ -55,31 +55,7 @@ let rec compile_expr ({ loc; _ } as env) :
             Fun.protect ~finally:(fun () -> Hashtbl.remove env.vars "super")
             @@ fun () -> compile_expr env e2]
         in
-        match lhs with
-        | I.Double f1 -> I.Double (f1 +. I.get_double (rhs super))
-        | I.Array xs -> I.Array (Array.append xs (I.get_array (rhs super)))
-        | I.String s1 -> I.String (s1 ^ I.get_string (rhs super))
-        | I.Object (assrts1, fields1) ->
-            let super = lazy lhs in
-            let assrts2, fields2 = I.get_object (rhs super) in
-            let tbl = Hashtbl.create 0 in
-            let common = ref [] in
-            fields1
-            |> Hashtbl.iter (fun f (h, v) ->
-                   match Hashtbl.find_opt fields2 f with
-                   | Some (h', v') -> common := (f, h, v, h', v') :: !common
-                   | None -> Hashtbl.add tbl f (h, v));
-            fields2
-            |> Hashtbl.iter (fun f (h, v) ->
-                   match Hashtbl.find_opt fields1 f with
-                   | Some _ -> ()
-                   | None -> Hashtbl.add tbl f (h, v));
-            !common
-            |> List.iter (fun (f, h1, v1, h2, v2) ->
-                   let h = if h2 = 1 then h1 else h2 in
-                   Hashtbl.add tbl f (h, v2));
-            I.Object (assrts1 @ assrts2, tbl)
-        | _ -> failwith "invalid add"]
+        I.binary_add super lhs rhs]
   | Binary (e1, `Sub, e2) ->
       [%expr
         I.Double
@@ -570,6 +546,33 @@ let compile root_prog_path progs bins strs =
             | None -> failwith ("field does not exist: " ^ key)
             | Some (_, (lazy v)) -> v)
         | _ -> failwith "ArrayIndex: expect array got something else"
+
+      let binary_add super lhs rhs =
+        match lhs with
+        | Double f1 -> Double (f1 +. get_double (rhs super))
+        | Array xs -> Array (Array.append xs (get_array (rhs super)))
+        | String s1 -> String (s1 ^ get_string (rhs super))
+        | Object (assrts1, fields1) ->
+            let super = lazy lhs in
+            let assrts2, fields2 = get_object (rhs super) in
+            let tbl = Hashtbl.create 0 in
+            let common = ref [] in
+            fields1
+            |> Hashtbl.iter (fun f (h, v) ->
+                   match Hashtbl.find_opt fields2 f with
+                   | Some (h', v') -> common := (f, h, v, h', v') :: !common
+                   | None -> Hashtbl.add tbl f (h, v));
+            fields2
+            |> Hashtbl.iter (fun f (h, v) ->
+                   match Hashtbl.find_opt fields1 f with
+                   | Some _ -> ()
+                   | None -> Hashtbl.add tbl f (h, v));
+            !common
+            |> List.iter (fun (f, h1, v1, h2, v2) ->
+                   let h = if h2 = 1 then h1 else h2 in
+                   Hashtbl.add tbl f (h, v2));
+            Object (assrts1 @ assrts2, tbl)
+        | _ -> failwith "invalid add"
     end
 
     module Compiled = struct
