@@ -142,10 +142,10 @@ let rec compile_expr ({ loc; _ } as env) :
   | Unary (Pos, e) -> [%expr I.Double (+.I.get_double [%e compile_expr env e])]
   | If (e1, e2, e3) ->
       [%expr
-        match [%e compile_expr env e1] with
-        | True -> [%e compile_expr env e2]
-        | False -> [%e compile_expr env e3]
-        | _ -> failwith "invalid if condition"]
+        I.if_
+          (fun () -> [%e compile_expr env e1])
+          (fun () -> [%e compile_expr env e2])
+          (fun () -> [%e compile_expr env e3])]
   | Function (params, body) ->
       with_binds env (params |> List.map fst) @@ fun () ->
       let binds =
@@ -581,6 +581,12 @@ let compile root_prog_path progs bins strs =
               match v with
               | Some v -> v
               | None -> failwith "Parameter not bound")
+
+      let if_ f1 f2 f3 =
+        match f1 () with
+        | True -> f2 ()
+        | False -> f3 ()
+        | _ -> failwith "invalid if condition"
     end
 
     module Compiled = struct
