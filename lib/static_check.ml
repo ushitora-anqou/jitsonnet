@@ -86,7 +86,7 @@ let rec f g =
       Ok ()
   | Function (xs, e') ->
       let g' = xs |> List.fold_left (fun g (x, _) -> add (Var x) g) g in
-      let* _ = xs |> List.map snd |> for_all (f g') in
+      let* _ = xs |> List.filter_map snd |> for_all (f g') in
       let* _ = f g' e' in
       let* _ = xs |> List.map fst |> should_be_unique in
       Ok ()

@@ -155,12 +155,12 @@ let rec compile_expr ({ loc; _ } as env) :
              ~pat:(ppat_var ~loc { loc; txt = Hashtbl.find env.vars id })
              ~expr:
                [%expr
-                 if [%e eint ~loc i] < Array.length positional then
-                   positional.([%e eint ~loc i])
-                 else
-                   match List.assoc_opt [%e estring ~loc id] named with
-                   | Some x -> x
-                   | None -> lazy [%e compile_expr env e]]
+                 I.function_param [%e eint ~loc i] positional
+                   [%e estring ~loc id] named
+                   [%e
+                     match e with
+                     | None -> [%expr None]
+                     | Some e -> [%expr Some (lazy [%e compile_expr env e])]]]
       in
       [%expr
         I.Function
@@ -571,6 +571,16 @@ let compile root_prog_path progs bins strs =
         | Null -> None
         | String s -> Some (s, (1, v))
         | _ -> failwith "field name must be string, got something else"
+
+      let function_param i positional id named v =
+        if i < Array.length positional then positional.(i)
+        else
+          match List.assoc_opt id named with
+          | Some x -> x
+          | None -> (
+              match v with
+              | Some v -> v
+              | None -> failwith "Parameter not bound")
     end
 
     module Compiled = struct

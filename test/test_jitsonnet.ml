@@ -632,7 +632,7 @@ let test_desugar_object () =
                              [ Var "$v2" ],
                              [] );
                          Function
-                           ( [ ("$v3", Error (String "Parameter not bound")) ],
+                           ( [ ("$v3", None) ],
                              Local
                                ( [ ("x", ArrayIndex (Var "$v2", Var "$v3")) ],
                                  Array [ Array [ Var "x" ] ] ) );
@@ -663,7 +663,7 @@ let test_desugar_array () =
                          [ Var "$v1" ],
                          [] );
                      Function
-                       ( [ ("$v2", Error (String "Parameter not bound")) ],
+                       ( [ ("$v2", None) ],
                          Local
                            ( [ ("x", ArrayIndex (Var "$v1", Var "$v2")) ],
                              Array [ Var "x" ] ) );

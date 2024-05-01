@@ -115,7 +115,7 @@ module Core = struct
     | Call of (expr * expr list * (id * expr) list)
     | Error of expr
     | False
-    | Function of ((id * expr) list * expr)
+    | Function of ((id * expr option) list * expr)
     | If of (expr * expr * expr)
     | Import of string
     | Importbin of string
@@ -154,7 +154,9 @@ module Core = struct
       | Error e -> f (Error (aux e))
       | Unary (op, e) -> f (Unary (op, aux e))
       | Function (xs, e) ->
-          f (Function (List.map (fun (x, y) -> (x, aux y)) xs, aux e))
+          f
+            (Function
+               (List.map (fun (x, y) -> (x, y |> Option.map aux)) xs, aux e))
       | Local (xs, e) ->
           f (Local (List.map (fun (x, y) -> (x, aux y)) xs, aux e))
       | If (e1, e2, e3) -> f (If (aux e1, aux e2, aux e3))
@@ -192,7 +194,17 @@ module Core = struct
       | Error e | Unary (_, e) ->
           let acc = aux acc e in
           f acc node
-      | Function (xs, e) | Local (xs, e) ->
+      | Function (xs, e) ->
+          let acc =
+            xs
+            |> List.fold_left
+                 (fun acc (_, x) ->
+                   match x with None -> acc | Some x -> aux acc x)
+                 acc
+          in
+          let acc = aux acc e in
+          f acc node
+      | Local (xs, e) ->
           let acc = xs |> List.fold_left (fun acc (_, x) -> aux acc x) acc in
           let acc = aux acc e in
           f acc node
@@ -398,7 +410,7 @@ and desugar_bind b = function
   | BindFunc (id, params, e) -> (id, desugar_expr b (Function (params, e)))
 
 and desugar_param b = function
-  | id, None -> (id, Core.Error (String "Parameter not bound"))
-  | id, Some e -> (id, desugar_expr b e)
+  | id, None -> (id, None)
+  | id, Some e -> (id, Some (desugar_expr b e))
 
 let desugar { expr } = desugar_expr false expr
