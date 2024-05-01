@@ -177,11 +177,7 @@ let rec compile_expr ({ loc; _ } as env) :
                        [ estring ~loc id; compile_expr_lazy env e ])
               |> elist ~loc] )
         |> Lazy.force]
-  | Error e ->
-      [%expr
-        let v = [%e compile_expr env e] in
-        manifestation Format.str_formatter v;
-        failwith (Format.flush_str_formatter ())]
+  | Error e -> [%expr error [%e compile_expr env e]]
   | Local (binds, e) ->
       with_binds env (binds |> List.map fst) @@ fun () ->
       pexp_let ~loc Recursive
@@ -226,13 +222,12 @@ let rec compile_expr ({ loc; _ } as env) :
                        assrts |> List.map (compile_expr_lazy env) |> elist ~loc],
                      let tbl = Hashtbl.create 0 in
                      [%e
-                       fields
+                       fields |> List.rev
                        |> List.fold_left
                             (fun e (e1, h, e2) ->
                               [%expr
-                                object_field tbl [%e eint ~loc h]
-                                  (lazy [%e compile_expr env e2])
-                                  [%e e1];
+                                object_field tbl [%e eint ~loc h] [%e e1]
+                                  (lazy [%e compile_expr env e2]);
                                 [%e e]])
                             [%expr tbl]] ))]
         :: bindings
@@ -262,9 +257,8 @@ let rec compile_expr ({ loc; _ } as env) :
                                 ~expr:[%expr v];
                             ]
                             [%expr
-                              object_field'
-                                (lazy [%e compiled_e2])
-                                [%e compiled_e1]]])
+                              object_field' [%e compiled_e1]
+                                (lazy [%e compiled_e2])]])
                  |> Hashtbl.of_seq ))
         in
         Lazy.force [%e evar ~loc (Hashtbl.find env.vars "self")]]
@@ -562,12 +556,14 @@ let compile root_prog_path progs bins strs =
             Object (assrts1 @ assrts2, tbl)
         | _ -> failwith "invalid add"
 
-      let object_field tbl h v = function
+      let object_field tbl h k v =
+        match k with
         | Null -> ()
         | String k -> Hashtbl.add tbl k (h, v)
         | _ -> failwith "field name must be string, got something else"
 
-      let object_field' v = function
+      let object_field' k v =
+        match k with
         | Null -> None
         | String s -> Some (s, (1, v))
         | _ -> failwith "field name must be string, got something else"
@@ -587,6 +583,10 @@ let compile root_prog_path progs bins strs =
         | True -> f2 ()
         | False -> f3 ()
         | _ -> failwith "invalid if condition"
+
+      let error v =
+        manifestation Format.str_formatter v;
+        failwith (Format.flush_str_formatter ())
     end
 
     open I
