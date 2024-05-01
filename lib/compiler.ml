@@ -227,7 +227,7 @@ let rec compile_expr ({ loc; _ } as env) :
                             (fun e (e1, h, e2) ->
                               [%expr
                                 object_field tbl [%e eint ~loc h] [%e e1]
-                                  (lazy [%e compile_expr env e2]);
+                                  [%e compile_expr_lazy env e2];
                                 [%e e]])
                             [%expr tbl]] ))]
         :: bindings
@@ -239,7 +239,7 @@ let rec compile_expr ({ loc; _ } as env) :
       with_binds env [ x ] @@ fun () ->
       let compiled_e1 (* with env + x *) = compile_expr env e1 in
       with_binds env [ "self" ] @@ fun () ->
-      let compiled_e2 (* with env + x, self *) = compile_expr env e2 in
+      let compiled_e2 (* with env + x, self *) = compile_expr_lazy env e2 in
       [%expr
         let rec [%p pvar ~loc (Hashtbl.find env.vars "self")] =
           lazy
@@ -257,8 +257,7 @@ let rec compile_expr ({ loc; _ } as env) :
                                 ~expr:[%expr v];
                             ]
                             [%expr
-                              object_field' [%e compiled_e1]
-                                (lazy [%e compiled_e2])]])
+                              object_field' [%e compiled_e1] [%e compiled_e2]]])
                  |> Hashtbl.of_seq ))
         in
         Lazy.force [%e evar ~loc (Hashtbl.find env.vars "self")]]
@@ -275,7 +274,16 @@ let rec compile_expr ({ loc; _ } as env) :
       [%expr Lazy.force [%e evar ~loc (Hashtbl.find env.vars import_id)]]
 
 and compile_expr_lazy ({ loc; _ } as env) e =
-  [%expr lazy [%e compile_expr env e]]
+  match compile_expr env e with
+  | {
+   pexp_desc =
+     Parsetree.Pexp_apply
+       ( { pexp_desc = Pexp_ident { txt = Lident "Lazy.force"; _ }; _ },
+         [ (Nolabel, ({ pexp_desc = Pexp_ident _; _ } as var)) ] );
+   _;
+  } ->
+      var
+  | e -> [%expr lazy [%e e]]
 
 let compile root_prog_path progs bins strs =
   let loc = !Ast_helper.default_loc in
@@ -298,7 +306,7 @@ let compile root_prog_path progs bins strs =
                     loc;
                     txt = Hashtbl.find env.vars (get_import_id `Import path);
                   })
-             ~expr:[%expr lazy [%e compile_expr env e]])
+             ~expr:[%expr [%e compile_expr_lazy env e]])
   in
   let bins_bindings =
     bins
