@@ -230,16 +230,9 @@ let rec compile_expr ({ loc; _ } as env) :
                        |> List.fold_left
                             (fun e (e1, h, e2) ->
                               [%expr
-                                (match [%e e1] with
-                                | I.Null -> ()
-                                | I.String k ->
-                                    Hashtbl.add tbl k
-                                      ( [%e eint ~loc h],
-                                        lazy [%e compile_expr env e2] )
-                                | _ ->
-                                    failwith
-                                      "field name must be string, got \
-                                       something else");
+                                I.object_field tbl [%e eint ~loc h]
+                                  (lazy [%e compile_expr env e2])
+                                  [%e e1];
                                 [%e e]])
                             [%expr tbl]] ))]
         :: bindings
@@ -573,6 +566,11 @@ let compile root_prog_path progs bins strs =
                    Hashtbl.add tbl f (h, v2));
             Object (assrts1 @ assrts2, tbl)
         | _ -> failwith "invalid add"
+
+      let object_field tbl h v = function
+        | Null -> ()
+        | String k -> Hashtbl.add tbl k (h, v)
+        | _ -> failwith "field name must be string, got something else"
     end
 
     module Compiled = struct
