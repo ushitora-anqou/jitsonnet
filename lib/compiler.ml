@@ -185,7 +185,7 @@ let rec compile_expr ({ loc; _ } as env) :
         |> List.map @@ fun (id, e) ->
            value_binding ~loc
              ~pat:(ppat_var ~loc { loc; txt = Hashtbl.find env.vars id })
-             ~expr:(compile_expr_lazy env e))
+             ~expr:(compile_expr_lazy ~in_bind:true env e))
         (compile_expr env e)
   | Self -> compile_expr env (Var "self")
   | Super -> compile_expr env (Var "super")
@@ -209,7 +209,7 @@ let rec compile_expr ({ loc; _ } as env) :
         |> List.map (fun (id, e) ->
                value_binding ~loc
                  ~pat:(ppat_var ~loc { loc; txt = Hashtbl.find env.vars id })
-                 ~expr:(compile_expr_lazy env e))
+                 ~expr:(compile_expr_lazy ~in_bind:true env e))
       in
       let bindings =
         value_binding ~loc
@@ -273,15 +273,16 @@ let rec compile_expr ({ loc; _ } as env) :
       in
       [%expr Lazy.force [%e evar ~loc (Hashtbl.find env.vars import_id)]]
 
-and compile_expr_lazy ({ loc; _ } as env) e =
+and compile_expr_lazy ?(in_bind = false) ({ loc; _ } as env) e =
   match compile_expr env e with
   | {
    pexp_desc =
      Parsetree.Pexp_apply
-       ( { pexp_desc = Pexp_ident { txt = Lident "Lazy.force"; _ }; _ },
+       ( { pexp_desc = Pexp_ident { txt = Ldot (Lident "Lazy", "force"); _ }; _ },
          [ (Nolabel, ({ pexp_desc = Pexp_ident _; _ } as var)) ] );
    _;
-  } ->
+  }
+    when not in_bind ->
       var
   | e -> [%expr lazy [%e e]]
 
@@ -306,7 +307,7 @@ let compile root_prog_path progs bins strs =
                     loc;
                     txt = Hashtbl.find env.vars (get_import_id `Import path);
                   })
-             ~expr:[%expr [%e compile_expr_lazy env e]])
+             ~expr:[%expr [%e compile_expr_lazy ~in_bind:true env e]])
   in
   let bins_bindings =
     bins
