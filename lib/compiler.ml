@@ -31,17 +31,17 @@ let pexp_let ~loc recflag binds body =
 
 let rec compile_expr ({ loc; _ } as env) :
     Syntax.Core.expr -> Parsetree.expression = function
-  | Null -> [%expr I.Null]
-  | True -> [%expr I.True]
-  | False -> [%expr I.False]
-  | String s -> [%expr I.String [%e estring ~loc s]]
-  | Number n -> [%expr I.Double [%e efloat ~loc (string_of_float n)]]
+  | Null -> [%expr Null]
+  | True -> [%expr True]
+  | False -> [%expr False]
+  | String s -> [%expr String [%e estring ~loc s]]
+  | Number n -> [%expr Double [%e efloat ~loc (string_of_float n)]]
   | Array xs ->
       [%expr
-        I.Array [%e xs |> List.map (compile_expr_lazy env) |> pexp_array ~loc]]
+        Array [%e xs |> List.map (compile_expr_lazy env) |> pexp_array ~loc]]
   | ArrayIndex (e1, e2) ->
       [%expr
-        I.array_index
+        array_index
           (fun () -> [%e compile_expr env e1])
           (fun () -> [%e compile_expr env e2])]
   | Binary (e1, `Add, e2) ->
@@ -55,94 +55,94 @@ let rec compile_expr ({ loc; _ } as env) :
             Fun.protect ~finally:(fun () -> Hashtbl.remove env.vars "super")
             @@ fun () -> compile_expr env e2]
         in
-        I.binary_add super lhs rhs]
+        binary_add super lhs rhs]
   | Binary (e1, `Sub, e2) ->
       [%expr
-        I.Double
-          (I.get_double [%e compile_expr env e1]
-          -. I.get_double [%e compile_expr env e2])]
+        Double
+          (get_double [%e compile_expr env e1]
+          -. get_double [%e compile_expr env e2])]
   | Binary (e1, `Mult, e2) ->
       [%expr
-        I.Double
-          (I.get_double [%e compile_expr env e1]
-          *. I.get_double [%e compile_expr env e2])]
+        Double
+          (get_double [%e compile_expr env e1]
+          *. get_double [%e compile_expr env e2])]
   | Binary (e1, `Div, e2) ->
       [%expr
-        I.Double
-          (I.get_double [%e compile_expr env e1]
-          /. I.get_double [%e compile_expr env e2])]
+        Double
+          (get_double [%e compile_expr env e1]
+          /. get_double [%e compile_expr env e2])]
   | Binary (e1, `And, e2) ->
       [%expr
-        match I.get_bool [%e compile_expr env e1] with
-        | false -> I.False
-        | true -> I.get_bool [%e compile_expr env e2] |> I.value_of_bool]
+        match get_bool [%e compile_expr env e1] with
+        | false -> False
+        | true -> get_bool [%e compile_expr env e2] |> value_of_bool]
   | Binary (e1, `Or, e2) ->
       [%expr
-        match I.get_bool [%e compile_expr env e1] with
-        | true -> I.True
-        | false -> I.get_bool [%e compile_expr env e2] |> I.value_of_bool]
+        match get_bool [%e compile_expr env e1] with
+        | true -> True
+        | false -> get_bool [%e compile_expr env e2] |> value_of_bool]
   | Binary (e1, `Land, e2) ->
       [%expr
-        I.Double
-          ((I.get_double [%e compile_expr env e1] |> int_of_float)
-           land (I.get_double [%e compile_expr env e2] |> int_of_float)
+        Double
+          ((get_double [%e compile_expr env e1] |> int_of_float)
+           land (get_double [%e compile_expr env e2] |> int_of_float)
           |> float_of_int)]
   | Binary (e1, `Lor, e2) ->
       [%expr
-        I.Double
-          ((I.get_double [%e compile_expr env e1] |> int_of_float)
-           lor (I.get_double [%e compile_expr env e2] |> int_of_float)
+        Double
+          ((get_double [%e compile_expr env e1] |> int_of_float)
+           lor (get_double [%e compile_expr env e2] |> int_of_float)
           |> float_of_int)]
   | Binary (e1, `Xor, e2) ->
       [%expr
-        I.Double
-          ((I.get_double [%e compile_expr env e1] |> int_of_float)
-           lxor (I.get_double [%e compile_expr env e2] |> int_of_float)
+        Double
+          ((get_double [%e compile_expr env e1] |> int_of_float)
+           lxor (get_double [%e compile_expr env e2] |> int_of_float)
           |> float_of_int)]
   | Binary (e1, `Lsl, e2) ->
       [%expr
-        I.Double
-          ((I.get_double [%e compile_expr env e1] |> int_of_float)
-           lsl (I.get_double [%e compile_expr env e2] |> int_of_float)
+        Double
+          ((get_double [%e compile_expr env e1] |> int_of_float)
+           lsl (get_double [%e compile_expr env e2] |> int_of_float)
           |> float_of_int)]
   | Binary (e1, `Lsr, e2) ->
       [%expr
-        I.Double
-          ((I.get_double [%e compile_expr env e1] |> int_of_float)
-           lsr (I.get_double [%e compile_expr env e2] |> int_of_float)
+        Double
+          ((get_double [%e compile_expr env e1] |> int_of_float)
+           lsr (get_double [%e compile_expr env e2] |> int_of_float)
           |> float_of_int)]
   | Binary (e1, `Lt, e2) ->
       [%expr
-        if I.std_cmp ([%e compile_expr env e1], [%e compile_expr env e2]) < 0
-        then I.True
-        else I.False]
+        if std_cmp ([%e compile_expr env e1], [%e compile_expr env e2]) < 0 then
+          True
+        else False]
   | Binary (e1, `Le, e2) ->
       [%expr
-        if I.std_cmp ([%e compile_expr env e1], [%e compile_expr env e2]) <= 0
-        then I.True
-        else I.False]
+        if std_cmp ([%e compile_expr env e1], [%e compile_expr env e2]) <= 0
+        then True
+        else False]
   | Binary (e1, `Gt, e2) ->
       [%expr
-        if I.std_cmp ([%e compile_expr env e1], [%e compile_expr env e2]) > 0
-        then I.True
-        else I.False]
+        if std_cmp ([%e compile_expr env e1], [%e compile_expr env e2]) > 0 then
+          True
+        else False]
   | Binary (e1, `Ge, e2) ->
       [%expr
-        if I.std_cmp ([%e compile_expr env e1], [%e compile_expr env e2]) >= 0
-        then I.True
-        else I.False]
+        if std_cmp ([%e compile_expr env e1], [%e compile_expr env e2]) >= 0
+        then True
+        else False]
   | Unary (Not, e) ->
-      [%expr I.get_bool [%e compile_expr env e] |> not |> I.value_of_bool]
+      [%expr get_bool [%e compile_expr env e] |> not |> value_of_bool]
   | Unary (Lnot, e) ->
       [%expr
-        I.Double
-          (I.get_double [%e compile_expr env e]
+        Double
+          (get_double [%e compile_expr env e]
           |> int_of_float |> lnot |> float_of_int)]
-  | Unary (Neg, e) -> [%expr I.Double (-.I.get_double [%e compile_expr env e])]
-  | Unary (Pos, e) -> [%expr I.Double (+.I.get_double [%e compile_expr env e])]
+  | Unary (Neg, e) -> [%expr Double (-.get_double [%e compile_expr env e])]
+  | Unary (Pos, e) -> [%expr Double (+.get_double [%e compile_expr env e])]
   | If (e1, e2, e3) ->
       [%expr
-        I.if_
+        if_
           (fun () -> [%e compile_expr env e1])
           (fun () -> [%e compile_expr env e2])
           (fun () -> [%e compile_expr env e3])]
@@ -155,20 +155,20 @@ let rec compile_expr ({ loc; _ } as env) :
              ~pat:(ppat_var ~loc { loc; txt = Hashtbl.find env.vars id })
              ~expr:
                [%expr
-                 I.function_param [%e eint ~loc i] positional
-                   [%e estring ~loc id] named
+                 function_param [%e eint ~loc i] positional [%e estring ~loc id]
+                   named
                    [%e
                      match e with
                      | None -> [%expr None]
                      | Some e -> [%expr Some (lazy [%e compile_expr env e])]]]
       in
       [%expr
-        I.Function
+        Function
           (fun (positional, named) ->
             [%e pexp_let ~loc Nonrecursive binds (compile_expr_lazy env body)])]
   | Call (e, positional, named) ->
       [%expr
-        I.get_function [%e compile_expr env e]
+        get_function [%e compile_expr env e]
           ( [%e pexp_array ~loc (positional |> List.map (compile_expr_lazy env))],
             [%e
               named
@@ -180,7 +180,7 @@ let rec compile_expr ({ loc; _ } as env) :
   | Error e ->
       [%expr
         let v = [%e compile_expr env e] in
-        I.manifestation Format.str_formatter v;
+        manifestation Format.str_formatter v;
         failwith (Format.flush_str_formatter ())]
   | Local (binds, e) ->
       with_binds env (binds |> List.map fst) @@ fun () ->
@@ -221,7 +221,7 @@ let rec compile_expr ({ loc; _ } as env) :
           ~expr:
             [%expr
               lazy
-                (I.Object
+                (Object
                    ( [%e
                        assrts |> List.map (compile_expr_lazy env) |> elist ~loc],
                      let tbl = Hashtbl.create 0 in
@@ -230,7 +230,7 @@ let rec compile_expr ({ loc; _ } as env) :
                        |> List.fold_left
                             (fun e (e1, h, e2) ->
                               [%expr
-                                I.object_field tbl [%e eint ~loc h]
+                                object_field tbl [%e eint ~loc h]
                                   (lazy [%e compile_expr env e2])
                                   [%e e1];
                                 [%e e]])
@@ -248,9 +248,9 @@ let rec compile_expr ({ loc; _ } as env) :
       [%expr
         let rec [%p pvar ~loc (Hashtbl.find env.vars "self")] =
           lazy
-            (I.Object
+            (Object
                ( [],
-                 [%e compiled_e3] |> I.get_array |> Array.to_seq
+                 [%e compiled_e3] |> get_array |> Array.to_seq
                  |> Seq.filter_map (fun v ->
                         [%e
                           pexp_let ~loc Nonrecursive
@@ -262,7 +262,7 @@ let rec compile_expr ({ loc; _ } as env) :
                                 ~expr:[%expr v];
                             ]
                             [%expr
-                              I.object_field'
+                              object_field'
                                 (lazy [%e compiled_e2])
                                 [%e compiled_e1]]])
                  |> Hashtbl.of_seq ))
@@ -319,7 +319,7 @@ let compile root_prog_path progs bins strs =
              ~expr:
                [%expr
                  lazy
-                   (I.Array
+                   (Array
                       (let path = [%e estring ~loc path] in
                        let ic =
                          try open_in_bin path
@@ -332,7 +332,7 @@ let compile root_prog_path progs bins strs =
                              match In_channel.input_byte ic with
                              | None -> acc
                              | Some b ->
-                                 loop (lazy (I.Double (float_of_int b)) :: acc)
+                                 loop (lazy (Double (float_of_int b)) :: acc)
                            in
                            loop [] |> List.rev |> Array.of_list)))])
   in
@@ -350,7 +350,7 @@ let compile root_prog_path progs bins strs =
              ~expr:
                [%expr
                  lazy
-                   (I.String
+                   (String
                       (let path = [%e estring ~loc path] in
                        let ic =
                          try open_in_bin path
@@ -589,26 +589,27 @@ let compile root_prog_path progs bins strs =
         | _ -> failwith "invalid if condition"
     end
 
+    open I
+
     module Compiled = struct
       let [%p pvar ~loc (Hashtbl.find env.vars "super")] =
-        lazy (I.Object ([], Hashtbl.create 0))
+        lazy (Object ([], Hashtbl.create 0))
 
       let [%p pvar ~loc (Hashtbl.find env.vars "std")] =
         lazy
-          (I.Object
+          (Object
              ( [],
                let tbl = Hashtbl.create 10 in
                Hashtbl.add tbl "primitiveEquals"
-                 (1, lazy (I.Function I.std_primitive_equals));
-               Hashtbl.add tbl "length" (1, lazy (I.Function I.std_length));
-               Hashtbl.add tbl "makeArray"
-                 (1, lazy (I.Function I.std_make_array));
-               Hashtbl.add tbl "type" (1, lazy (I.Function I.std_type));
-               Hashtbl.add tbl "filter" (1, lazy (I.Function I.std_filter));
+                 (1, lazy (Function std_primitive_equals));
+               Hashtbl.add tbl "length" (1, lazy (Function std_length));
+               Hashtbl.add tbl "makeArray" (1, lazy (Function std_make_array));
+               Hashtbl.add tbl "type" (1, lazy (Function std_type));
+               Hashtbl.add tbl "filter" (1, lazy (Function std_filter));
                Hashtbl.add tbl "objectHasEx"
-                 (1, lazy (I.Function I.std_object_has_ex));
+                 (1, lazy (Function std_object_has_ex));
                Hashtbl.add tbl "objectFieldsEx"
-                 (1, lazy (I.Function I.std_object_fields_ex));
+                 (1, lazy (Function std_object_fields_ex));
                tbl ))
 
       let () =
@@ -616,7 +617,7 @@ let compile root_prog_path progs bins strs =
           pexp_let ~loc Recursive
             (progs_bindings @ bins_bindings @ strs_bindings)
             [%expr
-              I.manifestation Format.std_formatter
+              manifestation Format.std_formatter
                 (Lazy.force
                    [%e
                      evar ~loc
