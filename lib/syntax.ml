@@ -123,7 +123,11 @@ module Core = struct
     | Local of ((id * expr) list * expr)
     | Null
     | Number of float
-    | Object of (expr list * (expr * h * expr) list)
+    | Object of {
+        binds : (id * expr) list;
+        assrts : expr list;
+        fields : (expr * h * expr) list;
+      }
     | ObjectFor of (expr * expr * id * expr)
     | Self
     | String of string
@@ -155,11 +159,15 @@ module Core = struct
           f (Local (List.map (fun (x, y) -> (x, aux y)) xs, aux e))
       | If (e1, e2, e3) -> f (If (aux e1, aux e2, aux e3))
       | ObjectFor (e1, e2, x, e3) -> f (ObjectFor (aux e1, aux e2, x, aux e3))
-      | Object (xs, ys) ->
+      | Object { binds; assrts; fields } ->
           f
             (Object
-               ( List.map aux xs,
-                 List.map (fun (e1, h, e2) -> (aux e1, h, aux e2)) ys ))
+               {
+                 binds = binds |> List.map (fun (id, x) -> (id, aux x));
+                 assrts = assrts |> List.map aux;
+                 fields =
+                   fields |> List.map (fun (e1, h, e2) -> (aux e1, h, aux e2));
+               })
     in
     aux root
 
@@ -193,10 +201,11 @@ module Core = struct
           let acc = aux acc e2 in
           let acc = aux acc e3 in
           f acc node
-      | Object (xs, ys) ->
-          let acc = xs |> List.fold_left aux acc in
+      | Object { binds; assrts; fields } ->
+          let acc = binds |> List.fold_left (fun acc (_, x) -> aux acc x) acc in
+          let acc = assrts |> List.fold_left aux acc in
           let acc =
-            ys
+            fields
             |> List.fold_left (fun acc (e1, _, e2) -> aux (aux acc e1) e2) acc
           in
           f acc node
@@ -264,20 +273,23 @@ let rec desugar_expr b = function
         members
         |> List.filter_map (function MemberObjlocal l -> Some l | _ -> None)
       in
-      let binds = if b then binds else Bind ("$", Self) :: binds in
+      let binds =
+        (if b then binds else Bind ("$", Self) :: binds)
+        |> List.map (desugar_bind b)
+      in
       let assrts =
         members
         |> List.filter_map (function
-             | MemberAssert assrt -> Some (desugar_assert binds assrt)
+             | MemberAssert assrt -> Some (desugar_assert [] assrt)
              | _ -> None)
       in
       let fields =
         members
         |> List.filter_map (function
-             | MemberField field -> Some (desugar_field binds b field)
+             | MemberField field -> Some (desugar_field [] b field)
              | _ -> None)
       in
-      let obj = Core.Object (assrts, fields) in
+      let obj = Core.Object { binds; assrts; fields } in
       if b then
         Core.Local
           ([ ("$outerself", Core.Self); ("$outersuper", Core.Super) ], obj)
@@ -352,7 +364,8 @@ and desugar_arrcomp e b compspec =
 and desugar_assert binds = function
   | e, None -> desugar_assert binds (e, Some (String "Assertion failed"))
   | e, Some e' ->
-      desugar_expr true (Local (binds, If (e, Null, Some (Error e'))))
+      assert (binds = []);
+      desugar_expr true (If (e, Null, Some (Error e')))
 
 and desugar_field binds b = function
   | Field ((FieldnameID id | FieldnameString id), plus, h, e) ->
@@ -361,7 +374,8 @@ and desugar_field binds b = function
       desugar_field binds b
         (FieldFunc (FieldnameExpr (String id), params, h, e))
   | Field (FieldnameExpr e, false, h, e') ->
-      (desugar_expr b e, h, desugar_expr true (Local (binds, e')))
+      assert (binds = []);
+      (desugar_expr b e, h, desugar_expr true e')
   | FieldFunc (FieldnameExpr e, params, h, e') ->
       desugar_field binds b
         (Field (FieldnameExpr e, false, h, Function (params, e')))

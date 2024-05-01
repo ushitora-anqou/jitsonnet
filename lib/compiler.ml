@@ -232,38 +232,51 @@ let rec compile_expr ({ loc; _ } as env) :
               (match Hashtbl.find_opt env.vars id with
               | Some s -> s
               | None -> failwith ("missing variable: " ^ id))]]
-  | Object (assrts, fields) ->
+  | Object { binds; assrts; fields } ->
       let fields (* compile keys with outer env *) =
         fields
         |> List.map (fun (e1, Syntax.H h, e2) -> (compile_expr env e1, h, e2))
       in
 
-      with_binds env [ "self" ] @@ fun () ->
-      [%expr
-        let rec [%p pvar ~loc (Hashtbl.find env.vars "self")] =
-          lazy
-            (I.Object
-               ( [%e assrts |> List.map (compile_expr_lazy env) |> elist ~loc],
-                 let tbl = Hashtbl.create 0 in
-                 [%e
-                   fields
-                   |> List.fold_left
-                        (fun e (e1, h, e2) ->
-                          [%expr
-                            (match [%e e1] with
-                            | I.Null -> ()
-                            | I.String k ->
-                                Hashtbl.add tbl k
-                                  ( [%e eint ~loc h],
-                                    lazy [%e compile_expr env e2] )
-                            | _ ->
-                                failwith
-                                  "field name must be string, got something \
-                                   else");
-                            [%e e]])
-                        [%expr tbl]] ))
-        in
-        Lazy.force [%e evar ~loc (Hashtbl.find env.vars "self")]]
+      with_binds env ("self" :: (binds |> List.map fst)) @@ fun () ->
+      let bindings =
+        binds
+        |> List.map (fun (id, e) ->
+               value_binding ~loc
+                 ~pat:(ppat_var ~loc { loc; txt = Hashtbl.find env.vars id })
+                 ~expr:(compile_expr_lazy env e))
+      in
+      let bindings =
+        value_binding ~loc
+          ~pat:(pvar ~loc (Hashtbl.find env.vars "self"))
+          ~expr:
+            [%expr
+              lazy
+                (I.Object
+                   ( [%e
+                       assrts |> List.map (compile_expr_lazy env) |> elist ~loc],
+                     let tbl = Hashtbl.create 0 in
+                     [%e
+                       fields
+                       |> List.fold_left
+                            (fun e (e1, h, e2) ->
+                              [%expr
+                                (match [%e e1] with
+                                | I.Null -> ()
+                                | I.String k ->
+                                    Hashtbl.add tbl k
+                                      ( [%e eint ~loc h],
+                                        lazy [%e compile_expr env e2] )
+                                | _ ->
+                                    failwith
+                                      "field name must be string, got \
+                                       something else");
+                                [%e e]])
+                            [%expr tbl]] ))]
+        :: bindings
+      in
+      pexp_let ~loc Recursive bindings
+        [%expr Lazy.force [%e evar ~loc (Hashtbl.find env.vars "self")]]
   | ObjectFor (e1, e2, x, e3) ->
       let compiled_e3 (* with env *) = compile_expr env e3 in
       with_binds env [ x ] @@ fun () ->

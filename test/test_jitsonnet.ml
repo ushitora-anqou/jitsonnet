@@ -523,40 +523,52 @@ let assert_core_expr expected got =
 
 let test_desugar_object () =
   Syntax.reset_gensym_i ();
-  assert_core_expr (Object ([], [])) "{}";
   assert_core_expr
-    (Object ([], [ (String "x", H 1, Local ([ ("$", Self) ], Number 1.)) ]))
+    (Object { binds = [ ("$", Self) ]; assrts = []; fields = [] })
+    "{}";
+  assert_core_expr
+    (Object
+       {
+         binds = [ ("$", Self) ];
+         assrts = [];
+         fields = [ (String "x", H 1, Number 1.) ];
+       })
     "{x: 1}";
   assert_core_expr
     (Object
-       ( [],
-         [
-           ( String "foo",
-             H 1,
-             Local ([ ("$", Self); ("a", String "b") ], String "bar") );
-         ] ))
+       {
+         binds = [ ("$", Self); ("a", String "b") ];
+         assrts = [];
+         fields =
+           [
+             (String "foo", H 1, String "bar");
+             (String "hoge", H 1, String "piyo");
+           ];
+       })
     {|
 {
   local a = "b",
   ["foo"]: "bar",
+  ["hoge"]: "piyo",
 }|};
   assert_core_expr
     (Object
-       ( [],
-         [
-           ( String "foo",
-             H 1,
-             Local
-               ( [ ("$", Self); ("a", String "b") ],
-                 If
-                   ( Call
-                       ( ArrayIndex (Var "std", String "objectHasEx"),
-                         [ Super; String "foo"; True ],
-                         [] ),
-                     Binary
-                       (ArrayIndex (Super, String "foo"), `Add, String "bar"),
-                     String "bar" ) ) );
-         ] ))
+       {
+         binds = [ ("$", Self); ("a", String "b") ];
+         assrts = [];
+         fields =
+           [
+             ( String "foo",
+               H 1,
+               If
+                 ( Call
+                     ( ArrayIndex (Var "std", String "objectHasEx"),
+                       [ Super; String "foo"; True ],
+                       [] ),
+                   Binary (ArrayIndex (Super, String "foo"), `Add, String "bar"),
+                   String "bar" ) );
+           ];
+       })
     {|
 {
   local a = "b",
@@ -564,33 +576,40 @@ let test_desugar_object () =
 }|};
   assert_core_expr
     (Object
-       ( [
-           Local
-             ( [ ("$", Self) ],
-               If
-                 ( Call
-                     ( ArrayIndex (Var "std", String "equals"),
-                       [ Var "x"; Number 1. ],
-                       [] ),
-                   Null,
-                   Error (String "Assertion failed") ) );
-         ],
-         [ (String "x", H 1, Local ([ ("$", Self) ], Number 1.)) ] ))
+       {
+         binds = [ ("$", Self) ];
+         assrts =
+           [
+             If
+               ( Call
+                   ( ArrayIndex (Var "std", String "equals"),
+                     [ Var "x"; Number 1. ],
+                     [] ),
+                 Null,
+                 Error (String "Assertion failed") );
+           ];
+         fields = [ (String "x", H 1, Number 1.) ];
+       })
     "{x: 1, assert x == 1}";
   assert_core_expr
     (Object
-       ( [],
-         [
-           ( String "x",
-             Syntax.H 1,
-             Local
-               ( [ ("$", Self) ],
-                 Local
-                   ( [ ("$outerself", Self); ("$outersuper", Super) ],
-                     Object
-                       ([], [ (String "y", Syntax.H 1, Local ([], Number 1.)) ])
-                   ) ) );
-         ] ))
+       {
+         binds = [ ("$", Self) ];
+         assrts = [];
+         fields =
+           [
+             ( String "x",
+               Syntax.H 1,
+               Local
+                 ( [ ("$outerself", Self); ("$outersuper", Super) ],
+                   Object
+                     {
+                       binds = [];
+                       assrts = [];
+                       fields = [ (String "y", Syntax.H 1, Number 1.) ];
+                     } ) );
+           ];
+       })
     "{x: {y: 1}}";
   assert_core_expr
     (ObjectFor
