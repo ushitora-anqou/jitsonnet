@@ -262,14 +262,9 @@ let rec compile_expr ({ loc; _ } as env) :
                                 ~expr:[%expr v];
                             ]
                             [%expr
-                              match [%e compiled_e1] with
-                              | I.Null -> None
-                              | I.String s ->
-                                  Some (s, (1, lazy [%e compiled_e2]))
-                              | _ ->
-                                  failwith
-                                    "field name must be string, got something \
-                                     else"]])
+                              I.object_field'
+                                (lazy [%e compiled_e2])
+                                [%e compiled_e1]]])
                  |> Hashtbl.of_seq ))
         in
         Lazy.force [%e evar ~loc (Hashtbl.find env.vars "self")]]
@@ -570,6 +565,11 @@ let compile root_prog_path progs bins strs =
       let object_field tbl h v = function
         | Null -> ()
         | String k -> Hashtbl.add tbl k (h, v)
+        | _ -> failwith "field name must be string, got something else"
+
+      let object_field' v = function
+        | Null -> None
+        | String s -> Some (s, (1, v))
         | _ -> failwith "field name must be string, got something else"
     end
 
