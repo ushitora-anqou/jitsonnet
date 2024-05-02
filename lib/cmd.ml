@@ -2,12 +2,12 @@ open Ppxlib
 
 let errf fmt = Printf.ksprintf (fun s -> Error s) fmt
 
-let run file_path =
+let run file_path bundle_dir =
   match Loader.load_root file_path with
   | Error msg ->
       Logs.err (fun m -> m "%s" msg);
       exit 1
-  | Ok t -> t |> Loader.compile |> Executor.execute_from_cli
+  | Ok t -> t |> Loader.compile |> Executor.execute_from_cli ~bundle_dir
 
 let compile file_path target =
   let target =

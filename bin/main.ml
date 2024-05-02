@@ -12,7 +12,11 @@ let () =
           v (info "run")
             Term.(
               const run
-              $ Arg.(required & pos 0 (some string) None & info ~docv:"FILE" []));
+              $ Arg.(required & pos 0 (some string) None & info ~docv:"FILE" [])
+              $ Arg.(
+                  required
+                  & pos 0 (some string) None
+                  & info ~docv:"BUNDLE-DIR" []));
           v (info "compile")
             Term.(
               const compile
