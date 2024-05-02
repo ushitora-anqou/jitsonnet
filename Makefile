@@ -6,5 +6,5 @@ build:
 	cd bundle && ocamlc -c stdjsonnet.ml
 
 .PHONY: test
-test:
+test: build
 	dune runtest -f
