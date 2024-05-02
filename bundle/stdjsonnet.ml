@@ -2,25 +2,7 @@ open Common
 module Compiled =
   struct
     let var___001__super = lazy (Object ([], (Hashtbl.create 0)))
-    let var___002__std =
-      lazy
-        (let primitive_std =
-           Object
-             ([],
-               (let tbl = Hashtbl.create 10 in
-                Hashtbl.add tbl "primitiveEquals"
-                  (1, (lazy (Function std_primitive_equals)));
-                Hashtbl.add tbl "length" (1, (lazy (Function std_length)));
-                Hashtbl.add tbl "makeArray"
-                  (1, (lazy (Function std_make_array)));
-                Hashtbl.add tbl "type" (1, (lazy (Function std_type)));
-                Hashtbl.add tbl "filter" (1, (lazy (Function std_filter)));
-                Hashtbl.add tbl "objectHasEx"
-                  (1, (lazy (Function std_object_has_ex)));
-                Hashtbl.add tbl "objectFieldsEx"
-                  (1, (lazy (Function std_object_fields_ex)));
-                tbl)) in
-         primitive_std)
+    let var___002__std = lazy (Object ([], (Hashtbl.create 0)))
     let v =
       let rec var___003__prog__home =
         lazy

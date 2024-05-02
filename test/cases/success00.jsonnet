@@ -77,4 +77,5 @@
   (importbin "success00_import.jsonnet"),
   (importstr "success00_import.jsonnet"),
   {a: x, local x = 3, assert true},
+  [ x for x in [1,2,3] ],
 ]

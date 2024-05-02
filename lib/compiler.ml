@@ -373,31 +373,25 @@ let compile ?(target = `Main) root_prog_path progs bins strs =
 
       let [%p pvar ~loc (Hashtbl.find env.vars "std")] =
         lazy
-          (let primitive_std =
-             Object
-               ( [],
-                 let tbl = Hashtbl.create 10 in
-                 Hashtbl.add tbl "primitiveEquals"
-                   (1, lazy (Function std_primitive_equals));
-                 Hashtbl.add tbl "length" (1, lazy (Function std_length));
-                 Hashtbl.add tbl "makeArray" (1, lazy (Function std_make_array));
-                 Hashtbl.add tbl "type" (1, lazy (Function std_type));
-                 Hashtbl.add tbl "filter" (1, lazy (Function std_filter));
-                 Hashtbl.add tbl "objectHasEx"
-                   (1, lazy (Function std_object_has_ex));
-                 Hashtbl.add tbl "objectFieldsEx"
-                   (1, lazy (Function std_object_fields_ex));
-                 tbl )
-           in
-           [%e
-             match target with
-             | `Stdjsonnet -> [%expr primitive_std]
-             | _ ->
-                 [%expr
-                   binary_add
-                     (lazy (assert false))
-                     primitive_std
-                     (fun _ -> Lazy.force Stdjsonnet.Compiled.v)]])
+          [%e
+            match target with
+            | `Stdjsonnet -> [%expr Object ([], Hashtbl.create 0)]
+            | _ ->
+                [%expr
+                  let (Object (assrts, tbl)) =
+                    Lazy.force Stdjsonnet.Compiled.v
+                  in
+                  Hashtbl.add tbl "primitiveEquals"
+                    (1, lazy (Function std_primitive_equals));
+                  Hashtbl.add tbl "length" (1, lazy (Function std_length));
+                  Hashtbl.add tbl "makeArray" (1, lazy (Function std_make_array));
+                  Hashtbl.add tbl "type" (1, lazy (Function std_type));
+                  Hashtbl.add tbl "filter" (1, lazy (Function std_filter));
+                  Hashtbl.add tbl "objectHasEx"
+                    (1, lazy (Function std_object_has_ex));
+                  Hashtbl.add tbl "objectFieldsEx"
+                    (1, lazy (Function std_object_fields_ex));
+                  Object (assrts, tbl)]]
 
       let v =
         [%e
