@@ -61,6 +61,7 @@ let execute' ~dir_name ~ocamlc_path ~redirect ast =
     ~finally:(fun () -> close_out oc)
     (fun () ->
       let f = Format.formatter_of_out_channel oc in
+      Format.pp_set_margin f max_int;
       Pprintast.structure f ast;
       Format.pp_print_flush f ());
   (match
