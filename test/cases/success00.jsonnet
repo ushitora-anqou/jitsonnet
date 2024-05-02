@@ -78,4 +78,5 @@
   (importstr "success00_import.jsonnet"),
   {a: x, local x = 3, assert true},
   [ x for x in [1,2,3] ],
+  { a: 1, b: 3, c: {d: 4, e: 5}, f: {g: 6} } { a+: 2, c+: {f: 6}, f: {h: 7} },
 ]
