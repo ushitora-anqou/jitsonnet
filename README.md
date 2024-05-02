@@ -1,5 +1,12 @@
 # JITsonnet
 
+## How to generate `bundle/stdjsonnet.cma`
+
+```
+dune exec bin/main.exe -- compile --target=stdjsonnet test/std.jsonnet > bundle/stdjsonnet.ml
+ocamlc -a -o bundle/stdjsonnet.cma bundle/stdjsonnet.ml
+```
+
 ## How to update `test/std_ast.ml`
 
 ```

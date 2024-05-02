@@ -71,8 +71,8 @@ let rec load file_path t =
              t |> load file)
            (Ok ())
 
-let compile t =
-  Compiler.compile t.root_prog_path
+let compile ?target t =
+  Compiler.compile ?target t.root_prog_path
     (t.loaded |> Hashtbl.to_seq |> List.of_seq)
     (t.importbins |> Hashtbl.to_seq_keys |> List.of_seq)
     (t.importstrs |> Hashtbl.to_seq_keys |> List.of_seq)

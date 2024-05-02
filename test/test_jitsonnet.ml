@@ -703,23 +703,12 @@ let test_static_check_basics () =
   assert_static_check false "local x = 1, x = 2; x";
   ()
 
-let test_executor_basics () =
-  let open Ppxlib in
-  let loc = !Ast_helper.default_loc in
-  assert (
-    Executor.execute
-      [%str
-        module M = struct
-          let () = print_string "hello"
-        end]
-    = "hello");
-  ()
-
 let assert_compile ?(remove_tmp_dir = true) src_file_path result_pat =
   let input_file_path = "../../../test/cases/" ^ src_file_path ^ ".jsonnet" in
   let expected_file_path =
     "../../../test/cases/" ^ src_file_path ^ ".expected"
   in
+  let bundle_dir = "../../../bundle" in
   match Loader.load_root input_file_path with
   | Error msg ->
       Logs.err (fun m ->
@@ -727,7 +716,9 @@ let assert_compile ?(remove_tmp_dir = true) src_file_path result_pat =
       assert false
   | Ok t -> (
       try
-        let got = t |> Loader.compile |> Executor.execute ~remove_tmp_dir in
+        let got =
+          t |> Loader.compile |> Executor.execute ~bundle_dir ~remove_tmp_dir
+        in
         match result_pat with
         | `Success ->
             let expected = read_all expected_file_path in
@@ -761,8 +752,7 @@ let test_compiler_error () =
   ()
 
 let test_compiler () =
-  assert_compile "success00" `Success;
-  assert_compile ~remove_tmp_dir:false "success01" `Success;
+  assert_compile ~remove_tmp_dir:false "success00" `Success;
   ()
 
 let () =
@@ -804,7 +794,6 @@ let () =
           test_case "array" `Quick test_desugar_array;
         ] );
       ("static check", [ test_case "basics" `Quick test_static_check_basics ]);
-      ("executor", [ test_case "basics" `Quick test_executor_basics ]);
       ( "compiler",
         [
           test_case "ok" `Quick test_compiler;

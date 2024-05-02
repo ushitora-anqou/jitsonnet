@@ -35,7 +35,7 @@ let main_exe_stderr_file_name = "main.exe.stderr"
 exception Compiled_executable_failed of (Unix.process_status * string)
 exception Compilation_failed of (Unix.process_status * string)
 
-let execute' ~dir_name ~ocamlc_path ~redirect ast =
+let execute' ~dir_name ~ocamlc_path ~redirect ~bundle_dir ast =
   let main_ml = Filename.concat dir_name main_ml_file_name in
   let main_exe = Filename.concat dir_name main_exe_file_name in
   let main_exe_stdout = Filename.concat dir_name main_exe_stdout_file_name in
@@ -67,7 +67,17 @@ let execute' ~dir_name ~ocamlc_path ~redirect ast =
   (match
      let com =
        Filename.quote_command ocamlc_path
-         [ "-w"; "-a"; "-o"; main_exe; main_ml ]
+         [
+           "-w";
+           "-a";
+           "-o";
+           main_exe;
+           "-I";
+           bundle_dir;
+           "common.cmo";
+           "stdjsonnet.cmo";
+           main_ml;
+         ]
      in
      let com = com ^ redirect_ocamlc in
      Unix.system com
@@ -87,18 +97,18 @@ let execute' ~dir_name ~ocamlc_path ~redirect ast =
       raise (Compiled_executable_failed (status, stderr_msg)));
   ()
 
-let execute ?(remove_tmp_dir = true) ast =
+let execute ~bundle_dir ?(remove_tmp_dir = true) ast =
   let temp_dir =
     if remove_tmp_dir then None else Some "/tmp" (* for dune runtest *)
   in
   let dir_name = Filename.temp_dir ?temp_dir "jitsonnet" "" in
   Fun.protect ~finally:(fun () -> if remove_tmp_dir then rm_rf dir_name)
   @@ fun () ->
-  execute' ~dir_name ~ocamlc_path:"ocamlc" ~redirect:true ast;
+  execute' ~dir_name ~ocamlc_path:"ocamlc" ~redirect:true ~bundle_dir ast;
   read_all (Filename.concat dir_name main_exe_stdout_file_name) |> Result.get_ok
 
-let execute_from_cli ast =
+let execute_from_cli ~bundle_dir ast =
   let dir_name = Filename.temp_dir "jitsonnet" "" in
   Fun.protect ~finally:(fun () -> rm_rf dir_name) @@ fun () ->
-  execute' ~dir_name ~ocamlc_path:"ocamlc" ~redirect:false ast;
+  execute' ~dir_name ~ocamlc_path:"ocamlc" ~redirect:false ~bundle_dir ast;
   ()
