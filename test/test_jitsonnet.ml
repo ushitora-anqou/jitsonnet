@@ -748,7 +748,7 @@ let test_compiler () =
 
 let test_compiler_with_go_jsonnet_testdata () =
   let assert_compile =
-    assert_compile ~test_cases_dir:"../../../go-jsonnet/testdata"
+    assert_compile ~test_cases_dir:"../../../thirdparty/go-jsonnet/testdata"
       ~expected_file_suffix:".golden"
   in
 
