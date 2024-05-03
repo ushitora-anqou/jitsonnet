@@ -173,6 +173,10 @@ let std_object_fields_ex ([| obj; b' |], []) =
        |> List.of_seq |> List.sort String.compare |> Array.of_list
        |> Array.map (fun x -> lazy (String x))))
 
+let std_modulo ([| a; b |], []) =
+  lazy
+    (Double (Float.rem (get_double (Lazy.force a)) (get_double (Lazy.force b))))
+
 let in_super super key =
   if Hashtbl.mem super (get_string key) then True else False
 
@@ -278,3 +282,14 @@ let object_field_plus super key value tbl h =
            let rhs = value in
            binary_add lhs rhs)
          (fun () -> value)))
+
+let append_to_std tbl =
+  Hashtbl.add tbl "primitiveEquals" (1, lazy (Function std_primitive_equals));
+  Hashtbl.add tbl "length" (1, lazy (Function std_length));
+  Hashtbl.add tbl "makeArray" (1, lazy (Function std_make_array));
+  Hashtbl.add tbl "type" (1, lazy (Function std_type));
+  Hashtbl.add tbl "filter" (1, lazy (Function std_filter));
+  Hashtbl.add tbl "objectHasEx" (1, lazy (Function std_object_has_ex));
+  Hashtbl.add tbl "objectFieldsEx" (1, lazy (Function std_object_fields_ex));
+  Hashtbl.add tbl "modulo" (1, lazy (Function std_modulo));
+  ()

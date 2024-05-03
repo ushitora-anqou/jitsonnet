@@ -1,5 +1,15 @@
 # JITsonnet
 
+## How to list `test_compiler_with_go_jsonnet_testdata` test cases
+
+```
+grep RUNTIME go-jsonnet/testdata/*.golden | awk -F: '{print $1}' | awk -F/ '{print $3}' >> bad
+grep Unknown go-jsonnet/testdata/*.golden | awk -F: '{print $1}' | awk -F/ '{print $3}' >> bad
+cat bad | sed -r 's/.golden$/.jsonnet/' | sponge bad
+ls go-jsonnet/testdata | grep -v golden | grep -v linter | grep -v bad | grep -v error | while read line; do grep --quiet "$line" bad || echo $line; done | grep -E '.jsonnet$' | sed -r 's/^(.*).jsonnet$/assert_compile "\1" `Success;/'
+```
+
+
 ## How to generate `bundle/stdjsonnet.cma`
 
 ```
