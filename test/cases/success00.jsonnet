@@ -105,4 +105,5 @@
     foo1: { bar: 0 } + x,
     foo2: { bar: 1 } + x,
   },
+  local ary = ["1","2","3"]; { local a = 5, [x]: a, for x in ary if true },
 ]
