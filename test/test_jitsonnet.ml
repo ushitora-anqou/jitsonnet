@@ -500,7 +500,7 @@ let test_parse_error () =
 
 let test_parse_std () =
   assert_expr Std_ast.expected
-    (let ic = open_in_bin "../../../test/std.jsonnet" in
+    (let ic = open_in_bin "../../../thirdparty/jsonnet/stdlib/std.jsonnet" in
      Fun.protect ~finally:(fun () -> close_in ic) @@ fun () ->
      In_channel.input_all ic);
   ()
