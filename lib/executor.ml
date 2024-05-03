@@ -74,6 +74,7 @@ let execute' ~dir_name ~ocamlc_path ~redirect ~bundle_dir ast =
            main_exe;
            "-I";
            bundle_dir;
+           "uutf.cmo";
            "common.cmo";
            "stdjsonnet.cmo";
            main_ml;
