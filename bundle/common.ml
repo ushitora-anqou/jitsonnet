@@ -249,3 +249,14 @@ let if_ f1 f2 f3 =
 let error v =
   manifestation Format.str_formatter v;
   failwith (Format.flush_str_formatter ())
+
+let object_field_plus super key value tbl h =
+  object_field tbl h key
+    (lazy
+      (if_
+         (fun () -> in_super super key)
+         (fun () ->
+           let lhs = super_index super key in
+           let rhs = value in
+           binary_add lhs rhs)
+         (fun () -> value)))

@@ -128,7 +128,7 @@ module Core = struct
     | Object of {
         binds : (id * expr) list;
         assrts : expr list;
-        fields : (expr * h * expr) list;
+        fields : (expr * bool * h * expr) list;
       }
     | ObjectFor of (expr * expr * id * expr)
     | Self
@@ -171,7 +171,8 @@ module Core = struct
                  binds = binds |> List.map (fun (id, x) -> (id, aux x));
                  assrts = assrts |> List.map aux;
                  fields =
-                   fields |> List.map (fun (e1, h, e2) -> (aux e1, h, aux e2));
+                   fields
+                   |> List.map (fun (e1, b, h, e2) -> (aux e1, b, h, aux e2));
                })
       | SuperIndex e -> f (SuperIndex (aux e))
     in
@@ -222,7 +223,9 @@ module Core = struct
           let acc = assrts |> List.fold_left aux acc in
           let acc =
             fields
-            |> List.fold_left (fun acc (e1, _, e2) -> aux (aux acc e1) e2) acc
+            |> List.fold_left
+                 (fun acc (e1, _, _, e2) -> aux (aux acc e1) e2)
+                 acc
           in
           f acc node
     in
@@ -387,12 +390,13 @@ and desugar_field binds b = function
   | FieldFunc ((FieldnameID id | FieldnameString id), params, h, e) ->
       desugar_field binds b
         (FieldFunc (FieldnameExpr (String id), params, h, e))
-  | Field (FieldnameExpr e, false, h, e') ->
+  | Field (FieldnameExpr e, b, h, e') ->
       assert (binds = []);
-      (desugar_expr b e, h, desugar_expr true e')
+      (desugar_expr b e, b, h, desugar_expr true e')
   | FieldFunc (FieldnameExpr e, params, h, e') ->
       desugar_field binds b
         (Field (FieldnameExpr e, false, h, Function (params, e')))
+(*
   | Field (FieldnameExpr e, true, h, e') ->
       (* FIXME
          let e'' =
@@ -401,6 +405,7 @@ and desugar_field binds b = function
       let e'' = e in
       let e''' = If (InSuper e'', Binary (SuperIndex e'', `Add, e'), Some e') in
       desugar_field binds b (Field (FieldnameExpr e, false, h, e'''))
+*)
 
 and desugar_bind b = function
   | Bind (id, e) -> (id, desugar_expr b e)

@@ -530,7 +530,7 @@ let test_desugar_object () =
        {
          binds = [ ("$", Self) ];
          assrts = [];
-         fields = [ (String "x", H 1, Number 1.) ];
+         fields = [ (String "x", false, H 1, Number 1.) ];
        })
     "{x: 1}";
   assert_core_expr
@@ -540,8 +540,8 @@ let test_desugar_object () =
          assrts = [];
          fields =
            [
-             (String "foo", H 1, String "bar");
-             (String "hoge", H 1, String "piyo");
+             (String "foo", false, H 1, String "bar");
+             (String "hoge", false, H 1, String "piyo");
            ];
        })
     {|
@@ -555,15 +555,7 @@ let test_desugar_object () =
        {
          binds = [ ("$", Self); ("a", String "b") ];
          assrts = [];
-         fields =
-           [
-             ( String "foo",
-               H 1,
-               If
-                 ( InSuper (String "foo"),
-                   Binary (SuperIndex (String "foo"), `Add, String "bar"),
-                   String "bar" ) );
-           ];
+         fields = [ (String "foo", true, H 1, String "bar") ];
        })
     {|
 {
@@ -584,7 +576,7 @@ let test_desugar_object () =
                  Null,
                  Error (String "Assertion failed") );
            ];
-         fields = [ (String "x", H 1, Number 1.) ];
+         fields = [ (String "x", false, H 1, Number 1.) ];
        })
     "{x: 1, assert x == 1}";
   assert_core_expr
@@ -595,12 +587,13 @@ let test_desugar_object () =
          fields =
            [
              ( String "x",
+               false,
                Syntax.H 1,
                Object
                  {
                    binds = [];
                    assrts = [];
-                   fields = [ (String "y", Syntax.H 1, Number 1.) ];
+                   fields = [ (String "y", false, Syntax.H 1, Number 1.) ];
                  } );
            ];
        })

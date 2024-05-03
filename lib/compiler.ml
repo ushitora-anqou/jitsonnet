@@ -192,7 +192,8 @@ let rec compile_expr ?(toplevel = false) ({ loc; _ } as env) :
   | Object { binds; assrts; fields } ->
       let fields (* compile keys with outer env *) =
         fields
-        |> List.map (fun (e1, Syntax.H h, e2) -> (compile_expr env e1, h, e2))
+        |> List.map (fun (e1, b, Syntax.H h, e2) ->
+               (compile_expr env e1, b, h, e2))
       in
 
       with_binds env ("self" :: "super" :: (binds |> List.map fst)) @@ fun () ->
@@ -214,11 +215,19 @@ let rec compile_expr ?(toplevel = false) ({ loc; _ } as env) :
                    [%e
                      fields |> List.rev
                      |> List.fold_left
-                          (fun e (e1, h, e2) ->
-                            [%expr
-                              object_field tbl [%e eint ~loc h] [%e e1]
-                                [%e compile_expr_lazy env e2];
-                              [%e e]])
+                          (fun e (e1, plus, h, e2) ->
+                            if plus then
+                              [%expr
+                                object_field_plus
+                                  [%e evar ~loc (Hashtbl.find env.vars "super")]
+                                  [%e e1] [%e compile_expr env e2] tbl
+                                  [%e eint ~loc h];
+                                [%e e]]
+                            else
+                              [%expr
+                                object_field tbl [%e eint ~loc h] [%e e1]
+                                  [%e compile_expr_lazy env e2];
+                                [%e e]])
                           [%expr tbl]]]
              in
              [%expr

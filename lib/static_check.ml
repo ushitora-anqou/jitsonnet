@@ -38,17 +38,17 @@ let rec f g =
       let* _ = f g e in
       Ok ()
   | Object { binds; assrts; fields } ->
-      let* _ = fields |> List.map (fun (e, _, _) -> e) |> for_all (f g) in
+      let* _ = fields |> List.map (fun (e, _, _, _) -> e) |> for_all (f g) in
       let g' = binds |> List.fold_left (fun g (x, _) -> add (Var x) g) g in
       let* _ =
         fields
-        |> List.map (fun (_, _, e') -> e')
+        |> List.map (fun (_, _, _, e') -> e')
         |> for_all (f (g' |> add Self |> add Super))
       in
       let* _ = assrts |> for_all (f (g' |> add Self |> add Super)) in
       let* _ =
         fields
-        |> List.filter_map (function String s, _, _ -> Some s | _ -> None)
+        |> List.filter_map (function String s, _, _, _ -> Some s | _ -> None)
         |> should_be_unique
       in
       Ok ()
