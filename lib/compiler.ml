@@ -98,15 +98,17 @@ let rec compile_expr ?(toplevel = false) ({ loc; _ } as env) :
   | Binary (e1, `Lsl, e2) ->
       [%expr
         Double
-          (Float.ldexp
-             (get_double [%e compile_expr env e1])
-             (int_of_float (get_double [%e compile_expr env e2])))]
+          (Int64.to_float
+             (Int64.shift_left
+                (Int64.of_float (get_double [%e compile_expr env e1]))
+                (int_of_float (get_double [%e compile_expr env e2]))))]
   | Binary (e1, `Lsr, e2) ->
       [%expr
         Double
-          (Float.ldexp
-             (get_double [%e compile_expr env e1])
-             (-int_of_float (get_double [%e compile_expr env e2])))]
+          (Int64.to_float
+             (Int64.shift_right
+                (Int64.of_float (get_double [%e compile_expr env e1]))
+                (int_of_float (get_double [%e compile_expr env e2]))))]
   | Binary (e1, `Lt, e2) ->
       [%expr
         if std_cmp ([%e compile_expr env e1], [%e compile_expr env e2]) < 0 then
