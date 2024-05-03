@@ -4,3 +4,6 @@
 [submodule "thirdparty/jsonnet"]
 	path = thirdparty/jsonnet
 	url = https://github.com/google/jsonnet.git
+[submodule "thirdparty/uutf"]
+	path = thirdparty/uutf
+	url = https://github.com/dbuenzli/uutf.git
