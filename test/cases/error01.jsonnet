@@ -1,1 +1,1 @@
-assert false : "TEST STRING FOO"; 0
+assert false : 'TEST STRING FOO'; 0

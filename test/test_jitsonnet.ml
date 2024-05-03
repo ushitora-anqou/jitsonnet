@@ -736,6 +736,7 @@ let assert_compile ?(remove_tmp_dir = true) src_file_path result_pat =
 let test_compiler_error () =
   assert_compile "error00" `Error;
   assert_compile "error01" `Error;
+  assert_compile "error02" `Error;
   ()
 
 let test_compiler () =

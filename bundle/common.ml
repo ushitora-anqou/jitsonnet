@@ -186,7 +186,8 @@ let array_index f1 f2 =
   match f1 () with
   | Array a -> a.(get_double (f2 ()) |> int_of_float) |> Lazy.force
   | Object _ as x -> (
-      let _, tbl = (get_object x) empty_obj_fields in
+      let assrts, tbl = (get_object x) empty_obj_fields in
+      assrts |> List.iter (fun (lazy _) -> ());
       let key = get_string (f2 ()) in
       match Hashtbl.find_opt tbl key with
       | None -> failwith ("field does not exist: " ^ key)
