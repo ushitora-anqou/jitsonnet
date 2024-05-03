@@ -38,6 +38,7 @@ type expr =
   | Import of string
   | Importbin of string
   | Importstr of string
+  | InSuper of expr
   | Local of (bind list * expr)
   | Null
   | Number of float
@@ -45,8 +46,8 @@ type expr =
   | ObjectSeq of (expr * objinside)
   | Select of (expr * id)
   | Self
-  | Super
   | String of string
+  | SuperIndex of expr
   | True
   | Unary of (unaryop * expr)
   | Var of id
@@ -120,6 +121,7 @@ module Core = struct
     | Import of string
     | Importbin of string
     | Importstr of string
+    | InSuper of expr
     | Local of ((id * expr) list * expr)
     | Null
     | Number of float
@@ -131,7 +133,7 @@ module Core = struct
     | ObjectFor of (expr * expr * id * expr)
     | Self
     | String of string
-    | Super
+    | SuperIndex of expr
     | True
     | Unary of (unaryop * expr)
     | Var of id
@@ -142,7 +144,7 @@ module Core = struct
     let rec aux node =
       match node with
       | False | Import _ | Importbin _ | Importstr _ | Null | Number _ | Self
-      | String _ | Super | True | Var _ ->
+      | String _ | True | Var _ ->
           f node
       | Array xs -> f (Array (List.map aux xs))
       | ArrayIndex (e1, e2) -> f (ArrayIndex (aux e1, aux e2))
@@ -160,6 +162,7 @@ module Core = struct
       | Local (xs, e) ->
           f (Local (List.map (fun (x, y) -> (x, aux y)) xs, aux e))
       | If (e1, e2, e3) -> f (If (aux e1, aux e2, aux e3))
+      | InSuper e -> f (InSuper (aux e))
       | ObjectFor (e1, e2, x, e3) -> f (ObjectFor (aux e1, aux e2, x, aux e3))
       | Object { binds; assrts; fields } ->
           f
@@ -170,6 +173,7 @@ module Core = struct
                  fields =
                    fields |> List.map (fun (e1, h, e2) -> (aux e1, h, aux e2));
                })
+      | SuperIndex e -> f (SuperIndex (aux e))
     in
     aux root
 
@@ -177,7 +181,7 @@ module Core = struct
     let rec aux acc node =
       match node with
       | False | Import _ | Importbin _ | Importstr _ | Null | Number _ | Self
-      | String _ | Super | True | Var _ ->
+      | String _ | True | Var _ ->
           f acc node
       | Array xs ->
           let acc = xs |> List.fold_left aux acc in
@@ -191,7 +195,7 @@ module Core = struct
           let acc = xs |> List.fold_left aux acc in
           let acc = ys |> List.fold_left (fun acc (_, y) -> aux acc y) acc in
           f acc node
-      | Error e | Unary (_, e) ->
+      | Error e | InSuper e | SuperIndex e | Unary (_, e) ->
           let acc = aux acc e in
           f acc node
       | Function (xs, e) ->
@@ -274,6 +278,7 @@ let rec desugar_expr b = function
   | Import s -> Core.Import s
   | Importbin s -> Core.Importbin s
   | Importstr s -> Core.Importstr s
+  | InSuper e -> Core.InSuper (desugar_expr b e)
   | Local (binds, e) ->
       let binds = binds |> List.map (desugar_bind b) in
       let e = desugar_expr b e in
@@ -302,10 +307,7 @@ let rec desugar_expr b = function
              | _ -> None)
       in
       let obj = Core.Object { binds; assrts; fields } in
-      if b then
-        Core.Local
-          ([ ("$outerself", Core.Self); ("$outersuper", Core.Super) ], obj)
-      else obj
+      if b then obj else obj
   | Object (ObjectFor ([], Var x1, e1, [], (x2, e2), [])) when x1 = x2 ->
       (* Optimized desugaring *)
       Core.ObjectFor (Var x1, desugar_expr true e1, x2, desugar_expr b e2)
@@ -333,8 +335,8 @@ let rec desugar_expr b = function
       desugar_expr b (Binary (e, `Add, Object objinside))
   | Select (e, id) -> Core.ArrayIndex (desugar_expr b e, String id)
   | Self -> Core.Self
-  | Super -> Core.Super
   | String s -> Core.String s
+  | SuperIndex e -> Core.SuperIndex (desugar_expr b e)
   | True -> Core.True
   | Unary (op, e) -> Core.Unary (op, desugar_expr b e)
   | Var s -> Core.Var s
@@ -397,12 +399,7 @@ and desugar_field binds b = function
            substitute [ (Var "$outerself", Self); (Var "$outersuper", Super) ] e
          in *)
       let e'' = e in
-      let e''' =
-        If
-          ( Binary (e'', `In, Super),
-            Binary (ArrayIndex (Super, e''), `Add, e'),
-            Some e' )
-      in
+      let e''' = If (InSuper e'', Binary (SuperIndex e'', `Add, e'), Some e') in
       desugar_field binds b (Field (FieldnameExpr e, false, h, e'''))
 
 and desugar_bind b = function

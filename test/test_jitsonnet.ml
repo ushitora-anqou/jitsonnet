@@ -300,8 +300,8 @@ let test_parse_select () =
              "y" ),
          "z" ))
     {|{y: {z: "a"}}.y.z|};
-  assert_expr (Select (Super, "x")) {|super.x|};
-  assert_expr (ArrayIndex (Super, String "x")) {|super["x"]|};
+  assert_expr (SuperIndex (String "x")) {|super.x|};
+  assert_expr (SuperIndex (String "x")) {|super["x"]|};
   ()
 
 let test_parse_array_index () =
@@ -438,8 +438,7 @@ let test_parse_binary () =
          ObjectMemberList
            [
              MemberField
-               (Field
-                  (FieldnameID "y", false, H 1, Binary (String "x", `In, Super)));
+               (Field (FieldnameID "y", false, H 1, InSuper (String "x")));
            ] ))
     {|{x: "a"} {y: "x" in super}|};
   ()
@@ -561,11 +560,8 @@ let test_desugar_object () =
              ( String "foo",
                H 1,
                If
-                 ( Call
-                     ( ArrayIndex (Var "std", String "objectHasEx"),
-                       [ Super; String "foo"; True ],
-                       [] ),
-                   Binary (ArrayIndex (Super, String "foo"), `Add, String "bar"),
+                 ( InSuper (String "foo"),
+                   Binary (SuperIndex (String "foo"), `Add, String "bar"),
                    String "bar" ) );
            ];
        })
@@ -600,14 +596,12 @@ let test_desugar_object () =
            [
              ( String "x",
                Syntax.H 1,
-               Local
-                 ( [ ("$outerself", Self); ("$outersuper", Super) ],
-                   Object
-                     {
-                       binds = [];
-                       assrts = [];
-                       fields = [ (String "y", Syntax.H 1, Number 1.) ];
-                     } ) );
+               Object
+                 {
+                   binds = [];
+                   assrts = [];
+                   fields = [ (String "y", Syntax.H 1, Number 1.) ];
+                 } );
            ];
        })
     "{x: {y: 1}}";

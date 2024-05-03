@@ -77,6 +77,29 @@
   (importbin "success00_import.jsonnet"),
   (importstr "success00_import.jsonnet"),
   {a: x, local x = 3, assert true},
-  [ x for x in [1,2,3] ],
-  { a: 1, b: 3, c: {d: 4, e: 5}, f: {g: 6} } { a+: 2, c+: {f: 6}, f: {h: 7} },
+  [x for x in [1, 2, 3]],
+  { a: 1, b: 3, c: { d: 4, e: 5 }, f: { g: 6 } } { a+: 2, c+: { f: 6 }, f: { h: 7 } },
+  ////  { z: "s2" } {
+  ////    x: "s1",
+  ////    a: "s7",
+  ////    y: { a: "1" } {
+  ////      [ self.x + ({ a: "a", b: { a: "s4" } { [ self.a ]+: "s5" } }).b.a ]+: "2",
+  ////      a: "s6",
+  ////      [ super.z + ({ a: "a" } { b: { a: "s4" } { [ super.a ]+: "s5" } }).b.a ]: "s3",
+  ////    },
+  ////  },
+  {
+    local f(x) = { bar: 1 } + x,
+    foo: {
+      bar: 0,
+    } + f({
+      x: super.bar,
+    }),
+  },
+  { x: { a: 10 } } + { y: { x: { a: 2 } } + super.x },
+  {
+    local x = { baz: super.bar },
+    foo1: { bar: 0 } + x,
+    foo2: { bar: 1 } + x,
+  },
 ]

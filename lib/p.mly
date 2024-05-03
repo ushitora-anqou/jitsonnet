@@ -135,10 +135,10 @@ Expr :
     Syntax.ArraySlice(x, a, None, c)
   }
   | SUPER DOT id=ID {
-    Syntax.Select (Super, id)
+    Syntax.SuperIndex (String id)
   }
   | SUPER LBRACKET e=Expr RBRACKET {
-    Syntax.ArrayIndex (Super, e)
+    Syntax.SuperIndex e
   }
   | e=Expr LPAREN args=Args RPAREN tailstrict=option(TAILSTRICT) {
     Syntax.Call (e, args, Option.is_some tailstrict)
@@ -180,7 +180,7 @@ Expr :
     Syntax.Error e
   }
   | e=Expr IN SUPER {
-    Syntax.Binary (e, `In, Super)
+    Syntax.InSuper e
   }
   | LPAREN e=Expr RPAREN {
     e

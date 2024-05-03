@@ -33,7 +33,10 @@ let rec f g =
   | Importbin _ ->
       Ok ()
   | Self -> is_in g Self
-  | Super -> is_in g Super
+  | InSuper e | SuperIndex e ->
+      let* () = is_in g Super in
+      let* _ = f g e in
+      Ok ()
   | Object { binds; assrts; fields } ->
       let* _ = fields |> List.map (fun (e, _, _) -> e) |> for_all (f g) in
       let g' = binds |> List.fold_left (fun g (x, _) -> add (Var x) g) g in
