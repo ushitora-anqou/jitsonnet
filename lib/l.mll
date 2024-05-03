@@ -108,6 +108,7 @@ rule main = parse
 | "|||" whitespace* newline {
   Lexing.new_line lexbuf;
   Buffer.clear string_literal_buffer;
+  text_block_w := None;
   text_block lexbuf;
   P.STRING (Buffer.contents string_literal_buffer)
 }

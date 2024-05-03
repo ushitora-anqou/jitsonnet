@@ -785,8 +785,6 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "bitwise_or7" `Success;
   assert_compile "bitwise_or8" `Success;
   assert_compile "bitwise_or9" `Success;
-
-  (*
   assert_compile "bitwise_shift" `Success;
   assert_compile "bitwise_shift2" `Success;
   assert_compile "bitwise_shift3" `Success;
@@ -800,6 +798,8 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "bitwise_xor8" `Success;
   assert_compile "bitwise_xor9" `Success;
   assert_compile "block_escaping" `Success;
+
+  (*
   assert_compile "block_string" `Success;
   assert_compile "boolean_literal" `Success;
   assert_compile "builtinAvg" `Success;
