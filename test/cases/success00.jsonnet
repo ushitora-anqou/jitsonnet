@@ -108,4 +108,5 @@
   local ary = ["1","2","3"]; { local a = 5, [x]: a, for x in ary if true },
   "" + 0,
   0 + "",
+  std.codepoint("あ"),
 ]

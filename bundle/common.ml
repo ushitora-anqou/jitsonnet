@@ -177,6 +177,14 @@ let std_modulo ([| a; b |], []) =
   lazy
     (Double (Float.rem (get_double (Lazy.force a)) (get_double (Lazy.force b))))
 
+let std_codepoint ([| s |], []) =
+  lazy
+    (let s = get_string (Lazy.force s) in
+     let d = Uutf.decoder ~encoding:`UTF_8 (`String s) in
+     match Uutf.decode d with
+     | `Uchar u -> Double (float_of_int (Uchar.to_int u))
+     | _ -> failwith "std.codepoint: invalid input string")
+
 let in_super super key =
   if Hashtbl.mem super (get_string key) then True else False
 
@@ -292,4 +300,5 @@ let append_to_std tbl =
   Hashtbl.add tbl "objectHasEx" (1, lazy (Function std_object_has_ex));
   Hashtbl.add tbl "objectFieldsEx" (1, lazy (Function std_object_fields_ex));
   Hashtbl.add tbl "modulo" (1, lazy (Function std_modulo));
+  Hashtbl.add tbl "codepoint" (1, lazy (Function std_codepoint));
   ()
