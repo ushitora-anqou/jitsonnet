@@ -1,0 +1,3 @@
+[submodule "go-jsonnet"]
+	path = go-jsonnet
+	url = https://github.com/google/go-jsonnet.git
