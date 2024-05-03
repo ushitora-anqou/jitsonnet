@@ -20,8 +20,8 @@ let empty_obj_fields = Hashtbl.create 0
 let value_of_bool = function true -> True | false -> False
 
 let string_of_double f =
-  if f = (f |> int_of_float |> float_of_int) then
-    Printf.sprintf "%d" (int_of_float f)
+  let i64 = Int64.of_float f in
+  if f = Int64.to_float i64 then Printf.sprintf "%s" (Int64.to_string i64)
   else Printf.sprintf "%f" f
 
 let get_object = function

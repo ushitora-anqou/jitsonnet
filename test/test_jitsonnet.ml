@@ -763,8 +763,6 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "arrcomp4" `Success;
   assert_compile "arrcomp6" `Success;
   assert_compile "arrcomp7" `Success;
-
-  (*
   assert_compile "arrcomp_if" `Success;
   assert_compile "arrcomp_if2" `Success;
   assert_compile "arrcomp_if3" `Success;
@@ -787,6 +785,8 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "bitwise_or7" `Success;
   assert_compile "bitwise_or8" `Success;
   assert_compile "bitwise_or9" `Success;
+
+  (*
   assert_compile "bitwise_shift" `Success;
   assert_compile "bitwise_shift2" `Success;
   assert_compile "bitwise_shift3" `Success;

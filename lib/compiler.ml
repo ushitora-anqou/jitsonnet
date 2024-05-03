@@ -77,33 +77,36 @@ let rec compile_expr ?(toplevel = false) ({ loc; _ } as env) :
   | Binary (e1, `Land, e2) ->
       [%expr
         Double
-          ((get_double [%e compile_expr env e1] |> int_of_float)
-           land (get_double [%e compile_expr env e2] |> int_of_float)
-          |> float_of_int)]
+          (Int64.to_float
+             (Int64.logand
+                (Int64.of_float (get_double [%e compile_expr env e1]))
+                (Int64.of_float (get_double [%e compile_expr env e2]))))]
   | Binary (e1, `Lor, e2) ->
       [%expr
         Double
-          ((get_double [%e compile_expr env e1] |> int_of_float)
-           lor (get_double [%e compile_expr env e2] |> int_of_float)
-          |> float_of_int)]
+          (Int64.to_float
+             (Int64.logor
+                (Int64.of_float (get_double [%e compile_expr env e1]))
+                (Int64.of_float (get_double [%e compile_expr env e2]))))]
   | Binary (e1, `Xor, e2) ->
       [%expr
         Double
-          ((get_double [%e compile_expr env e1] |> int_of_float)
-           lxor (get_double [%e compile_expr env e2] |> int_of_float)
-          |> float_of_int)]
+          (Int64.to_float
+             (Int64.logxor
+                (Int64.of_float (get_double [%e compile_expr env e1]))
+                (Int64.of_float (get_double [%e compile_expr env e2]))))]
   | Binary (e1, `Lsl, e2) ->
       [%expr
         Double
-          ((get_double [%e compile_expr env e1] |> int_of_float)
-           lsl (get_double [%e compile_expr env e2] |> int_of_float)
-          |> float_of_int)]
+          (Float.ldexp
+             (get_double [%e compile_expr env e1])
+             (int_of_float (get_double [%e compile_expr env e2])))]
   | Binary (e1, `Lsr, e2) ->
       [%expr
         Double
-          ((get_double [%e compile_expr env e1] |> int_of_float)
-           lsr (get_double [%e compile_expr env e2] |> int_of_float)
-          |> float_of_int)]
+          (Float.ldexp
+             (get_double [%e compile_expr env e1])
+             (-int_of_float (get_double [%e compile_expr env e2])))]
   | Binary (e1, `Lt, e2) ->
       [%expr
         if std_cmp ([%e compile_expr env e1], [%e compile_expr env e2]) < 0 then
