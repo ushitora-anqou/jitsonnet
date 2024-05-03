@@ -19,6 +19,11 @@ and object_ =
 let empty_obj_fields = Hashtbl.create 0
 let value_of_bool = function true -> True | false -> False
 
+let string_of_double f =
+  if f = (f |> int_of_float |> float_of_int) then
+    Printf.sprintf "%d" (int_of_float f)
+  else Printf.sprintf "%f" f
+
 let get_object = function
   | Object (General obj) -> obj
   | Object (Simple obj) -> fun _ -> obj
@@ -68,9 +73,7 @@ let manifestation ppf v =
     | True -> fprintf ppf "true"
     | False -> fprintf ppf "false"
     | String s -> fprintf ppf "%S" s
-    | Double f when f = (f |> int_of_float |> float_of_int) ->
-        fprintf ppf "%d" (int_of_float f)
-    | Double f -> fprintf ppf "%f" f
+    | Double f -> fprintf ppf "%s" (string_of_double f)
     | Array [||] -> fprintf ppf "[ ]"
     | Array xs ->
         fprintf ppf "@[<v 3>[@,%a@]@,]"
@@ -192,9 +195,23 @@ let array_index f1 f2 =
 
 let binary_add lhs rhs =
   match lhs with
-  | Double f1 -> Double (f1 +. get_double rhs)
+  | Double f1 -> (
+      match rhs with
+      | String s -> String (string_of_double f1 ^ s)
+      | Double f2 -> Double (f1 +. f2)
+      | _ ->
+          failwith "binary_add: expected string or double, got something else")
   | Array xs -> Array (Array.append xs (get_array rhs))
-  | String s1 -> String (s1 ^ get_string rhs)
+  | String s1 ->
+      String
+        (s1
+        ^
+        match rhs with
+        | String s -> s
+        | Double f -> string_of_double f
+        | _ ->
+            failwith "binary_add: expected string or double, got something else"
+        )
   | Object _ ->
       Object
         (General
