@@ -7,3 +7,6 @@
 [submodule "thirdparty/uutf"]
 	path = thirdparty/uutf
 	url = https://github.com/dbuenzli/uutf.git
+[submodule "thirdparty/ocaml-dtoa"]
+	path = thirdparty/ocaml-dtoa
+	url = https://github.com/flow/ocaml-dtoa.git
