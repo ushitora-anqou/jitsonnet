@@ -13,10 +13,10 @@ and assrts = value Lazy.t list
 and fields = (string, int * value Lazy.t) Hashtbl.t
 
 and object_ =
-  | Simple of (assrts * fields)
-  | General of (fields -> assrts * fields)
+  | General of (fields (* self *) -> fields (* super *) -> assrts * fields)
 
 let empty_obj_fields = Hashtbl.create 0
+let gen_empty_self () = Hashtbl.create 0
 let value_of_bool = function true -> True | false -> False
 
 let string_of_double f =
@@ -26,7 +26,6 @@ let string_of_double f =
 
 let get_object = function
   | Object (General obj) -> obj
-  | Object (Simple obj) -> fun _ -> obj
   | _ -> failwith "expect object got something else"
 
 let get_bool = function
@@ -101,7 +100,7 @@ let manifestation ppf v =
           xs
     | Function _ -> ()
     | Object _ as x ->
-        let assrts, tbl = (get_object x) empty_obj_fields in
+        let assrts, tbl = (get_object x) (gen_empty_self ()) empty_obj_fields in
         assrts |> List.iter (fun (lazy _) -> ());
         let xs =
           tbl |> Hashtbl.to_seq |> List.of_seq
@@ -136,7 +135,7 @@ let std_length ([| v |], []) =
     | (lazy (Array xs)) -> Double (xs |> Array.length |> float_of_int)
     | (lazy (String s)) -> Double (s |> String.length |> float_of_int)
     | (lazy (Object _ as x)) ->
-        let _, fields = (get_object x) empty_obj_fields in
+        let _, fields = (get_object x) (gen_empty_self ()) empty_obj_fields in
         Double
           (fields |> Hashtbl.to_seq
           |> Seq.filter_map (fun (f, (h, _)) -> if h = 2 then None else Some ())
@@ -173,7 +172,9 @@ let std_filter ([| f; ary |], []) =
 
 let std_object_has_ex ([| obj; f; b' |], []) =
   lazy
-    (let _, fields = get_object (Lazy.force obj) empty_obj_fields in
+    (let _, fields =
+       get_object (Lazy.force obj) (gen_empty_self ()) empty_obj_fields
+     in
      let f = f |> Lazy.force |> get_string in
      let b' = b' |> Lazy.force |> get_bool in
      match Hashtbl.find_opt fields f with
@@ -183,7 +184,9 @@ let std_object_has_ex ([| obj; f; b' |], []) =
 let std_object_fields_ex ([| obj; b' |], []) =
   lazy
     (let b' = b' |> Lazy.force |> get_bool in
-     let _, fields = get_object (Lazy.force obj) empty_obj_fields in
+     let _, fields =
+       get_object (Lazy.force obj) (gen_empty_self ()) empty_obj_fields
+     in
      Array
        (fields |> Hashtbl.to_seq
        |> Seq.filter_map (fun (f, (h, _)) ->
@@ -229,7 +232,7 @@ let array_index f1 f2 =
   | Array a -> a.(get_double (f2 ()) |> int_of_float) |> Lazy.force
   | String s -> String (String.make 1 s.[int_of_float (get_double (f2 ()))])
   | Object _ as x -> (
-      let assrts, tbl = (get_object x) empty_obj_fields in
+      let assrts, tbl = (get_object x) (gen_empty_self ()) empty_obj_fields in
       assrts |> List.iter (fun (lazy _) -> ());
       let key = get_string (f2 ()) in
       match Hashtbl.find_opt tbl key with
@@ -259,26 +262,29 @@ let binary_add lhs rhs =
   | Object _, _ ->
       Object
         (General
-           (fun super ->
-             let assrts1, fields1 = (get_object lhs) super in
-             let assrts2, fields2 = get_object rhs fields1 in
-             let tbl = Hashtbl.create 0 in
+           (fun self super ->
+             let assrts1, _ = (get_object lhs) self super in
+             let fields1 = Hashtbl.copy self in
+             Hashtbl.reset self;
+             let assrts2, _ = get_object rhs self fields1 in
+             let fields2 = Hashtbl.copy self in
+             Hashtbl.reset self;
              let common = ref [] in
              fields1
              |> Hashtbl.iter (fun f (h, v) ->
                     match Hashtbl.find_opt fields2 f with
                     | Some (h', v') -> common := (f, h, v, h', v') :: !common
-                    | None -> Hashtbl.add tbl f (h, v));
+                    | None -> Hashtbl.add self f (h, v));
              fields2
              |> Hashtbl.iter (fun f (h, v) ->
                     match Hashtbl.find_opt fields1 f with
                     | Some _ -> ()
-                    | None -> Hashtbl.add tbl f (h, v));
+                    | None -> Hashtbl.add self f (h, v));
              !common
              |> List.iter (fun (f, h1, v1, h2, v2) ->
                     let h = if h2 = 1 then h1 else h2 in
-                    Hashtbl.add tbl f (h, v2));
-             (assrts1 @ assrts2, tbl)))
+                    Hashtbl.add self f (h, v2));
+             (assrts1 @ assrts2, self)))
   | _ -> failwith "invalid add"
 
 let object_field tbl h k v =

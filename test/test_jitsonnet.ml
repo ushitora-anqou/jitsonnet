@@ -982,9 +982,7 @@ let test_compiler_with_go_jsonnet_testdata () =
   *)
   assert_compile "numeric_literal" `Success;
   assert_compile "obj_local_right_level" `Success;
-  (*
   assert_compile "obj_local_right_level2" `Success;
-  *)
   assert_compile "obj_local_right_level3" `Success;
   assert_compile "object_comp" `Success;
   assert_compile "object_comp2" `Success;
