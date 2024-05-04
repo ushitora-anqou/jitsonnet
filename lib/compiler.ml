@@ -239,7 +239,12 @@ let rec compile_expr ?(toplevel = false) ({ loc; _ } as env) :
                lazy
                  (Object
                     [%e
-                      if toplevel then [%expr Simple [%e body]]
+                      if toplevel then
+                        [%expr
+                          let [%p pvar ~loc (Hashtbl.find env.vars "super")] =
+                            empty_obj_fields
+                          in
+                          Simple [%e body]]
                       else
                         [%expr
                           General

@@ -953,7 +953,7 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "in4" `Success;
   assert_compile "insuper" `Success;
   assert_compile "insuper2" `Success;
-  (*assert_compile "insuper3" `Success;*)
+  assert_compile "insuper3" `Success;
   (*assert_compile "insuper4" `Success;*)
   assert_compile "insuper5" `Success;
   assert_compile "insuper7" `Success;
