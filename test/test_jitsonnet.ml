@@ -801,14 +801,14 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "block_string" `Success;
   assert_compile "boolean_literal" `Success;
   assert_compile "builtinAvg" `Success;
-
-  (*
   assert_compile "builtinBase64" `Success;
   assert_compile "builtinBase64Decode" `Success;
   assert_compile "builtinBase64DecodeBytes" `Success;
   assert_compile "builtinBase64_byte_array" `Success;
   assert_compile "builtinChar" `Success;
   assert_compile "builtinChar2" `Success;
+
+  (*
   assert_compile "builtinChar4" `Success;
   assert_compile "builtinChar6" `Success;
   assert_compile "builtinContains" `Success;

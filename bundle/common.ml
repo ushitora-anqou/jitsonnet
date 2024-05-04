@@ -85,6 +85,7 @@ let manifestation ppf v =
             | '\n' -> Buffer.add_string buf {|\n|}
             | '\r' -> Buffer.add_string buf {|\r|}
             | '\t' -> Buffer.add_string buf {|\t|}
+            | '\000' -> Buffer.add_string buf {|\u0000|}
             | ch -> Buffer.add_char buf ch);
             loop (i + 1))
         in
