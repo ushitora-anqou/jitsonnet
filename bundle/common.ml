@@ -202,6 +202,15 @@ let std_codepoint ([| s |], []) =
      | `Uchar u -> Double (float_of_int (Uchar.to_int u))
      | _ -> failwith "std.codepoint: invalid input string")
 
+let std_char ([| n |], []) =
+  lazy
+    (let n = int_of_float (get_double (Lazy.force n)) in
+     let buf = Buffer.create 10 in
+     let e = Uutf.encoder `UTF_8 (`Buffer buf) in
+     ignore (Uutf.encode e (`Uchar (Uchar.of_int n)));
+     ignore (Uutf.encode e `End);
+     String (Buffer.contents buf))
+
 let in_super super key =
   if Hashtbl.mem super (get_string key) then True else False
 
@@ -318,4 +327,5 @@ let append_to_std tbl =
   Hashtbl.add tbl "objectFieldsEx" (1, lazy (Function std_object_fields_ex));
   Hashtbl.add tbl "modulo" (1, lazy (Function std_modulo));
   Hashtbl.add tbl "codepoint" (1, lazy (Function std_codepoint));
+  Hashtbl.add tbl "char" (1, lazy (Function std_char));
   ()
