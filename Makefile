@@ -6,6 +6,8 @@ build:
 	cd bundle && ocamlc -w -a -c stdjsonnet.ml
 	cp thirdparty/uutf/src/uutf.ml bundle/
 	cd bundle && ocamlc -w -a -c uutf.ml
+	cp _build/default/thirdparty/ocaml-dtoa/src/.dtoa.objs/byte/dtoa* bundle/
+	cp _build/default/thirdparty/ocaml-dtoa/src/dlldtoa_stubs.so bundle/
 
 .PHONY: test
 test: build

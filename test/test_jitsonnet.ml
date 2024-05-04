@@ -814,8 +814,6 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "builtinEqualsIgnoreCase" `Success;
   assert_compile "builtinEqualsIgnoreCase2" `Success;
   assert_compile "builtinIsDecimal" `Success;
-
-  (*
   assert_compile "builtinIsDecimal2" `Success;
   assert_compile "builtinIsEmpty" `Success;
   assert_compile "builtinIsEmpty1" `Success;
@@ -826,6 +824,8 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "builtinIsOdd" `Success;
   assert_compile "builtinIsOdd2" `Success;
   assert_compile "builtinManifestJsonEx" `Success;
+
+  (*
   assert_compile "builtinMaxArray" `Success;
   assert_compile "builtinMinArray" `Success;
   assert_compile "builtinObjectFieldsEx" `Success;

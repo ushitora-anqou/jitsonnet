@@ -31,3 +31,5 @@ _opam/
 misc/
 bundle/stdjsonnet.ml
 bundle/uutf.ml
+bundle/dtoa.cmt*
+bundle/dlldtoa_stubs.so

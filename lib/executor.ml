@@ -74,10 +74,13 @@ let execute' ~dir_name ~ocamlc_path ~redirect ~bundle_dir ast =
            main_exe;
            "-I";
            bundle_dir;
+           "dtoa.cmo";
            "uutf.cmo";
            "common.cmo";
            "stdjsonnet.cmo";
            main_ml;
+           "-dllib";
+           "-ldtoa_stubs";
          ]
      in
      let com = com ^ redirect_ocamlc in
@@ -88,7 +91,10 @@ let execute' ~dir_name ~ocamlc_path ~redirect ~bundle_dir ast =
       let stderr_msg = read_all ocamlc_stderr |> Result.value ~default:"" in
       raise (Compilation_failed (status, stderr_msg)));
   (match
-     let com = Filename.quote_command main_exe [] in
+     let com =
+       Filename.quote_command "env"
+         [ "LD_LIBRARY_PATH=" ^ bundle_dir; main_exe ]
+     in
      let com = com ^ redirect_main_exe in
      Unix.system com
    with
