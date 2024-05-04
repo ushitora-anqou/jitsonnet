@@ -915,7 +915,7 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "equals4" `Success;
   assert_compile "equals5" `Success;
   assert_compile "equals6" `Success;
-  (* assert_compile "escaped_fields" `Success;*)
+  (*assert_compile "escaped_fields" `Success;*)
   assert_compile "escaped_single_quote" `Success;
   (*
   assert_compile "extvar_code" `Success;
@@ -1208,7 +1208,6 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "string_index" `Success;
   assert_compile "string_index2" `Success;
   assert_compile "string_to_bool" `Success;
-  (*
   assert_compile "supersugar" `Success;
   assert_compile "supersugar2" `Success;
   assert_compile "supersugar3" `Success;
@@ -1217,7 +1216,6 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "supersugar6" `Success;
   assert_compile "supersugar7" `Success;
   assert_compile "supersugar9" `Success;
-  *)
   assert_compile "tailstrict" `Success;
   assert_compile "tailstrict4" `Success;
   assert_compile "tailstrict5" `Success;
@@ -1234,7 +1232,6 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "unary_minus" `Success;
   assert_compile "unary_minus2" `Success;
   assert_compile "unary_minus3" `Success;
-  (*assert_compile "unfinished_args" `Success;*)
   assert_compile "unicode" `Success;
   assert_compile "unicode2" `Success;
   assert_compile "use_object" `Success;
