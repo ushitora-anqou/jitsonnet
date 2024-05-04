@@ -807,8 +807,6 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "builtinBase64_byte_array" `Success;
   assert_compile "builtinChar" `Success;
   assert_compile "builtinChar2" `Success;
-
-  (*
   assert_compile "builtinChar4" `Success;
   assert_compile "builtinChar6" `Success;
   assert_compile "builtinContains" `Success;
@@ -816,6 +814,8 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "builtinEqualsIgnoreCase" `Success;
   assert_compile "builtinEqualsIgnoreCase2" `Success;
   assert_compile "builtinIsDecimal" `Success;
+
+  (*
   assert_compile "builtinIsDecimal2" `Success;
   assert_compile "builtinIsEmpty" `Success;
   assert_compile "builtinIsEmpty1" `Success;

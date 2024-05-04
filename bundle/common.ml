@@ -212,6 +212,9 @@ let std_char ([| n |], []) =
      ignore (Uutf.encode e `End);
      String (Buffer.contents buf))
 
+let std_floor ([| f |], []) =
+  lazy (Double (Float.floor (get_double (Lazy.force f))))
+
 let in_super super key =
   if Hashtbl.mem super (get_string key) then True else False
 
@@ -330,4 +333,5 @@ let append_to_std tbl =
   Hashtbl.add tbl "modulo" (1, lazy (Function std_modulo));
   Hashtbl.add tbl "codepoint" (1, lazy (Function std_codepoint));
   Hashtbl.add tbl "char" (1, lazy (Function std_char));
+  Hashtbl.add tbl "floor" (1, lazy (Function std_floor));
   ()
