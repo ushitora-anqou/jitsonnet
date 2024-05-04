@@ -824,8 +824,6 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "builtinIsOdd" `Success;
   assert_compile "builtinIsOdd2" `Success;
   assert_compile "builtinManifestJsonEx" `Success;
-
-  (*
   assert_compile "builtinMaxArray" `Success;
   assert_compile "builtinMinArray" `Success;
   assert_compile "builtinObjectFieldsEx" `Success;
@@ -839,10 +837,13 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "builtinReverse_many" `Success;
   assert_compile "builtinReverse_single" `Success;
   assert_compile "builtinRound" `Success;
+
+  (*
   assert_compile "builtinSha1" `Success;
   assert_compile "builtinSha256" `Success;
   assert_compile "builtinSha3" `Success;
   assert_compile "builtinSha512" `Success;
+  *)
   assert_compile "builtinSubStr_length_larger" `Success;
   assert_compile "builtinSubStr_start_larger_then_size" `Success;
   assert_compile "builtinSubstr" `Success;
@@ -855,6 +856,8 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "builtinXnor1" `Success;
   assert_compile "builtinXor" `Success;
   assert_compile "builtinXor1" `Success;
+
+  (*
   assert_compile "builtin_acos" `Success;
   assert_compile "builtin_asin" `Success;
   assert_compile "builtin_atan" `Success;
@@ -866,7 +869,10 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "builtin_exp6" `Success;
   assert_compile "builtin_exp7" `Success;
   assert_compile "builtin_exp8" `Success;
+  *)
   assert_compile "builtin_floor" `Success;
+
+  (*
   assert_compile "builtin_log" `Success;
   assert_compile "builtin_log2" `Success;
   assert_compile "builtin_log3" `Success;
@@ -874,17 +880,22 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "builtin_log6" `Success;
   assert_compile "builtin_lstripChars" `Success;
   assert_compile "builtin_manifestTomlEx" `Success;
+  *)
   assert_compile "builtin_member_array" `Success;
   assert_compile "builtin_member_string" `Success;
   assert_compile "builtin_parseInt" `Success;
   assert_compile "builtin_parseInt2" `Success;
   assert_compile "builtin_rstripChars" `Success;
+  (*
   assert_compile "builtin_sin" `Success;
   assert_compile "builtin_sqrt" `Success;
   assert_compile "builtin_stripChars" `Success;
   assert_compile "builtin_substr_multibyte" `Success;
   assert_compile "builtin_tan" `Success;
+  *)
   assert_compile "comparisons" `Success;
+
+  (*
   assert_compile "decodeUTF8" `Success;
   assert_compile "div1" `Success;
   assert_compile "div2" `Success;

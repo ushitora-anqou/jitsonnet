@@ -151,16 +151,16 @@ let std_make_array ([| n; f |], []) =
        (Array.init (int_of_float n) (fun i ->
             f ([| lazy (Double (float_of_int i)) |], []))))
 
-let std_type ([| v |], []) =
-  lazy
-    (match v with
-    | (lazy Null) -> String "null"
-    | (lazy (True | False)) -> String "boolean"
-    | (lazy (String _)) -> String "string"
-    | (lazy (Function _)) -> String "function"
-    | (lazy (Double _)) -> String "number"
-    | (lazy (Object _)) -> String "object"
-    | (lazy (Array _)) -> String "array")
+let std_type' = function
+  | Null -> "null"
+  | True | False -> "boolean"
+  | String _ -> "string"
+  | Function _ -> "function"
+  | Double _ -> "number"
+  | Object _ -> "object"
+  | Array _ -> "array"
+
+let std_type ([| v |], []) = lazy (String (std_type' (Lazy.force v)))
 
 let std_filter ([| f; ary |], []) =
   lazy
@@ -237,26 +237,26 @@ let array_index f1 f2 =
       | Some (_, (lazy v)) -> v)
   | _ -> failwith "ArrayIndex: expect array got something else"
 
+let rec value_to_string = function
+  | String s -> s
+  | Double f -> string_of_double f
+  | True -> "true"
+  | False -> "false"
+  | Array xs ->
+      "["
+      ^ String.concat ", "
+          (xs |> Array.to_list
+          |> List.map (fun x -> value_to_string (Lazy.force x)))
+      ^ "]"
+  | v -> failwith ("value_to_string: " ^ std_type' v)
+
 let binary_add lhs rhs =
-  match lhs with
-  | Double f1 -> (
-      match rhs with
-      | String s -> String (string_of_double f1 ^ s)
-      | Double f2 -> Double (f1 +. f2)
-      | _ ->
-          failwith "binary_add: expected string or double, got something else")
-  | Array xs -> Array (Array.append xs (get_array rhs))
-  | String s1 ->
-      String
-        (s1
-        ^
-        match rhs with
-        | String s -> s
-        | Double f -> string_of_double f
-        | _ ->
-            failwith "binary_add: expected string or double, got something else"
-        )
-  | Object _ ->
+  match (lhs, rhs) with
+  | Double f1, Double f2 -> Double (f1 +. f2)
+  | Array xs, _ -> Array (Array.append xs (get_array rhs))
+  | String _, _ | _, String _ ->
+      String (value_to_string lhs ^ value_to_string rhs)
+  | Object _, _ ->
       Object
         (General
            (fun super ->
