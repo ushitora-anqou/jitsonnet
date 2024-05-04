@@ -52,9 +52,14 @@ let rec f g =
         |> should_be_unique
       in
       Ok ()
-  | ObjectFor (e1, e2, x, e3) ->
+  | ObjectFor (outermost, e1, e2, x, e3) ->
       let* _ = e1 |> f (g |> add (Var x)) in
-      let* _ = e2 |> f (g |> add (Var x) |> add Self |> add Super) in
+      let* _ =
+        e2
+        |> f
+             (let g = if outermost then add (Var "$") g else g in
+              g |> add (Var x) |> add Self |> add Super)
+      in
       let* _ = e3 |> f g in
       Ok ()
   | Array es -> es |> for_all (f g)

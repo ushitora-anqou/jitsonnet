@@ -242,33 +242,49 @@ let rec compile_expr ?toplevel:_ ({ loc; _ } as env) :
              (fun [%p pvar ~loc (Hashtbl.find env.vars "self")]
                   [%p pvar ~loc (Hashtbl.find env.vars "super")] ->
                [%e body]))]
-  | ObjectFor (e1, e2, x, e3) ->
+  | ObjectFor (outermost, e1, e2, x, e3) ->
       let compiled_e3 (* with env *) = compile_expr env e3 in
       with_binds env [ x ] @@ fun () ->
       let compiled_e1 (* with env + x *) = compile_expr env e1 in
-      with_binds env [ "self"; "super" ] @@ fun () ->
-      let compiled_e2 (* with env + x, self *) = compile_expr_lazy env e2 in
+      with_binds env
+        (let a = [ "self"; "super" ] in
+         if outermost then "$" :: a else a)
+      @@ fun () ->
+      let compiled_e2 (* with env + x (+ $), self *) =
+        compile_expr_lazy env e2
+      in
       [%expr
         Object
           (General
              (fun [%p pvar ~loc (Hashtbl.find env.vars "self")]
                   [%p pvar ~loc (Hashtbl.find env.vars "super")] ->
                let tbl = [%e evar ~loc (Hashtbl.find env.vars "self")] in
-               [%e compiled_e3] |> get_array |> Array.to_seq
-               |> Seq.filter_map (fun v ->
-                      [%e
-                        pexp_let ~loc Nonrecursive
-                          [
-                            value_binding ~loc
-                              ~pat:
-                                (ppat_var ~loc
-                                   { loc; txt = Hashtbl.find env.vars x })
-                              ~expr:[%expr v];
-                          ]
-                          [%expr
-                            object_field' [%e compiled_e1] [%e compiled_e2]]])
-               |> Hashtbl.add_seq tbl;
-               ([], tbl)))]
+               [%e
+                 (if outermost then
+                    pexp_let ~loc Nonrecursive
+                      [
+                        value_binding ~loc
+                          ~pat:(pvar ~loc (Hashtbl.find env.vars "$"))
+                          ~expr:[%expr lazy [%e compile_expr env Self]];
+                      ]
+                  else Fun.id)
+                   [%expr
+                     [%e compiled_e3] |> get_array |> Array.to_seq
+                     |> Seq.filter_map (fun v ->
+                            [%e
+                              pexp_let ~loc Nonrecursive
+                                [
+                                  value_binding ~loc
+                                    ~pat:
+                                      (ppat_var ~loc
+                                         { loc; txt = Hashtbl.find env.vars x })
+                                    ~expr:[%expr v];
+                                ]
+                                [%expr
+                                  object_field' [%e compiled_e1]
+                                    [%e compiled_e2]]])
+                     |> Hashtbl.add_seq tbl;
+                     ([], tbl)]]))]
   | (Import file_path | Importbin file_path | Importstr file_path) as node ->
       let import_id =
         get_import_id

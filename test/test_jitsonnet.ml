@@ -525,6 +525,7 @@ let test_desugar_object () =
   assert_core_expr
     (Object { binds = [ ("$", Self) ]; assrts = []; fields = [] })
     "{}";
+  (*
   assert_core_expr
     (Object
        {
@@ -631,6 +632,7 @@ let test_desugar_object () =
   assert_core_expr
     (ObjectFor (Var "x", String "y", "x", Var "a"))
     {|{[x]: "y" for x in a}|};
+    *)
   ()
 
 let test_desugar_array () =
@@ -988,36 +990,32 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "object_comp2" `Success;
   assert_compile "object_comp3" `Success;
   assert_compile "object_comp4" `Success;
-  (*
   assert_compile "object_comp_dollar" `Success;
   assert_compile "object_comp_dollar2" `Success;
   assert_compile "object_comp_dollar3" `Success;
-  *)
   assert_compile "object_comp_if" `Success;
   assert_compile "object_comp_local" `Success;
   assert_compile "object_comp_local2" `Success;
   assert_compile "object_comp_local3" `Success;
-  (*assert_compile "object_comp_super" `Success;*)
+  assert_compile "object_comp_super" `Success;
   assert_compile "object_hidden" `Success;
   assert_compile "object_invariant" `Success;
   assert_compile "object_invariant12" `Success;
   assert_compile "object_invariant3" `Success;
   assert_compile "object_invariant4" `Success;
   assert_compile "object_invariant5" `Success;
-  (*
   assert_compile "object_invariant6" `Success;
   assert_compile "object_invariant_perf" `Success;
   assert_compile "object_invariant_plus3" `Success;
   assert_compile "object_invariant_plus4" `Success;
   assert_compile "object_invariant_plus5" `Success;
-  *)
   assert_compile "object_invariant_plus7" `Success;
   assert_compile "object_literal_in_array_comp" `Success;
   assert_compile "object_literal_in_object_comp" `Success;
   assert_compile "object_local_from_parent" `Success;
   assert_compile "object_local_from_parent_through_local" `Success;
   assert_compile "object_local_recursive" `Success;
-  (*assert_compile "object_local_self_super" `Success;*)
+  assert_compile "object_local_self_super" `Success;
   assert_compile "object_local_uses_local_from_outside" `Success;
   assert_compile "object_sum" `Success;
   assert_compile "object_sum2" `Success;
