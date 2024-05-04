@@ -209,31 +209,33 @@ let rec compile_expr ?(toplevel = false) ({ loc; _ } as env) :
                  ~pat:(ppat_var ~loc { loc; txt = Hashtbl.find env.vars id })
                  ~expr:(compile_expr_lazy ~in_bind:true env e))
       in
-      let bindings =
+      let self_bind =
         value_binding ~loc
           ~pat:(pvar ~loc (Hashtbl.find env.vars "self"))
           ~expr:
             (let body =
-               [%expr
-                 [%e assrts |> List.map (compile_expr_lazy env) |> elist ~loc],
-                   let tbl = Hashtbl.create 0 in
-                   [%e
-                     fields |> List.rev
-                     |> List.fold_left
-                          (fun e (e1, plus, h, e2) ->
-                            if plus then
-                              [%expr
-                                object_field_plus
-                                  [%e evar ~loc (Hashtbl.find env.vars "super")]
-                                  [%e e1] [%e compile_expr env e2] tbl
-                                  [%e eint ~loc h];
-                                [%e e]]
-                            else
-                              [%expr
-                                object_field tbl [%e eint ~loc h] [%e e1]
-                                  [%e compile_expr_lazy env e2];
-                                [%e e]])
-                          [%expr tbl]]]
+               pexp_let ~loc Recursive bindings
+                 [%expr
+                   [%e assrts |> List.map (compile_expr_lazy env) |> elist ~loc],
+                     let tbl = Hashtbl.create 0 in
+                     [%e
+                       fields |> List.rev
+                       |> List.fold_left
+                            (fun e (e1, plus, h, e2) ->
+                              if plus then
+                                [%expr
+                                  object_field_plus
+                                    [%e
+                                      evar ~loc (Hashtbl.find env.vars "super")]
+                                    [%e e1] [%e compile_expr env e2] tbl
+                                    [%e eint ~loc h];
+                                  [%e e]]
+                              else
+                                [%expr
+                                  object_field tbl [%e eint ~loc h] [%e e1]
+                                    [%e compile_expr_lazy env e2];
+                                  [%e e]])
+                            [%expr tbl]]]
              in
              [%expr
                lazy
@@ -250,9 +252,8 @@ let rec compile_expr ?(toplevel = false) ({ loc; _ } as env) :
                           General
                             (fun [%p pvar ~loc (Hashtbl.find env.vars "super")] ->
                               [%e body])]])])
-        :: bindings
       in
-      pexp_let ~loc Recursive bindings
+      pexp_let ~loc Recursive [ self_bind ]
         [%expr Lazy.force [%e evar ~loc (Hashtbl.find env.vars "self")]]
   | ObjectFor (e1, e2, x, e3) ->
       let compiled_e3 (* with env *) = compile_expr env e3 in
