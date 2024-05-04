@@ -837,7 +837,6 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "builtinReverse_many" `Success;
   assert_compile "builtinReverse_single" `Success;
   assert_compile "builtinRound" `Success;
-
   (*
   assert_compile "builtinSha1" `Success;
   assert_compile "builtinSha256" `Success;
@@ -856,7 +855,6 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "builtinXnor1" `Success;
   assert_compile "builtinXor" `Success;
   assert_compile "builtinXor1" `Success;
-
   (*
   assert_compile "builtin_acos" `Success;
   assert_compile "builtin_asin" `Success;
@@ -871,7 +869,6 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "builtin_exp8" `Success;
   *)
   assert_compile "builtin_floor" `Success;
-
   (*
   assert_compile "builtin_log" `Success;
   assert_compile "builtin_log2" `Success;
@@ -894,43 +891,45 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "builtin_tan" `Success;
   *)
   assert_compile "comparisons" `Success;
-
   (*
   assert_compile "decodeUTF8" `Success;
+  *)
   assert_compile "div1" `Success;
   assert_compile "div2" `Success;
-  assert_compile "div3" `Success;
+  (*assert_compile "div3" `Success;*)
   assert_compile "dollar_end" `Success;
   assert_compile "dollar_end2" `Success;
   assert_compile "empty_array" `Success;
   assert_compile "empty_object" `Success;
   assert_compile "empty_object_comp" `Success;
-  assert_compile "encodeUTF8" `Success;
+  (*assert_compile "encodeUTF8" `Success;*)
   assert_compile "equals" `Success;
   assert_compile "equals2" `Success;
   assert_compile "equals3" `Success;
   assert_compile "equals4" `Success;
   assert_compile "equals5" `Success;
   assert_compile "equals6" `Success;
-  assert_compile "escaped_fields" `Success;
+  (* assert_compile "escaped_fields" `Success;*)
   assert_compile "escaped_single_quote" `Success;
+  (*
   assert_compile "extvar_code" `Success;
   assert_compile "extvar_mutually_recursive" `Success;
   assert_compile "extvar_self_recursive" `Success;
   assert_compile "extvar_string" `Success;
+  *)
   assert_compile "false" `Success;
   assert_compile "filled_thunk" `Success;
   assert_compile "foldl_empty" `Success;
   assert_compile "foldl_single_element" `Success;
   assert_compile "foldl_string" `Success;
-  assert_compile "foldl_various" `Success;
+  (*assert_compile "foldl_various" `Success;*)
   assert_compile "foldr_empty" `Success;
   assert_compile "foldr_single_element" `Success;
   assert_compile "foldr_string" `Success;
-  assert_compile "foldr_various" `Success;
+  (*assert_compile "foldr_various" `Success;*)
   assert_compile "function_capturing" `Success;
   assert_compile "function_in_object" `Success;
-  assert_compile "function_no_params" `Success;
+  (*assert_compile "function_no_params" `Success;*)
   assert_compile "function_with_argument" `Success;
   assert_compile "greater" `Success;
   assert_compile "greaterEq" `Success;
@@ -941,23 +940,17 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "import2" `Success;
   assert_compile "import3" `Success;
   assert_compile "import4" `Success;
-  assert_compile "import_block_literal" `Success;
-  assert_compile "import_computed" `Success;
   assert_compile "import_twice" `Success;
   assert_compile "import_various_literals" `Success;
-  assert_compile "importbin_block_literal" `Success;
-  assert_compile "importbin_computed" `Success;
   assert_compile "importbin_nonutf8" `Success;
-  assert_compile "importstr_block_literal" `Success;
-  assert_compile "importstr_computed" `Success;
   assert_compile "in" `Success;
   assert_compile "in2" `Success;
   assert_compile "in3" `Success;
   assert_compile "in4" `Success;
   assert_compile "insuper" `Success;
   assert_compile "insuper2" `Success;
-  assert_compile "insuper3" `Success;
-  assert_compile "insuper4" `Success;
+  (*assert_compile "insuper3" `Success;*)
+  (*assert_compile "insuper4" `Success;*)
   assert_compile "insuper5" `Success;
   assert_compile "insuper7" `Success;
   assert_compile "lazy" `Success;
@@ -977,50 +970,53 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "mult" `Success;
   assert_compile "mult2" `Success;
   assert_compile "mult3" `Success;
-  assert_compile "multi" `Success;
-  assert_compile "multi_string_output" `Success;
+  (*
   assert_compile "native1" `Success;
   assert_compile "native2" `Success;
   assert_compile "native3" `Success;
   assert_compile "native6" `Success;
   assert_compile "native_nonexistent" `Success;
-  assert_compile "number_leading_zero" `Success;
+  *)
   assert_compile "numeric_literal" `Success;
+  (*
   assert_compile "obj_local_right_level" `Success;
   assert_compile "obj_local_right_level2" `Success;
   assert_compile "obj_local_right_level3" `Success;
+  *)
   assert_compile "object_comp" `Success;
   assert_compile "object_comp2" `Success;
   assert_compile "object_comp3" `Success;
   assert_compile "object_comp4" `Success;
-  assert_compile "object_comp_assert" `Success;
+  (*
   assert_compile "object_comp_dollar" `Success;
   assert_compile "object_comp_dollar2" `Success;
   assert_compile "object_comp_dollar3" `Success;
+  *)
   assert_compile "object_comp_if" `Success;
-  assert_compile "object_comp_illegal" `Success;
   assert_compile "object_comp_local" `Success;
   assert_compile "object_comp_local2" `Success;
   assert_compile "object_comp_local3" `Success;
-  assert_compile "object_comp_super" `Success;
+  (*assert_compile "object_comp_super" `Success;*)
   assert_compile "object_hidden" `Success;
   assert_compile "object_invariant" `Success;
   assert_compile "object_invariant12" `Success;
   assert_compile "object_invariant3" `Success;
   assert_compile "object_invariant4" `Success;
   assert_compile "object_invariant5" `Success;
+  (*
   assert_compile "object_invariant6" `Success;
   assert_compile "object_invariant_perf" `Success;
   assert_compile "object_invariant_plus3" `Success;
   assert_compile "object_invariant_plus4" `Success;
   assert_compile "object_invariant_plus5" `Success;
+  *)
   assert_compile "object_invariant_plus7" `Success;
   assert_compile "object_literal_in_array_comp" `Success;
   assert_compile "object_literal_in_object_comp" `Success;
   assert_compile "object_local_from_parent" `Success;
   assert_compile "object_local_from_parent_through_local" `Success;
   assert_compile "object_local_recursive" `Success;
-  assert_compile "object_local_self_super" `Success;
+  (*assert_compile "object_local_self_super" `Success;*)
   assert_compile "object_local_uses_local_from_outside" `Success;
   assert_compile "object_sum" `Success;
   assert_compile "object_sum2" `Success;
@@ -1028,15 +1024,16 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "object_super" `Success;
   assert_compile "object_super_deep" `Success;
   assert_compile "object_super_within" `Success;
-  assert_compile "object_various_field_types" `Success;
+  (*assert_compile "object_various_field_types" `Success;*)
   assert_compile "object_within_object" `Success;
   assert_compile "optional_args" `Success;
   assert_compile "optional_args10" `Success;
   assert_compile "optional_args12" `Success;
-  assert_compile "optional_args14" `Success;
+  (*assert_compile "optional_args14" `Success;*)
   assert_compile "optional_args15" `Success;
   assert_compile "optional_args16" `Success;
   assert_compile "optional_args17" `Success;
+  (*
   assert_compile "optional_args18" `Success;
   assert_compile "optional_args19" `Success;
   assert_compile "optional_args2" `Success;
@@ -1048,11 +1045,14 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "optional_args5" `Success;
   assert_compile "optional_args6" `Success;
   assert_compile "optional_args7" `Success;
+  *)
   assert_compile "or3" `Success;
+  (*
   assert_compile "overriding_stdlib_desugared" `Success;
   assert_compile "parseJson" `Success;
   assert_compile "parseYaml" `Success;
   assert_compile "percent_format_float" `Success;
+  *)
   assert_compile "percent_format_str" `Success;
   assert_compile "percent_format_str2" `Success;
   assert_compile "percent_format_str3" `Success;
@@ -1065,14 +1065,16 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "plus3" `Success;
   assert_compile "plus4" `Success;
   assert_compile "plus7" `Success;
-  assert_compile "plus8" `Success;
+  (*assert_compile "plus8" `Success;*)
   assert_compile "plus9" `Success;
   assert_compile "positional_after_optional" `Success;
+  (*
   assert_compile "pow" `Success;
   assert_compile "pow2" `Success;
   assert_compile "pow3" `Success;
   assert_compile "pow5" `Success;
   assert_compile "pow6" `Success;
+  *)
   assert_compile "proto_object_comp" `Success;
   assert_compile "recursive_local" `Success;
   assert_compile "self" `Success;
@@ -1095,6 +1097,7 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "std.codepoint2" `Success;
   assert_compile "std.codepoint4" `Success;
   assert_compile "std.codepoint5" `Success;
+  (*
   assert_compile "std.exponent" `Success;
   assert_compile "std.exponent2" `Success;
   assert_compile "std.exponent3" `Success;
@@ -1102,6 +1105,7 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "std.exponent5" `Success;
   assert_compile "std.exponent6" `Success;
   assert_compile "std.exponent7" `Success;
+  *)
   assert_compile "std.filter" `Success;
   assert_compile "std.filter3" `Success;
   assert_compile "std.filter7" `Success;
@@ -1119,13 +1123,16 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "std" `Success;
   assert_compile "std.length" `Success;
   assert_compile "std.length_array" `Success;
+  (*
   assert_compile "std.length_function" `Success;
   assert_compile "std.length_object" `Success;
   assert_compile "std.length_object_sum" `Success;
   assert_compile "std.length_object_with_hidden" `Success;
+  *)
   assert_compile "std.length_string" `Success;
   assert_compile "std.lstripChars.multibyte" `Success;
   assert_compile "std.makeArray" `Success;
+  (*
   assert_compile "std.makeArrayNamed" `Success;
   assert_compile "std.makeArrayNamed2" `Success;
   assert_compile "std.makeArrayNamed4" `Success;
@@ -1142,6 +1149,7 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "std.md5_3" `Success;
   assert_compile "std.md5_4" `Success;
   assert_compile "std.md5_5" `Success;
+  *)
   assert_compile "std.mod_int" `Success;
   assert_compile "std.mod_string" `Success;
   assert_compile "std.modulo" `Success;
@@ -1170,19 +1178,25 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "std.slice" `Success;
   assert_compile "std.sort" `Success;
   assert_compile "std.sort2" `Success;
+  (*
   assert_compile "std.thisFile" `Success;
   assert_compile "std.thisFile2" `Success;
+  *)
   assert_compile "std.toString" `Success;
   assert_compile "std.toString2" `Success;
+  (*
   assert_compile "std.toString3" `Success;
   assert_compile "std.toString4" `Success;
   assert_compile "std.toString6" `Success;
   assert_compile "std.toString7" `Success;
   assert_compile "std.toString8" `Success;
+  *)
   assert_compile "std_in_local" `Success;
   assert_compile "std_substr" `Success;
+  (*
   assert_compile "stdlib_smoke_test" `Success;
   assert_compile "strReplace" `Success;
+  *)
   assert_compile "strReplace2" `Success;
   assert_compile "string2" `Success;
   assert_compile "string_comparison1" `Success;
@@ -1195,6 +1209,7 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "string_index" `Success;
   assert_compile "string_index2" `Success;
   assert_compile "string_to_bool" `Success;
+  (*
   assert_compile "supersugar" `Success;
   assert_compile "supersugar2" `Success;
   assert_compile "supersugar3" `Success;
@@ -1203,6 +1218,7 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "supersugar6" `Success;
   assert_compile "supersugar7" `Success;
   assert_compile "supersugar9" `Success;
+  *)
   assert_compile "tailstrict" `Success;
   assert_compile "tailstrict4" `Success;
   assert_compile "tailstrict5" `Success;
@@ -1219,14 +1235,14 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "unary_minus" `Success;
   assert_compile "unary_minus2" `Success;
   assert_compile "unary_minus3" `Success;
-  assert_compile "unfinished_args" `Success;
+  (*assert_compile "unfinished_args" `Success;*)
   assert_compile "unicode" `Success;
   assert_compile "unicode2" `Success;
   assert_compile "use_object" `Success;
   assert_compile "use_object_in_object" `Success;
   assert_compile "variable" `Success;
   assert_compile "verbatim_string" `Success;
-  *)
+
   ()
 
 let () =
