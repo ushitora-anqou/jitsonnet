@@ -1028,11 +1028,10 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "optional_args" `Success;
   assert_compile "optional_args10" `Success;
   assert_compile "optional_args12" `Success;
-  (*assert_compile "optional_args14" `Success;*)
+  assert_compile "optional_args14" `Success;
   assert_compile "optional_args15" `Success;
   assert_compile "optional_args16" `Success;
   assert_compile "optional_args17" `Success;
-  (*
   assert_compile "optional_args18" `Success;
   assert_compile "optional_args19" `Success;
   assert_compile "optional_args2" `Success;
@@ -1044,7 +1043,6 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "optional_args5" `Success;
   assert_compile "optional_args6" `Success;
   assert_compile "optional_args7" `Success;
-  *)
   assert_compile "or3" `Success;
   (*
   assert_compile "overriding_stdlib_desugared" `Success;

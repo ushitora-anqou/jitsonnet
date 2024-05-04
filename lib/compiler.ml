@@ -153,17 +153,20 @@ let rec compile_expr ?toplevel:_ ({ loc; _ } as env) :
              ~pat:(ppat_var ~loc { loc; txt = Hashtbl.find env.vars id })
              ~expr:
                [%expr
-                 function_param [%e eint ~loc i] positional [%e estring ~loc id]
-                   named
-                   [%e
-                     match e with
-                     | None -> [%expr None]
-                     | Some e -> [%expr Some (lazy [%e compile_expr env e])]]]
+                 lazy
+                   (Lazy.force
+                      (function_param [%e eint ~loc i] positional
+                         [%e estring ~loc id] named
+                         [%e
+                           match e with
+                           | None -> [%expr None]
+                           | Some e ->
+                               [%expr Some (lazy [%e compile_expr env e])]]))]
       in
       [%expr
         Function
           (fun (positional, named) ->
-            [%e pexp_let ~loc Nonrecursive binds (compile_expr_lazy env body)])]
+            [%e pexp_let ~loc Recursive binds (compile_expr_lazy env body)])]
   | Call (e, positional, named) ->
       [%expr
         get_function [%e compile_expr env e]
