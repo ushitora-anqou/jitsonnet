@@ -875,7 +875,9 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "builtin_log3" `Success;
   assert_compile "builtin_log4" `Success;
   assert_compile "builtin_log6" `Success;
-  assert_compile "builtin_lstripChars" `Success;
+  *)
+  (*assert_compile "builtin_lstripChars" `Success; (* SLOW *)*)
+  (*
   assert_compile "builtin_manifestTomlEx" `Success;
   *)
   assert_compile "builtin_member_array" `Success;
@@ -886,8 +888,10 @@ let test_compiler_with_go_jsonnet_testdata () =
   (*
   assert_compile "builtin_sin" `Success;
   assert_compile "builtin_sqrt" `Success;
-  assert_compile "builtin_stripChars" `Success;
+  *)
+  (*assert_compile "builtin_stripChars" `Success; (* TOO SLOW *)*)
   assert_compile "builtin_substr_multibyte" `Success;
+  (*
   assert_compile "builtin_tan" `Success;
   *)
   assert_compile "comparisons" `Success;
