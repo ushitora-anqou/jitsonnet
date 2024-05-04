@@ -190,9 +190,7 @@ let rec compile_expr ?toplevel:_ ({ loc; _ } as env) :
         (compile_expr env e)
   | Self ->
       [%expr
-        Object
-          (General
-             (fun _ _ -> ([], [%e evar ~loc (Hashtbl.find env.vars "self")])))]
+        make_simple_object ([], [%e evar ~loc (Hashtbl.find env.vars "self")])]
   | Var id ->
       [%expr
         Lazy.force
@@ -240,11 +238,11 @@ let rec compile_expr ?toplevel:_ ({ loc; _ } as env) :
                      [%expr tbl]]]
       in
       [%expr
-        Object
-          (General
-             (fun [%p pvar ~loc (Hashtbl.find env.vars "self")]
-                  [%p pvar ~loc (Hashtbl.find env.vars "super")] ->
-               [%e body]))]
+        make_object
+          (fun
+            [%p pvar ~loc (Hashtbl.find env.vars "self")]
+            [%p pvar ~loc (Hashtbl.find env.vars "super")]
+          -> [%e body])]
   | ObjectFor (outermost, e1, e2, x, e3) ->
       let compiled_e3 (* with env *) = compile_expr env e3 in
       with_binds env [ x ] @@ fun () ->
@@ -257,37 +255,37 @@ let rec compile_expr ?toplevel:_ ({ loc; _ } as env) :
         compile_expr_lazy env e2
       in
       [%expr
-        Object
-          (General
-             (fun [%p pvar ~loc (Hashtbl.find env.vars "self")]
-                  [%p pvar ~loc (Hashtbl.find env.vars "super")] ->
-               let tbl = [%e evar ~loc (Hashtbl.find env.vars "self")] in
-               [%e
-                 (if outermost then
-                    pexp_let ~loc Nonrecursive
-                      [
-                        value_binding ~loc
-                          ~pat:(pvar ~loc (Hashtbl.find env.vars "$"))
-                          ~expr:[%expr lazy [%e compile_expr env Self]];
-                      ]
-                  else Fun.id)
-                   [%expr
-                     [%e compiled_e3] |> get_array |> Array.to_seq
-                     |> Seq.filter_map (fun v ->
-                            [%e
-                              pexp_let ~loc Nonrecursive
-                                [
-                                  value_binding ~loc
-                                    ~pat:
-                                      (ppat_var ~loc
-                                         { loc; txt = Hashtbl.find env.vars x })
-                                    ~expr:[%expr v];
-                                ]
-                                [%expr
-                                  object_field' [%e compiled_e1]
-                                    [%e compiled_e2]]])
-                     |> Hashtbl.add_seq tbl;
-                     ([], tbl)]]))]
+        make_object
+          (fun
+            [%p pvar ~loc (Hashtbl.find env.vars "self")]
+            [%p pvar ~loc (Hashtbl.find env.vars "super")]
+          ->
+            let tbl = [%e evar ~loc (Hashtbl.find env.vars "self")] in
+            [%e
+              (if outermost then
+                 pexp_let ~loc Nonrecursive
+                   [
+                     value_binding ~loc
+                       ~pat:(pvar ~loc (Hashtbl.find env.vars "$"))
+                       ~expr:[%expr lazy [%e compile_expr env Self]];
+                   ]
+               else Fun.id)
+                [%expr
+                  [%e compiled_e3] |> get_array |> Array.to_seq
+                  |> Seq.filter_map (fun v ->
+                         [%e
+                           pexp_let ~loc Nonrecursive
+                             [
+                               value_binding ~loc
+                                 ~pat:
+                                   (ppat_var ~loc
+                                      { loc; txt = Hashtbl.find env.vars x })
+                                 ~expr:[%expr v];
+                             ]
+                             [%expr
+                               object_field' [%e compiled_e1] [%e compiled_e2]]])
+                  |> Hashtbl.add_seq tbl;
+                  ([], tbl)]])]
   | (Import file_path | Importbin file_path | Importstr file_path) as node ->
       let import_id =
         get_import_id
@@ -411,18 +409,14 @@ let compile ?(target = `Main) root_prog_path progs bins strs =
         lazy
           [%e
             match target with
-            | `Stdjsonnet -> [%expr Object (General (fun self _ -> ([], self)))]
+            | `Stdjsonnet -> [%expr make_simple_object ([], empty_obj_fields)]
             | _ ->
                 [%expr
-                  Object
-                    (General
-                       (fun self super ->
-                         let (Object (General f)) =
-                           Lazy.force Stdjsonnet.Compiled.v
-                         in
-                         let assrts, _ = f self super in
-                         append_to_std self;
-                         (assrts, self)))]]
+                  make_object (fun self super ->
+                      let f = get_object_f (Lazy.force Stdjsonnet.Compiled.v) in
+                      let assrts, _ = f self super in
+                      append_to_std self;
+                      (assrts, self))]]
 
       let v =
         [%e
