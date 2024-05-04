@@ -110,4 +110,5 @@
   0 + "",
   std.codepoint("あ"),
   std.char(12354),
+  "abc"[1],
 ]

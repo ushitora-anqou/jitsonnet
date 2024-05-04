@@ -223,6 +223,7 @@ let super_index super key =
 let array_index f1 f2 =
   match f1 () with
   | Array a -> a.(get_double (f2 ()) |> int_of_float) |> Lazy.force
+  | String s -> String (String.make 1 s.[int_of_float (get_double (f2 ()))])
   | Object _ as x -> (
       let assrts, tbl = (get_object x) empty_obj_fields in
       assrts |> List.iter (fun (lazy _) -> ());
