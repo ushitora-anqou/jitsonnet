@@ -111,11 +111,11 @@ let execute ~bundle_dir ?(remove_tmp_dir = true) ast =
   let dir_name = Filename.temp_dir ?temp_dir "jitsonnet" "" in
   Fun.protect ~finally:(fun () -> if remove_tmp_dir then rm_rf dir_name)
   @@ fun () ->
-  execute' ~dir_name ~ocamlc_path:"ocamlc" ~redirect:true ~bundle_dir ast;
+  execute' ~dir_name ~ocamlc_path:"ocamlc.opt" ~redirect:true ~bundle_dir ast;
   read_all (Filename.concat dir_name main_exe_stdout_file_name) |> Result.get_ok
 
 let execute_from_cli ~bundle_dir ast =
   let dir_name = Filename.temp_dir "jitsonnet" "" in
   Fun.protect ~finally:(fun () -> rm_rf dir_name) @@ fun () ->
-  execute' ~dir_name ~ocamlc_path:"ocamlc" ~redirect:false ~bundle_dir ast;
+  execute' ~dir_name ~ocamlc_path:"ocamlc.opt" ~redirect:false ~bundle_dir ast;
   ()
