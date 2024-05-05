@@ -40,10 +40,7 @@ let rec compile_expr ?toplevel:_ ({ loc; _ } as env) :
       [%expr
         Array [%e xs |> List.map (compile_expr_lazy env) |> pexp_array ~loc]]
   | ArrayIndex (e1, e2) ->
-      [%expr
-        array_index
-          (fun () -> [%e compile_expr env e1])
-          (fun () -> [%e compile_expr env e2])]
+      [%expr array_index [%e compile_expr env e1] [%e compile_expr env e2]]
   | Binary (e1, `Add, e2) ->
       [%expr
         let lhs = [%e compile_expr env e1] in

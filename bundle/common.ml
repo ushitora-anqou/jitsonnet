@@ -230,14 +230,14 @@ let super_index super key =
   | None -> failwith ("field does not exist: " ^ key)
   | Some (_, (lazy v)) -> v
 
-let array_index f1 f2 =
-  match f1 () with
-  | Array a -> a.(get_double (f2 ()) |> int_of_float) |> Lazy.force
-  | String s -> String (String.make 1 s.[int_of_float (get_double (f2 ()))])
+let array_index v1 v2 =
+  match v1 with
+  | Array a -> a.(get_double v2 |> int_of_float) |> Lazy.force
+  | String s -> String (String.make 1 s.[int_of_float (get_double v2)])
   | Object _ as x -> (
       let assrts, tbl = get_object x in
       assrts |> List.iter (fun (lazy _) -> ());
-      let key = get_string (f2 ()) in
+      let key = get_string v2 in
       match Hashtbl.find_opt tbl key with
       | None -> failwith ("field does not exist: " ^ key)
       | Some (_, (lazy v)) -> v)
