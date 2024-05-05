@@ -137,8 +137,7 @@ let rec compile_expr ?toplevel:_ ({ loc; _ } as env) :
   | Unary (Pos, e) -> [%expr Double (+.get_double [%e compile_expr env e])]
   | If (e1, e2, e3) ->
       [%expr
-        if_
-          (fun () -> [%e compile_expr env e1])
+        if_ [%e compile_expr env e1]
           (fun () -> [%e compile_expr env e2])
           (fun () -> [%e compile_expr env e3])]
   | Function (params, body) ->

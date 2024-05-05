@@ -313,8 +313,8 @@ let function_param i positional id named v =
     | None -> (
         match v with Some v -> v | None -> failwith "Parameter not bound")
 
-let if_ f1 f2 f3 =
-  match f1 () with
+let if_ v1 f2 f3 =
+  match v1 with
   | True -> f2 ()
   | False -> f3 ()
   | _ -> failwith "invalid if condition"
@@ -326,8 +326,7 @@ let error v =
 let object_field_plus super key value tbl h =
   object_field tbl h key
     (lazy
-      (if_
-         (fun () -> in_super super key)
+      (if_ (in_super super key)
          (fun () ->
            let lhs = super_index super key in
            let rhs = value in
