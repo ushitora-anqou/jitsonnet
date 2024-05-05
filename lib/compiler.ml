@@ -162,7 +162,7 @@ let rec compile_expr ?toplevel:_ ({ loc; _ } as env) :
       [%expr
         Function
           (fun (positional, named) ->
-            [%e pexp_let ~loc Recursive binds (compile_expr_lazy env body)])]
+            [%e pexp_let ~loc Recursive binds (compile_expr env body)])]
   | Call (e, positional, named) ->
       [%expr
         get_function [%e compile_expr env e]
@@ -172,8 +172,7 @@ let rec compile_expr ?toplevel:_ ({ loc; _ } as env) :
               |> List.map (fun (id, e) ->
                      pexp_tuple ~loc
                        [ estring ~loc id; compile_expr_lazy env e ])
-              |> elist ~loc] )
-        |> Lazy.force]
+              |> elist ~loc] )]
   | Error e -> [%expr error [%e compile_expr env e]]
   | Local (binds, e) ->
       with_binds env (binds |> List.map fst) @@ fun () ->

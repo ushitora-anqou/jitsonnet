@@ -5,8 +5,7 @@ type value =
   | String of string
   | Double of float
   | Object of object_
-  | Function of
-      (value Lazy.t array * (string * value Lazy.t) list -> value Lazy.t)
+  | Function of (value Lazy.t array * (string * value Lazy.t) list -> value)
   | Array of value Lazy.t array
 
 and assrts = value Lazy.t list
@@ -128,34 +127,31 @@ let manifestation ppf v =
   fprintf ppf "\n"
 
 let std_primitive_equals ([| v; v' |], []) =
-  lazy
-    ((match (Lazy.force v, Lazy.force v') with
-     | String lhs, String rhs -> lhs = rhs
-     | Double lhs, Double rhs -> lhs = rhs
-     | True, True | False, False | Null, Null -> true
-     | _ -> false)
-    |> value_of_bool)
+  (match (Lazy.force v, Lazy.force v') with
+  | String lhs, String rhs -> lhs = rhs
+  | Double lhs, Double rhs -> lhs = rhs
+  | True, True | False, False | Null, Null -> true
+  | _ -> false)
+  |> value_of_bool
 
 let std_length ([| v |], []) =
-  lazy
-    (match v with
-    | (lazy (Array xs)) -> Double (xs |> Array.length |> float_of_int)
-    | (lazy (String s)) -> Double (s |> String.length |> float_of_int)
-    | (lazy (Object _ as x)) ->
-        let _, fields = get_object x in
-        Double
-          (fields |> Hashtbl.to_seq
-          |> Seq.filter_map (fun (f, (h, _)) -> if h = 2 then None else Some ())
-          |> Seq.length |> float_of_int)
-    | _ -> failwith "std.length: invalid type argument")
+  match v with
+  | (lazy (Array xs)) -> Double (xs |> Array.length |> float_of_int)
+  | (lazy (String s)) -> Double (s |> String.length |> float_of_int)
+  | (lazy (Object _ as x)) ->
+      let _, fields = get_object x in
+      Double
+        (fields |> Hashtbl.to_seq
+        |> Seq.filter_map (fun (f, (h, _)) -> if h = 2 then None else Some ())
+        |> Seq.length |> float_of_int)
+  | _ -> failwith "std.length: invalid type argument"
 
 let std_make_array ([| n; f |], []) =
-  lazy
-    (let n = n |> Lazy.force |> get_double in
-     let f = f |> Lazy.force |> get_function in
-     Array
-       (Array.init (int_of_float n) (fun i ->
-            f ([| lazy (Double (float_of_int i)) |], []))))
+  let n = n |> Lazy.force |> get_double in
+  let f = f |> Lazy.force |> get_function in
+  Array
+    (Array.init (int_of_float n) (fun i ->
+         lazy (f ([| lazy (Double (float_of_int i)) |], []))))
 
 let std_type' = function
   | Null -> "null"
@@ -166,60 +162,52 @@ let std_type' = function
   | Object _ -> "object"
   | Array _ -> "array"
 
-let std_type ([| v |], []) = lazy (String (std_type' (Lazy.force v)))
+let std_type ([| v |], []) = String (std_type' (Lazy.force v))
 
 let std_filter ([| f; ary |], []) =
-  lazy
-    (let f = f |> Lazy.force |> get_function in
-     let xs = ary |> Lazy.force |> get_array in
-     Array
-       (xs |> Array.to_list
-       |> List.filter (fun x -> f ([| x |], []) |> Lazy.force |> get_bool)
-       |> Array.of_list))
+  let f = f |> Lazy.force |> get_function in
+  let xs = ary |> Lazy.force |> get_array in
+  Array
+    (xs |> Array.to_list
+    |> List.filter (fun x -> f ([| x |], []) |> get_bool)
+    |> Array.of_list)
 
 let std_object_has_ex ([| obj; f; b' |], []) =
-  lazy
-    (let _, fields = get_object (Lazy.force obj) in
-     let f = f |> Lazy.force |> get_string in
-     let b' = b' |> Lazy.force |> get_bool in
-     match Hashtbl.find_opt fields f with
-     | Some (h, _) when h <> 2 || b' -> True
-     | _ -> False)
+  let _, fields = get_object (Lazy.force obj) in
+  let f = f |> Lazy.force |> get_string in
+  let b' = b' |> Lazy.force |> get_bool in
+  match Hashtbl.find_opt fields f with
+  | Some (h, _) when h <> 2 || b' -> True
+  | _ -> False
 
 let std_object_fields_ex ([| obj; b' |], []) =
-  lazy
-    (let b' = b' |> Lazy.force |> get_bool in
-     let _, fields = get_object (Lazy.force obj) in
-     Array
-       (fields |> Hashtbl.to_seq
-       |> Seq.filter_map (fun (f, (h, _)) ->
-              if h <> 2 || b' then Some f else None)
-       |> List.of_seq |> List.sort String.compare |> Array.of_list
-       |> Array.map (fun x -> lazy (String x))))
+  let b' = b' |> Lazy.force |> get_bool in
+  let _, fields = get_object (Lazy.force obj) in
+  Array
+    (fields |> Hashtbl.to_seq
+    |> Seq.filter_map (fun (f, (h, _)) -> if h <> 2 || b' then Some f else None)
+    |> List.of_seq |> List.sort String.compare |> Array.of_list
+    |> Array.map (fun x -> lazy (String x)))
 
 let std_modulo ([| a; b |], []) =
-  lazy
-    (Double (Float.rem (get_double (Lazy.force a)) (get_double (Lazy.force b))))
+  Double (Float.rem (get_double (Lazy.force a)) (get_double (Lazy.force b)))
 
 let std_codepoint ([| s |], []) =
-  lazy
-    (let s = get_string (Lazy.force s) in
-     let d = Uutf.decoder ~encoding:`UTF_8 (`String s) in
-     match Uutf.decode d with
-     | `Uchar u -> Double (float_of_int (Uchar.to_int u))
-     | _ -> failwith "std.codepoint: invalid input string")
+  let s = get_string (Lazy.force s) in
+  let d = Uutf.decoder ~encoding:`UTF_8 (`String s) in
+  match Uutf.decode d with
+  | `Uchar u -> Double (float_of_int (Uchar.to_int u))
+  | _ -> failwith "std.codepoint: invalid input string"
 
 let std_char ([| n |], []) =
-  lazy
-    (let n = int_of_float (get_double (Lazy.force n)) in
-     let buf = Buffer.create 10 in
-     let e = Uutf.encoder `UTF_8 (`Buffer buf) in
-     ignore (Uutf.encode e (`Uchar (Uchar.of_int n)));
-     ignore (Uutf.encode e `End);
-     String (Buffer.contents buf))
+  let n = int_of_float (get_double (Lazy.force n)) in
+  let buf = Buffer.create 10 in
+  let e = Uutf.encoder `UTF_8 (`Buffer buf) in
+  ignore (Uutf.encode e (`Uchar (Uchar.of_int n)));
+  ignore (Uutf.encode e `End);
+  String (Buffer.contents buf)
 
-let std_floor ([| f |], []) =
-  lazy (Double (Float.floor (get_double (Lazy.force f))))
+let std_floor ([| f |], []) = Double (Float.floor (get_double (Lazy.force f)))
 
 let in_super super key =
   if Hashtbl.mem super (get_string key) then True else False
