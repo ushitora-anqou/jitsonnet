@@ -2,12 +2,32 @@ open Ppxlib
 
 let errf fmt = Printf.ksprintf (fun s -> Error s) fmt
 
-let run file_path bundle_dir =
+let run file_path bundle_path =
   match Loader.load_root file_path with
   | Error msg ->
       Logs.err (fun m -> m "%s" msg);
       exit 1
-  | Ok t -> t |> Loader.compile |> Executor.execute_from_cli ~bundle_dir
+  | Ok t -> (
+      let compiled = Loader.compile t in
+      match
+        Executor.(
+          execute
+            (make_config ~bundle_path ~mode:`Bytecode ~interactive_compile:false
+               ~interactive_execute:true ()))
+          compiled
+      with
+      | WEXITED code, _, _ -> exit code
+      | status, _, _ ->
+          Logs.err (fun m ->
+              m "unexpected error: %s"
+                (Executor.string_of_process_status status));
+          exit 1
+      | exception Executor.Compilation_failed msg ->
+          Logs.err (fun m -> m "BUG: compilation failed: %s" msg);
+          exit 1
+      | exception Executor.Execution_failed msg ->
+          Logs.err (fun m -> m "BUG: execution failed: %s" msg);
+          exit 1)
 
 let compile file_path target =
   let target =

@@ -19,43 +19,151 @@ let rm_rf dir_name =
 
 let read_all file_path =
   match open_in_bin file_path with
-  | exception _ -> Error "can't open the file"
+  | exception _ -> Error "read_all: can't open the file"
   | ic ->
       Fun.protect
         ~finally:(fun () -> close_in ic)
         (fun () -> Ok (In_channel.input_all ic))
 
-let main_ml_file_name = "main.ml"
-let main_exe_file_name = "main.exe"
-let ocamlc_stdout_file_name = "ocamlc.stdout"
-let ocamlc_stderr_file_name = "ocamlc.stderr"
-let main_exe_stdout_file_name = "main.exe.stdout"
-let main_exe_stderr_file_name = "main.exe.stderr"
+let write_all file_path body =
+  match open_out_bin file_path with
+  | exception _ -> Error "write_all: can't open the file"
+  | oc ->
+      Fun.protect
+        ~finally:(fun () -> close_out oc)
+        (fun () -> Ok (Out_channel.output_string oc body))
 
-exception Compiled_executable_failed of (Unix.process_status * string)
-exception Compilation_failed of (Unix.process_status * string)
+let execute_process ?(interactive = false) prog args env =
+  Logs.debug (fun m ->
+      m "execute_process: %s %s"
+        (env |> Array.to_list |> String.concat " ")
+        (Filename.quote_command prog (Array.to_list args)));
+  let stdin_in_fd, stdin_out_fd = Unix.pipe ~cloexec:true () in
+  let stdout_in_fd, stdout_out_fd = Unix.pipe ~cloexec:true () in
+  let stderr_in_fd, stderr_out_fd = Unix.pipe ~cloexec:true () in
+  Fun.protect ~finally:(fun () ->
+      Unix.close stdout_in_fd;
+      Unix.close stderr_in_fd)
+  @@ fun () ->
+  let pid =
+    Unix.create_process_env prog args env
+      (if interactive then Unix.stdin else stdin_in_fd)
+      (if interactive then Unix.stdout else stdout_out_fd)
+      (if interactive then Unix.stderr else stderr_out_fd)
+  in
+  Unix.close stdin_out_fd;
+  Unix.close stdout_out_fd;
+  Unix.close stderr_out_fd;
+  let stdout_content =
+    if interactive then ""
+    else In_channel.input_all (Unix.in_channel_of_descr stdout_in_fd)
+  in
+  let stderr_content =
+    if interactive then ""
+    else In_channel.input_all (Unix.in_channel_of_descr stderr_in_fd)
+  in
+  let _, status = Unix.waitpid [] pid in
+  (status, stdout_content, stderr_content)
 
-let execute' ~dir_name ~ocamlc_path ~redirect ~bundle_dir ast =
-  let main_ml = Filename.concat dir_name main_ml_file_name in
-  let main_exe = Filename.concat dir_name main_exe_file_name in
-  let main_exe_stdout = Filename.concat dir_name main_exe_stdout_file_name in
-  let main_exe_stderr = Filename.concat dir_name main_exe_stderr_file_name in
-  let ocamlc_stdout = Filename.concat dir_name ocamlc_stdout_file_name in
-  let ocamlc_stderr = Filename.concat dir_name ocamlc_stderr_file_name in
-  let redirect_ocamlc =
-    if redirect then
-      Printf.sprintf "> %s 2> %s"
-        (Filename.quote ocamlc_stdout)
-        (Filename.quote ocamlc_stderr)
-    else ""
-  in
-  let redirect_main_exe =
-    if redirect then
-      Printf.sprintf "> %s 2> %s"
-        (Filename.quote main_exe_stdout)
-        (Filename.quote main_exe_stderr)
-    else ""
-  in
+exception Compilation_failed of string
+exception Execution_failed of string
+
+let string_of_process_status = function
+  | Unix.WEXITED n -> "exited " ^ string_of_int n
+  | WSIGNALED n -> "signal " ^ string_of_int n
+  | WSTOPPED n -> "stopped  " ^ string_of_int n
+
+let compile_to_bytecode ~ocamlc ~main_ml ~main_exe ~bundle_path ~interactive ()
+    =
+  match
+    execute_process ~interactive ocamlc
+      [|
+        ocamlc;
+        "-w";
+        "a";
+        "-o";
+        main_exe;
+        "-I";
+        bundle_path;
+        "dtoa.cmo";
+        "uutf.cmo";
+        "common.cmo";
+        "stdjsonnet.cmo";
+        main_ml;
+        "-dllib";
+        "-ldtoa_stubs";
+      |]
+      [||]
+  with
+  | Unix.WEXITED 0, _, _ -> ()
+  | status, stdout_content, stderr_content ->
+      raise
+        (Compilation_failed
+           (Printf.sprintf "%s failed: %s:\n%s\n%s" ocamlc
+              (string_of_process_status status)
+              stdout_content stderr_content))
+  | exception exc ->
+      raise
+        (Compilation_failed
+           (Printf.sprintf "unexpected error: %s" (Printexc.to_string exc)))
+
+let execute_bytecode ~main_exe ~bundle_path ~interactive () =
+  try
+    execute_process ~interactive main_exe [| main_exe |]
+      [| "LD_LIBRARY_PATH=" ^ bundle_path |]
+  with exc ->
+    raise
+      (Execution_failed
+         (Printf.sprintf "unexpected error: %s" (Printexc.to_string exc)))
+
+let timeit show_profile name f =
+  match show_profile with
+  | false -> f ()
+  | true ->
+      let t0 = Unix.gettimeofday () in
+      let r = f () in
+      let t1 = Unix.gettimeofday () in
+      Logs.info (fun m -> m "timeit: %s: %f sec" name (t1 -. t0));
+      r
+
+type config = {
+  work_dir_prefix : string; [@default "/tmp"]
+  remove_work_dir : bool; [@default true]
+  main_ml_file_name : string; [@default "main.ml"]
+  main_exe_file_name : string; [@default "main.exe"]
+  ocamlc : string; [@default "ocamlc.opt"]
+  ocamlopt : string; [@default "ocamlopt"]
+  ocamlcp : string; [@default "ocamlcp"]
+  bundle_path : string;
+  show_profile : bool; [@default false]
+  mode :
+    [ `Bytecode (* ocamlc *) | `Native (* ocamlopt *) | `Profile (* ocamlcp *) ];
+  interactive_compile : bool;
+  interactive_execute : bool;
+}
+[@@deriving make]
+
+let execute
+    {
+      work_dir_prefix;
+      remove_work_dir;
+      main_ml_file_name;
+      main_exe_file_name;
+      ocamlc;
+      bundle_path;
+      show_profile;
+      mode;
+      interactive_execute;
+      interactive_compile;
+      _;
+    } ast =
+  let work_dir = Filename.temp_dir ~temp_dir:work_dir_prefix "jitsonnet_" "" in
+  Fun.protect ~finally:(fun () -> if remove_work_dir then rm_rf work_dir)
+  @@ fun () ->
+  let main_ml = Filename.concat work_dir main_ml_file_name in
+  let main_exe = Filename.concat work_dir main_exe_file_name in
+
+  (* Write ast to main_ml *)
   let oc = open_out_bin main_ml in
   Fun.protect
     ~finally:(fun () -> close_out oc)
@@ -64,58 +172,14 @@ let execute' ~dir_name ~ocamlc_path ~redirect ~bundle_dir ast =
       Format.pp_set_margin f max_int;
       Pprintast.structure f ast;
       Format.pp_print_flush f ());
-  (match
-     let com =
-       Filename.quote_command ocamlc_path
-         [
-           "-w";
-           "-a";
-           "-o";
-           main_exe;
-           "-I";
-           bundle_dir;
-           "dtoa.cmo";
-           "uutf.cmo";
-           "common.cmo";
-           "stdjsonnet.cmo";
-           main_ml;
-           "-dllib";
-           "-ldtoa_stubs";
-         ]
-     in
-     let com = com ^ redirect_ocamlc in
-     Unix.system com
-   with
-  | WEXITED 0 -> ()
-  | status ->
-      let stderr_msg = read_all ocamlc_stderr |> Result.value ~default:"" in
-      raise (Compilation_failed (status, stderr_msg)));
-  (match
-     let com =
-       Filename.quote_command "env"
-         [ "LD_LIBRARY_PATH=" ^ bundle_dir; main_exe ]
-     in
-     let com = com ^ redirect_main_exe in
-     Unix.system com
-   with
-  | WEXITED 0 -> ()
-  | status ->
-      let stderr_msg = read_all main_exe_stderr |> Result.value ~default:"" in
-      raise (Compiled_executable_failed (status, stderr_msg)));
-  ()
 
-let execute ~bundle_dir ?(remove_tmp_dir = true) ast =
-  let temp_dir =
-    if remove_tmp_dir then None else Some "/tmp" (* for dune runtest *)
-  in
-  let dir_name = Filename.temp_dir ?temp_dir "jitsonnet" "" in
-  Fun.protect ~finally:(fun () -> if remove_tmp_dir then rm_rf dir_name)
-  @@ fun () ->
-  execute' ~dir_name ~ocamlc_path:"ocamlc.opt" ~redirect:true ~bundle_dir ast;
-  read_all (Filename.concat dir_name main_exe_stdout_file_name) |> Result.get_ok
-
-let execute_from_cli ~bundle_dir ast =
-  let dir_name = Filename.temp_dir "jitsonnet" "" in
-  Fun.protect ~finally:(fun () -> rm_rf dir_name) @@ fun () ->
-  execute' ~dir_name ~ocamlc_path:"ocamlc.opt" ~redirect:false ~bundle_dir ast;
-  ()
+  match mode with
+  | `Bytecode ->
+      timeit show_profile "compile to bytecode" (fun () ->
+          compile_to_bytecode ~ocamlc ~main_ml ~main_exe ~bundle_path
+            ~interactive:interactive_compile ());
+      timeit show_profile "execute bytecode" (fun () ->
+          execute_bytecode ~main_exe ~bundle_path
+            ~interactive:interactive_execute ())
+  | `Native -> failwith "native mode not implemented"
+  | `Profile -> failwith "profile mode not implemented"

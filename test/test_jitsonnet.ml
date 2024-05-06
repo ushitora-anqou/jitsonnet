@@ -692,7 +692,7 @@ let test_static_check_basics () =
   assert_static_check false "local x = 1, x = 2; x";
   ()
 
-let assert_compile ?(remove_tmp_dir = true) ?(bundle_dir = "../../../bundle")
+let assert_compile ?remove_work_dir ?(bundle_path = "../../../bundle")
     ?(test_cases_dir = "../../../test/cases")
     ?(expected_file_suffix = ".expected") src_file_path result_pat =
   let input_file_path =
@@ -707,36 +707,49 @@ let assert_compile ?(remove_tmp_dir = true) ?(bundle_dir = "../../../bundle")
           m "assert_compile_expr: failed to load: %s: %s" input_file_path msg);
       assert false
   | Ok t -> (
-      try
-        let got =
-          t |> Loader.compile |> Executor.execute ~bundle_dir ~remove_tmp_dir
-        in
-        match result_pat with
-        | `Success ->
-            let expected = read_all expected_file_path in
-            Alcotest.(check string) "" expected got;
-            ()
-        | `Error -> assert false
+      match
+        let compiled = Loader.compile t in
+        Executor.(
+          execute
+            (make_config ~mode:`Bytecode ~bundle_path ?remove_work_dir
+               ~interactive_compile:true ~interactive_execute:false ())
+            compiled)
       with
-      | Executor.Compilation_failed (_, stderr_msg) ->
-          Logs.err (fun m -> m "failed to compile: '%s'" stderr_msg);
-          assert false
-      | Executor.Compiled_executable_failed (_, stderr_msg) -> (
+      | Unix.WEXITED 0, got, _ -> (
           match result_pat with
           | `Success ->
-              Logs.err (fun m -> m "failed to execute: '%s'" stderr_msg);
+              let expected = read_all expected_file_path in
+              Alcotest.(check string) "" expected got;
+              ()
+          | `Error -> assert false)
+      | Unix.WEXITED _, _, got -> (
+          match result_pat with
+          | `Success ->
+              Logs.err (fun m -> m "failed to execute: '%s'" got);
               assert false
           | `Error -> (
               let expected = read_all expected_file_path |> String.trim in
-              match Str.(search_forward (regexp expected) stderr_msg 0) with
+              match Str.(search_forward (regexp expected) got 0) with
               | exception Not_found ->
                   Logs.err (fun m ->
                       m
                         "failed to find expected substring: expect '%s', got \
                          '%s'"
-                        expected stderr_msg);
+                        expected got);
                   assert false
-              | _ -> ())))
+              | _ -> ()))
+      | status, stdout_content, stderr_content ->
+          Logs.err (fun m ->
+              m "unexpected error: %s:\n%s\n%s"
+                (Executor.string_of_process_status status)
+                stdout_content stderr_content);
+          assert false
+      | exception Executor.Compilation_failed msg ->
+          Logs.err (fun m -> m "failed to compile: '%s'" msg);
+          assert false
+      | exception Executor.Execution_failed msg ->
+          Logs.err (fun m -> m "failed to execute: '%s'" msg);
+          assert false)
 
 let test_compiler_error () =
   assert_compile "error00" `Error;
