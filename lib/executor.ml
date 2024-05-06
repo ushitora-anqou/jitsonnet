@@ -33,11 +33,12 @@ let write_all file_path body =
         ~finally:(fun () -> close_out oc)
         (fun () -> Ok (Out_channel.output_string oc body))
 
-let execute_process ?(interactive = false) prog args env =
+let execute_process ?(interactive = false) ?env prog args =
   Logs.debug (fun m ->
       m "execute_process: %s %s"
-        (env |> Array.to_list |> String.concat " ")
+        (env |> Option.fold ~none:[] ~some:Array.to_list |> String.concat " ")
         (Filename.quote_command prog (Array.to_list args)));
+  let env = match env with None -> Unix.environment () | Some env -> env in
   let stdin_in_fd, stdin_out_fd = Unix.pipe ~cloexec:true () in
   let stdout_in_fd, stdout_out_fd = Unix.pipe ~cloexec:true () in
   let stderr_in_fd, stderr_out_fd = Unix.pipe ~cloexec:true () in
@@ -73,6 +74,40 @@ let string_of_process_status = function
   | WSIGNALED n -> "signal " ^ string_of_int n
   | WSTOPPED n -> "stopped  " ^ string_of_int n
 
+let compile_to_native ?mold ~ocamlopt ~main_ml ~main_exe ~bundle_path
+    ~interactive () =
+  match
+    execute_process ~interactive
+      (mold |> Option.value ~default:ocamlopt)
+      (Array.append
+         (match mold with None -> [||] | Some mold -> [| mold; "-run" |])
+         [|
+           ocamlopt;
+           "-w";
+           "a";
+           "-o";
+           main_exe;
+           "-I";
+           bundle_path;
+           "dtoa.cmxa";
+           "uutf.cmx";
+           "common.cmx";
+           "stdjsonnet.cmx";
+           main_ml;
+         |])
+  with
+  | Unix.WEXITED 0, _, _ -> ()
+  | status, stdout_content, stderr_content ->
+      raise
+        (Compilation_failed
+           (Printf.sprintf "%s failed: %s:\n%s\n%s" ocamlopt
+              (string_of_process_status status)
+              stdout_content stderr_content))
+  | exception exc ->
+      raise
+        (Compilation_failed
+           (Printf.sprintf "unexpected error: %s" (Printexc.to_string exc)))
+
 let compile_to_bytecode ~ocamlc ~main_ml ~main_exe ~bundle_path ~interactive ()
     =
   match
@@ -93,7 +128,6 @@ let compile_to_bytecode ~ocamlc ~main_ml ~main_exe ~bundle_path ~interactive ()
         "-dllib";
         "-ldtoa_stubs";
       |]
-      [||]
   with
   | Unix.WEXITED 0, _, _ -> ()
   | status, stdout_content, stderr_content ->
@@ -107,10 +141,10 @@ let compile_to_bytecode ~ocamlc ~main_ml ~main_exe ~bundle_path ~interactive ()
         (Compilation_failed
            (Printf.sprintf "unexpected error: %s" (Printexc.to_string exc)))
 
-let execute_bytecode ~main_exe ~bundle_path ~interactive () =
+let run_executable ~main_exe ~bundle_path ~interactive () =
   try
     execute_process ~interactive main_exe [| main_exe |]
-      [| "LD_LIBRARY_PATH=" ^ bundle_path |]
+      ~env:[| "LD_LIBRARY_PATH=" ^ bundle_path |]
   with exc ->
     raise
       (Execution_failed
@@ -140,6 +174,7 @@ type config = {
     [ `Bytecode (* ocamlc *) | `Native (* ocamlopt *) | `Profile (* ocamlcp *) ];
   interactive_compile : bool;
   interactive_execute : bool;
+  mold : string option;
 }
 [@@deriving make]
 
@@ -150,11 +185,13 @@ let execute
       main_ml_file_name;
       main_exe_file_name;
       ocamlc;
+      ocamlopt;
       bundle_path;
       show_profile;
       mode;
       interactive_execute;
       interactive_compile;
+      mold;
       _;
     } ast =
   let work_dir = Filename.temp_dir ~temp_dir:work_dir_prefix "jitsonnet_" "" in
@@ -179,7 +216,13 @@ let execute
           compile_to_bytecode ~ocamlc ~main_ml ~main_exe ~bundle_path
             ~interactive:interactive_compile ());
       timeit show_profile "execute bytecode" (fun () ->
-          execute_bytecode ~main_exe ~bundle_path
-            ~interactive:interactive_execute ())
-  | `Native -> failwith "native mode not implemented"
+          run_executable ~main_exe ~bundle_path ~interactive:interactive_execute
+            ())
+  | `Native ->
+      timeit show_profile "compile to native" (fun () ->
+          compile_to_native ?mold ~ocamlopt ~main_ml ~main_exe ~bundle_path
+            ~interactive:interactive_compile ());
+      timeit show_profile "execute native" (fun () ->
+          run_executable ~main_exe ~bundle_path ~interactive:interactive_execute
+            ())
   | `Profile -> failwith "profile mode not implemented"
