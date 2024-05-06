@@ -218,17 +218,24 @@ let super_index super key =
   | None -> failwith ("field does not exist: " ^ key)
   | Some (_, (lazy v)) -> v
 
+let array_index_s' (assrts, tbl) key =
+  assrts |> List.iter (fun (lazy _) -> ());
+  match Hashtbl.find_opt tbl key with
+  | None -> failwith ("field does not exist: " ^ key)
+  | Some (_, (lazy v)) -> v
+
+let array_index_s v1 key =
+  match Lazy.force v1 with
+  | Object (General (obj, _)) -> array_index_s' obj key
+  | _ -> failwith "ArrayIndex: expect array got something else"
+
 let array_index v1 v2 =
   match Lazy.force v1 with
   | Array a -> a.(get_double v2 |> int_of_float) |> Lazy.force
   | String s -> String (String.make 1 s.[int_of_float (get_double v2)])
-  | Object _ as x -> (
-      let assrts, tbl = get_object x in
-      assrts |> List.iter (fun (lazy _) -> ());
+  | Object (General (obj, _)) ->
       let key = get_string v2 in
-      match Hashtbl.find_opt tbl key with
-      | None -> failwith ("field does not exist: " ^ key)
-      | Some (_, (lazy v)) -> v)
+      array_index_s' obj key
   | _ -> failwith "ArrayIndex: expect array got something else"
 
 let rec value_to_string = function
