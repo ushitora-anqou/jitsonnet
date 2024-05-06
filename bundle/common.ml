@@ -219,7 +219,7 @@ let super_index super key =
   | Some (_, (lazy v)) -> v
 
 let array_index v1 v2 =
-  match v1 with
+  match Lazy.force v1 with
   | Array a -> a.(get_double v2 |> int_of_float) |> Lazy.force
   | String s -> String (String.make 1 s.[int_of_float (get_double v2)])
   | Object _ as x -> (
