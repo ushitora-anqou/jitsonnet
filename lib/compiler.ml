@@ -141,6 +141,10 @@ let rec compile_expr ?toplevel:_ ({ loc; _ } as env) :
           (fun () -> [%e compile_expr env e2])
           (fun () -> [%e compile_expr env e3])]
   | Function (params, body) ->
+      let use_rec_value =
+        params |> List.exists (fun (_, v) -> Option.is_some v)
+        (* FIXME: use more strict condition *)
+      in
       with_binds env (params |> List.map fst) @@ fun () ->
       let binds =
         params
@@ -148,21 +152,25 @@ let rec compile_expr ?toplevel:_ ({ loc; _ } as env) :
            value_binding ~loc
              ~pat:(ppat_var ~loc { loc; txt = Hashtbl.find env.vars id })
              ~expr:
-               [%expr
-                 lazy
-                   (Lazy.force
-                      (function_param [%e eint ~loc i] positional
-                         [%e estring ~loc id] named
-                         [%e
-                           match e with
-                           | None -> [%expr None]
-                           | Some e ->
-                               [%expr Some (lazy [%e compile_expr env e])]]))]
+               (let body =
+                  [%expr
+                    function_param [%e eint ~loc i] positional
+                      [%e estring ~loc id] named
+                      [%e
+                        match e with
+                        | None -> [%expr None]
+                        | Some e -> [%expr Some (lazy [%e compile_expr env e])]]]
+                in
+                if use_rec_value then [%expr lazy (Lazy.force [%e body])]
+                else body)
       in
       [%expr
         Function
           (fun (positional, named) ->
-            [%e pexp_let ~loc Recursive binds (compile_expr env body)])]
+            [%e
+              pexp_let ~loc
+                (if use_rec_value then Recursive else Nonrecursive)
+                binds (compile_expr env body)])]
   | Call (e, positional, named) ->
       [%expr
         get_function [%e compile_expr env e]
