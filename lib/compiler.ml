@@ -42,7 +42,7 @@ let rec compile_expr ?toplevel:_ ({ loc; _ } as env) :
   | ArrayIndex (e1, String s) ->
       [%expr array_index_s [%e compile_expr_lazy env e1] [%e estring ~loc s]]
   | ArrayIndex (e1, e2) ->
-      [%expr array_index [%e compile_expr_lazy env e1] [%e compile_expr env e2]]
+      [%expr array_index [%e compile_expr env e1] [%e compile_expr env e2]]
   | Binary (e1, `Add, e2) ->
       [%expr
         let lhs = [%e compile_expr env e1] in
