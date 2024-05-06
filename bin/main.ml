@@ -16,7 +16,9 @@ let () =
               $ Arg.(
                   required
                   & pos 1 (some string) None
-                  & info ~docv:"BUNDLE-DIR" []));
+                  & info ~docv:"BUNDLE-PATH" [])
+              $ Arg.(value & flag & info [ "profile" ])
+              $ Arg.(value & opt (some string) None & info [ "work-dir" ]));
           v (info "compile")
             Term.(
               const compile

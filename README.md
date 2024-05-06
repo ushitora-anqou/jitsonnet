@@ -1,5 +1,11 @@
 # JITsonnet
 
+## How to run with profiling and a custom working directory
+
+```
+dune exec bin/main.exe -- run --profile --work-dir /tmp misc/hoge.jsonnet bundle
+```
+
 ## How to list `test_compiler_with_go_jsonnet_testdata` test cases
 
 ```
