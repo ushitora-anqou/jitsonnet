@@ -1,5 +1,11 @@
 # JITsonnet
 
+## How to run native mode with mold linker
+
+```
+time dune exec bin/main.exe -- run --profile --native --mold ~/workspace/mold-2.31.0-x86_64-linux/bin/mold thirdparty/go-jsonnet/testdata/builtin_stripChars.jsonnet bundle
+```
+
 ## How to run with profiling and a custom working directory
 
 ```
