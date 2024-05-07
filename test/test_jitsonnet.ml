@@ -670,7 +670,7 @@ let assert_static_check good src =
       assert false
   | Ok { expr = got } -> (
       let desugared = Syntax.desugar_expr false got in
-      match Static_check.f desugared with
+      match Static_check.f false desugared with
       | Ok () when good -> ()
       | Error _ when not good -> ()
       | Ok () ->
@@ -701,7 +701,7 @@ let assert_compile ?remove_work_dir ?(bundle_path = "../../../bundle")
   let expected_file_path =
     Filename.concat test_cases_dir (src_file_path ^ expected_file_suffix)
   in
-  match Loader.load_root input_file_path with
+  match Loader.load_root false input_file_path with
   | Error msg ->
       Logs.err (fun m ->
           m "assert_compile_expr: failed to load: %s: %s" input_file_path msg);

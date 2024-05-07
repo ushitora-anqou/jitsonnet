@@ -3,7 +3,7 @@ open Ppxlib
 let errf fmt = Printf.ksprintf (fun s -> Error s) fmt
 
 let run file_path bundle_path show_profile work_dir_prefix native mold =
-  match Loader.load_root file_path with
+  match Loader.load_root false file_path with
   | Error msg ->
       Logs.err (fun m -> m "%s" msg);
       exit 1
@@ -37,7 +37,7 @@ let compile file_path target =
   let target =
     match target with Some "stdjsonnet" -> `Stdjsonnet | _ -> `Main
   in
-  match Loader.load_root file_path with
+  match Loader.load_root (target = `Stdjsonnet) file_path with
   | Error msg ->
       Logs.err (fun m -> m "%s" msg);
       exit 1

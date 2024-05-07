@@ -48,7 +48,7 @@ let make_imported_files_real root desugared =
          desugared)
   with Make_imported_files_real_error file -> Error ("invalid import: " ^ file)
 
-let rec load file_path t =
+let rec load is_stdjsonnet file_path t =
   let ( let* ) = Result.bind in
   let* file_path = get_real_path file_path in
   match Hashtbl.find_opt t.loaded file_path with
@@ -59,7 +59,7 @@ let rec load file_path t =
         Syntax.desugar prog
         |> make_imported_files_real (Filename.dirname file_path)
       in
-      let* () = Static_check.f desugared in
+      let* () = Static_check.f is_stdjsonnet desugared in
       Hashtbl.add t.loaded file_path desugared;
       let progs, bins, strs = list_imported_files desugared in
       bins |> List.iter (fun k -> Hashtbl.replace t.importbins k ());
@@ -68,7 +68,7 @@ let rec load file_path t =
       |> List.fold_left
            (fun res file ->
              let* () = res in
-             t |> load file)
+             t |> load is_stdjsonnet file)
            (Ok ())
 
 let compile ?target t =
@@ -77,7 +77,7 @@ let compile ?target t =
     (t.importbins |> Hashtbl.to_seq_keys |> List.of_seq)
     (t.importstrs |> Hashtbl.to_seq_keys |> List.of_seq)
 
-let load_root root_prog_path =
+let load_root is_stdjsonnet root_prog_path =
   let ( let* ) = Result.bind in
   let* root_prog_path = get_real_path root_prog_path in
   let t =
@@ -88,4 +88,4 @@ let load_root root_prog_path =
       root_prog_path;
     }
   in
-  load root_prog_path t |> Result.map (Fun.const t)
+  load is_stdjsonnet root_prog_path t |> Result.map (Fun.const t)

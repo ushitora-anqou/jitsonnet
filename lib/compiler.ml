@@ -217,8 +217,26 @@ let rec compile_expr ?toplevel:_ ({ loc; _ } as env) :
                 (if use_rec_value then Recursive else Nonrecursive)
                 binds (compile_expr env body)])]
   | Call (e, positional, named) ->
+      let fun_expr =
+        match e with
+        | ArrayIndex (Var "std", String "length") -> [%expr std_length]
+        | ArrayIndex (Var "std", String "makeArray") -> [%expr std_make_array]
+        | ArrayIndex (Var "std", String "type") -> [%expr std_type]
+        | ArrayIndex (Var "std", String "primitiveEquals") ->
+            [%expr std_primitive_equals]
+        | ArrayIndex (Var "std", String "filter") -> [%expr std_filter]
+        | ArrayIndex (Var "std", String "objectHasEx") ->
+            [%expr std_object_has_ex]
+        | ArrayIndex (Var "std", String "objectFieldsEx") ->
+            [%expr std_object_fields_ex]
+        | ArrayIndex (Var "std", String "modulo") -> [%expr std_modulo]
+        | ArrayIndex (Var "std", String "codepoint") -> [%expr std_codepoint]
+        | ArrayIndex (Var "std", String "char") -> [%expr std_char]
+        | ArrayIndex (Var "std", String "floor") -> [%expr std_floor]
+        | _ -> [%expr get_function [%e compile_expr env e]]
+      in
       [%expr
-        get_function [%e compile_expr env e]
+        [%e fun_expr]
           ( [%e pexp_array ~loc (positional |> List.map (compile_expr_lazy env))],
             [%e
               named
