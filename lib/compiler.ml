@@ -14,6 +14,12 @@ let env_evar ~loc env name =
 let env_pvar ~loc env name =
   pvar ~loc (Hashtbl.find env.vars name).name_in_target
 
+let set_same_var_desc env name ~same_as:name' =
+  let var = Hashtbl.find env.vars name in
+  let var' = Hashtbl.find env.vars name' in
+  let var = { var with desc = var'.desc } in
+  Hashtbl.replace env.vars name var
+
 let set_var_object env name ~key_to_value_ary_index () =
   let var = Hashtbl.find env.vars name in
   let var = { var with desc = VarObject { key_to_value_ary_index } } in
@@ -227,6 +233,7 @@ let rec compile_expr ?toplevel:_ ({ loc; _ } as env) :
         binds
         |> List.map @@ fun (id, e) ->
            (match e with
+           | Syntax.Core.Var id' -> set_same_var_desc env id ~same_as:id'
            | Syntax.Core.Object { fields; _ } ->
                set_var_object env id
                  ~key_to_value_ary_index:
