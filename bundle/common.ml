@@ -3,6 +3,7 @@ type value =
   | True
   | False
   | String of string
+  | Rope of Rope.t
   | Double of float
   | Object of object_
   | Function of (value Lazy.t array * (string * value Lazy.t) list -> value)
@@ -55,6 +56,7 @@ let get_function = function
 
 let get_string = function
   | String s -> s
+  | Rope r -> Rope.to_string r
   | _ -> failwith "expect string got something else"
 
 let rec std_cmp = function
@@ -70,6 +72,9 @@ let rec std_cmp = function
       in
       aux 0 0
   | String s1, String s2 -> String.compare s1 s2
+  | Rope r1, Rope r2 -> Rope.compare r1 r2
+  | Rope r1, String s2 -> Rope.compare r1 (Rope.of_string s2)
+  | String s1, Rope r2 -> Rope.compare (Rope.of_string s1) r2
   | Double n1, Double n2 -> Float.compare n1 n2
   | _ -> failwith "std_cmp: invalid arguments"
 
@@ -98,6 +103,7 @@ let manifestation ppf v =
         in
         loop 0;
         fprintf ppf "\"%s\"" (Buffer.contents buf)
+    | Rope r -> aux ppf (String (Rope.to_string r))
     | Double f -> fprintf ppf "%s" (string_of_double f)
     | Array [||] -> fprintf ppf "[ ]"
     | Array xs ->
@@ -131,6 +137,9 @@ let manifestation ppf v =
 let std_primitive_equals ([| v; v' |], []) =
   (match (Lazy.force v, Lazy.force v') with
   | String lhs, String rhs -> lhs = rhs
+  | Rope lhs, Rope rhs -> Rope.equal lhs rhs
+  | Rope lhs, String rhs -> Rope.equal lhs (Rope.of_string rhs)
+  | String lhs, Rope rhs -> Rope.equal (Rope.of_string lhs) rhs
   | Double lhs, Double rhs -> lhs = rhs
   | True, True | False, False | Null, Null -> true
   | _ -> false)
@@ -140,6 +149,7 @@ let std_length ([| v |], []) =
   match v with
   | (lazy (Array xs)) -> Double (xs |> Array.length |> float_of_int)
   | (lazy (String s)) -> Double (s |> String.length |> float_of_int)
+  | (lazy (Rope r)) -> Double (r |> Rope.length |> float_of_int)
   | (lazy (Object _ as x)) ->
       let _, _, fields = get_object x in
       Double
@@ -158,7 +168,7 @@ let std_make_array ([| n; f |], []) =
 let std_type' = function
   | Null -> "null"
   | True | False -> "boolean"
-  | String _ -> "string"
+  | String _ | Rope _ -> "string"
   | Function _ -> "function"
   | Double _ -> "number"
   | Object _ -> "object"
@@ -235,6 +245,7 @@ let array_index v1 v2 =
   match v1 with
   | Array a -> a.(get_double v2 |> int_of_float) |> Lazy.force
   | String s -> String (String.make 1 s.[int_of_float (get_double v2)])
+  | Rope r -> Rope (Rope.sub r (int_of_float (get_double v2)) 1)
   | Object (General (obj, _)) ->
       let key = get_string v2 in
       array_index_s' obj key
@@ -262,8 +273,18 @@ let binary_add lhs rhs =
   match (lhs, rhs) with
   | Double f1, Double f2 -> Double (f1 +. f2)
   | Array xs, _ -> Array (Array.append xs (get_array rhs))
+  | Rope lhs, Rope rhs -> Rope (Rope.concat2 lhs rhs)
+  | Rope lhs, String rhs -> Rope (Rope.concat2 lhs (Rope.of_string rhs))
+  | String lhs, Rope rhs -> Rope (Rope.concat2 (Rope.of_string lhs) rhs)
+  | Rope lhs, _ ->
+      Rope (Rope.concat2 lhs (Rope.of_string (value_to_string rhs)))
+  | _, Rope rhs ->
+      Rope (Rope.concat2 (Rope.of_string (value_to_string lhs)) rhs)
   | String _, _ | _, String _ ->
-      String (value_to_string lhs ^ value_to_string rhs)
+      Rope
+        (Rope.concat2
+           (Rope.of_string (value_to_string lhs))
+           (Rope.of_string (value_to_string rhs)))
   | Object _, _ ->
       make_object (fun self super ->
           let _, assrts1, _ = get_object_f lhs self super in
@@ -294,12 +315,14 @@ let object_field tbl h k v =
   match k with
   | Null -> ()
   | String k -> Hashtbl.add tbl k (h, v)
+  | Rope r -> Hashtbl.add tbl (Rope.to_string r) (h, v)
   | _ -> failwith "field name must be string, got something else"
 
 let object_field' k v =
   match k with
   | Null -> None
   | String s -> Some (s, (1, v))
+  | Rope r -> Some (Rope.to_string r, (1, v))
   | _ -> failwith "field name must be string, got something else"
 
 let function_param i positional id named v =

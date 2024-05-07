@@ -18,6 +18,7 @@ depends: [
   "ocaml"
   "odoc" {with-doc}
   "ppx_deriving"
+  "rope"
   "uutf"
 ]
 build: [

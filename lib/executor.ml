@@ -89,6 +89,7 @@ let compile_to_native ?mold ~ocamlopt ~main_ml ~main_exe ~bundle_path
            main_exe;
            "-I";
            bundle_path;
+           "rope.cmxa";
            "dtoa.cmxa";
            "uutf.cmx";
            "common.cmx";
@@ -120,6 +121,7 @@ let compile_to_bytecode ~ocamlc ~main_ml ~main_exe ~bundle_path ~interactive ()
         main_exe;
         "-I";
         bundle_path;
+        "rope.cma";
         "dtoa.cmo";
         "uutf.cmo";
         "common.cmo";
