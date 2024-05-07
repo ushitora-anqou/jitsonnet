@@ -112,4 +112,5 @@
   std.char(12354),
   "abc"[1],
   { x: { a: 1 } } { y: super.x.a },
+  ({ foo(): self.bar(), bar(): 10, } + { bar(): 11 }).foo(),
 ]
