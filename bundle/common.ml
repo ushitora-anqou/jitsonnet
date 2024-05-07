@@ -8,13 +8,15 @@ type value =
   | Function of (value Lazy.t array * (string * value Lazy.t) list -> value)
   | Array of value Lazy.t array
 
+and value_ary = value Lazy.t array
 and assrts = value Lazy.t list
 and fields = (string, int * value Lazy.t) Hashtbl.t
 
 and object_ =
   | General of
-      ((assrts * fields (* cache *))
-      * (fields (* self *) -> fields (* super *) -> assrts * fields) option)
+      ((value_ary * assrts * fields (* cache *))
+      * (fields (* self *) -> fields (* super *) -> value_ary * assrts * fields)
+        option)
 
 let empty_obj_fields = Hashtbl.create 0
 let gen_empty_self () = Hashtbl.create 0
@@ -106,7 +108,7 @@ let manifestation ppf v =
           xs
     | Function _ -> ()
     | Object _ as x ->
-        let assrts, tbl = get_object x in
+        let _, assrts, tbl = get_object x in
         assrts |> List.iter (fun (lazy _) -> ());
         let xs =
           tbl |> Hashtbl.to_seq |> List.of_seq
@@ -139,7 +141,7 @@ let std_length ([| v |], []) =
   | (lazy (Array xs)) -> Double (xs |> Array.length |> float_of_int)
   | (lazy (String s)) -> Double (s |> String.length |> float_of_int)
   | (lazy (Object _ as x)) ->
-      let _, fields = get_object x in
+      let _, _, fields = get_object x in
       Double
         (fields |> Hashtbl.to_seq
         |> Seq.filter_map (fun (f, (h, _)) -> if h = 2 then None else Some ())
@@ -173,7 +175,7 @@ let std_filter ([| f; ary |], []) =
     |> Array.of_list)
 
 let std_object_has_ex ([| obj; f; b' |], []) =
-  let _, fields = get_object (Lazy.force obj) in
+  let _, _, fields = get_object (Lazy.force obj) in
   let f = f |> Lazy.force |> get_string in
   let b' = b' |> Lazy.force |> get_bool in
   match Hashtbl.find_opt fields f with
@@ -182,7 +184,7 @@ let std_object_has_ex ([| obj; f; b' |], []) =
 
 let std_object_fields_ex ([| obj; b' |], []) =
   let b' = b' |> Lazy.force |> get_bool in
-  let _, fields = get_object (Lazy.force obj) in
+  let _, _, fields = get_object (Lazy.force obj) in
   Array
     (fields |> Hashtbl.to_seq
     |> Seq.filter_map (fun (f, (h, _)) -> if h <> 2 || b' then Some f else None)
@@ -218,7 +220,7 @@ let super_index super key =
   | None -> failwith ("field does not exist: " ^ key)
   | Some (_, (lazy v)) -> v
 
-let array_index_s' (assrts, tbl) key =
+let array_index_s' (_, assrts, tbl) key =
   assrts |> List.iter (fun (lazy _) -> ());
   match Hashtbl.find_opt tbl key with
   | None -> failwith ("field does not exist: " ^ key)
@@ -264,10 +266,10 @@ let binary_add lhs rhs =
       String (value_to_string lhs ^ value_to_string rhs)
   | Object _, _ ->
       make_object (fun self super ->
-          let assrts1, _ = get_object_f lhs self super in
+          let _, assrts1, _ = get_object_f lhs self super in
           let fields1 = Hashtbl.copy self in
           Hashtbl.reset self;
-          let assrts2, _ = get_object_f rhs self fields1 in
+          let _, assrts2, _ = get_object_f rhs self fields1 in
           let fields2 = Hashtbl.copy self in
           Hashtbl.reset self;
           let common = ref [] in
@@ -285,7 +287,7 @@ let binary_add lhs rhs =
           |> List.iter (fun (f, h1, v1, h2, v2) ->
                  let h = if h2 = 1 then h1 else h2 in
                  Hashtbl.add self f (h, v2));
-          (assrts1 @ assrts2, self))
+          ([||], assrts1 @ assrts2, self))
   | _ -> failwith "invalid add"
 
 let object_field tbl h k v =
@@ -318,15 +320,17 @@ let error v =
   manifestation Format.str_formatter v;
   failwith (Format.flush_str_formatter ())
 
+let object_field_plus_value super key value =
+  lazy
+    (if_ (in_super super key)
+       (fun () ->
+         let lhs = super_index super key in
+         let rhs = value in
+         binary_add lhs rhs)
+       (fun () -> value))
+
 let object_field_plus super key value tbl h =
-  object_field tbl h key
-    (lazy
-      (if_ (in_super super key)
-         (fun () ->
-           let lhs = super_index super key in
-           let rhs = value in
-           binary_add lhs rhs)
-         (fun () -> value)))
+  object_field tbl h key (object_field_plus_value super key value)
 
 let append_to_std tbl =
   Hashtbl.add tbl "primitiveEquals" (1, lazy (Function std_primitive_equals));

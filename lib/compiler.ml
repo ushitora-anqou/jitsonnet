@@ -1,7 +1,23 @@
 open Ppxlib
 open Ast_builder.Default
 
-type env = { vars : (string, string) Hashtbl.t; loc : location }
+type var_desc =
+  | VarUnknown
+  | VarObject of { key_to_value_ary_index : (string, int) Hashtbl.t }
+
+type var_in_env = { name_in_target : string; desc : var_desc }
+type env = { vars : (string, var_in_env) Hashtbl.t; loc : location }
+
+let env_evar ~loc env name =
+  evar ~loc (Hashtbl.find env.vars name).name_in_target
+
+let env_pvar ~loc env name =
+  pvar ~loc (Hashtbl.find env.vars name).name_in_target
+
+let set_var_object env name ~key_to_value_ary_index () =
+  let var = Hashtbl.find env.vars name in
+  let var = { var with desc = VarObject { key_to_value_ary_index } } in
+  Hashtbl.replace env.vars name var
 
 let gensym suffix =
   gen_symbol ~prefix:"var_" ()
@@ -14,7 +30,10 @@ let gensym suffix =
   suffix
 
 let with_binds env ids f =
-  ids |> List.iter (fun id -> Hashtbl.add env.vars id (gensym id));
+  ids
+  |> List.iter (fun id ->
+         Hashtbl.add env.vars id
+           { name_in_target = gensym id; desc = VarUnknown });
   Fun.protect
     ~finally:(fun () -> ids |> List.iter (fun id -> Hashtbl.remove env.vars id))
     f
@@ -39,10 +58,29 @@ let rec compile_expr ?toplevel:_ ({ loc; _ } as env) :
   | Array xs ->
       [%expr
         Array [%e xs |> List.map (compile_expr_lazy env) |> pexp_array ~loc]]
-  | ArrayIndex (e1, String s) ->
-      [%expr array_index_s [%e compile_expr_lazy env e1] [%e estring ~loc s]]
-  | ArrayIndex (e1, e2) ->
-      [%expr array_index [%e compile_expr env e1] [%e compile_expr env e2]]
+  | ArrayIndex es ->
+      let rec aux times es =
+        match es with
+        | Syntax.Core.Var v, Syntax.Core.String key when times < 1 -> (
+            match (Hashtbl.find env.vars v).desc with
+            | VarUnknown -> aux 1 es
+            | VarObject { key_to_value_ary_index } -> (
+                match Hashtbl.find_opt key_to_value_ary_index key with
+                | None -> aux 1 es
+                | Some value_ary_index ->
+                    [%expr
+                      let (Object (General ((value_ary, _, _), _))) =
+                        Lazy.force [%e env_evar ~loc env v]
+                      in
+                      Lazy.force value_ary.([%e eint ~loc value_ary_index])]))
+        | e1, String s ->
+            [%expr
+              array_index_s [%e compile_expr_lazy env e1] [%e estring ~loc s]]
+        | e1, e2 ->
+            [%expr
+              array_index [%e compile_expr env e1] [%e compile_expr env e2]]
+      in
+      aux 0 es
   | Binary (e1, `Add, e2) ->
       [%expr
         let lhs = [%e compile_expr env e1] in
@@ -151,8 +189,7 @@ let rec compile_expr ?toplevel:_ ({ loc; _ } as env) :
       let binds =
         params
         |> List.mapi @@ fun i (id, e) ->
-           value_binding ~loc
-             ~pat:(ppat_var ~loc { loc; txt = Hashtbl.find env.vars id })
+           value_binding ~loc ~pat:(env_pvar ~loc env id)
              ~expr:
                (let body =
                   [%expr
@@ -186,68 +223,89 @@ let rec compile_expr ?toplevel:_ ({ loc; _ } as env) :
   | Error e -> [%expr error [%e compile_expr env e]]
   | Local (binds, e) ->
       with_binds env (binds |> List.map fst) @@ fun () ->
-      pexp_let ~loc Recursive
-        (binds
+      let bindings =
+        binds
         |> List.map @@ fun (id, e) ->
-           value_binding ~loc
-             ~pat:(ppat_var ~loc { loc; txt = Hashtbl.find env.vars id })
-             ~expr:(compile_expr_lazy ~in_bind:true env e))
-        (compile_expr env e)
-  | Self ->
-      [%expr
-        make_simple_object ([], [%e evar ~loc (Hashtbl.find env.vars "self")])]
-  | Var id ->
-      [%expr
-        Lazy.force
-          [%e
-            evar ~loc
-              (match Hashtbl.find_opt env.vars id with
-              | Some s -> s
-              | None -> failwith ("missing variable: " ^ id))]]
+           (match e with
+           | Syntax.Core.Object { fields; _ } ->
+               set_var_object env id
+                 ~key_to_value_ary_index:
+                   (fields
+                   |> List.mapi (fun i v -> (i, v))
+                   |> List.filter_map (fun (i, (e1, _, _, _)) ->
+                          match e1 with
+                          | Syntax.Core.String key -> Some (key, i)
+                          | _ -> None)
+                   |> List.to_seq |> Hashtbl.of_seq)
+                 ()
+           | _ -> ());
+           value_binding ~loc ~pat:(env_pvar ~loc env id)
+             ~expr:(compile_expr_lazy ~in_bind:true env e)
+      in
+      let body = compile_expr env e in
+      pexp_let ~loc Recursive bindings body
+  | Self -> [%expr make_simple_object ([||], [], [%e env_evar ~loc env "self"])]
+  | Var id -> [%expr Lazy.force [%e env_evar ~loc env id]]
   | Object { binds; assrts; fields } ->
       let fields (* compile keys with outer env *) =
         fields
         |> List.map (fun (e1, b, Syntax.H h, e2) ->
-               (compile_expr env e1, b, h, e2))
+               ( Syntax.gensym () (* variable name for e1 *),
+                 compile_expr env e1,
+                 b,
+                 h,
+                 e2 ))
       in
 
-      with_binds env ("self" :: "super" :: (binds |> List.map fst)) @@ fun () ->
-      let bindings =
-        binds
-        |> List.map (fun (id, e) ->
-               value_binding ~loc
-                 ~pat:(ppat_var ~loc { loc; txt = Hashtbl.find env.vars id })
-                 ~expr:(compile_expr_lazy ~in_bind:true env e))
-      in
+      with_binds env
+        ("self" :: "super"
+        :: ((fields |> List.map (fun (k, _, _, _, _) -> k))
+           @ (binds |> List.map fst)))
+      @@ fun () ->
       let body =
-        pexp_let ~loc Recursive bindings
-          [%expr
-            [%e assrts |> List.map (compile_expr_lazy env) |> elist ~loc],
-              let tbl = [%e evar ~loc (Hashtbl.find env.vars "self")] in
-              [%e
-                fields |> List.rev
-                |> List.fold_left
-                     (fun e (e1, plus, h, e2) ->
-                       if plus then
-                         [%expr
-                           object_field_plus
-                             [%e evar ~loc (Hashtbl.find env.vars "super")]
-                             [%e e1] [%e compile_expr env e2] tbl
-                             [%e eint ~loc h];
-                           [%e e]]
-                       else
-                         [%expr
-                           object_field tbl [%e eint ~loc h] [%e e1]
-                             [%e compile_expr_lazy env e2];
-                           [%e e]])
-                     [%expr tbl]]]
+        pexp_let ~loc Nonrecursive
+          (fields
+          |> List.map (fun (id, e1, _, _, _) ->
+                 value_binding ~loc ~pat:(env_pvar ~loc env id) ~expr:e1))
+          (pexp_let ~loc Recursive
+             (binds
+             |> List.map (fun (id, e) ->
+                    value_binding ~loc ~pat:(env_pvar ~loc env id)
+                      ~expr:(compile_expr_lazy ~in_bind:true env e)))
+             [%expr
+               let value_ary =
+                 [%e
+                   pexp_array ~loc
+                     (fields
+                     |> List.map (fun (e1_key, _, plus, _, e2) ->
+                            if plus then
+                              [%expr
+                                object_field_plus_value
+                                  [%e env_evar ~loc env "super"]
+                                  [%e env_evar ~loc env e1_key]
+                                  [%e compile_expr env e2]]
+                            else compile_expr_lazy env e2))]
+               in
+               ( value_ary,
+                 [%e assrts |> List.map (compile_expr_lazy env) |> elist ~loc],
+                 let tbl = [%e env_evar ~loc env "self"] in
+                 [%e
+                   fields
+                   |> List.mapi (fun i (e1_key, _, _, h, _) -> (i, e1_key, h))
+                   |> List.rev
+                   |> List.fold_left
+                        (fun e (i, e1_key, h) ->
+                          [%expr
+                            object_field tbl [%e eint ~loc h]
+                              [%e env_evar ~loc env e1_key]
+                              value_ary.([%e eint ~loc i]);
+                            [%e e]])
+                        [%expr tbl]] )])
       in
       [%expr
         make_object
-          (fun
-            [%p pvar ~loc (Hashtbl.find env.vars "self")]
-            [%p pvar ~loc (Hashtbl.find env.vars "super")]
-          -> [%e body])]
+          (fun [%p env_pvar ~loc env "self"] [%p env_pvar ~loc env "super"] ->
+            [%e body])]
   | ObjectFor (outermost, e1, e2, x, e3) ->
       let compiled_e3 (* with env *) = compile_expr env e3 in
       with_binds env [ x ] @@ fun () ->
@@ -261,17 +319,13 @@ let rec compile_expr ?toplevel:_ ({ loc; _ } as env) :
       in
       [%expr
         make_object
-          (fun
-            [%p pvar ~loc (Hashtbl.find env.vars "self")]
-            [%p pvar ~loc (Hashtbl.find env.vars "super")]
-          ->
-            let tbl = [%e evar ~loc (Hashtbl.find env.vars "self")] in
+          (fun [%p env_pvar ~loc env "self"] [%p env_pvar ~loc env "super"] ->
+            let tbl = [%e env_evar ~loc env "self"] in
             [%e
               (if outermost then
                  pexp_let ~loc Nonrecursive
                    [
-                     value_binding ~loc
-                       ~pat:(pvar ~loc (Hashtbl.find env.vars "$"))
+                     value_binding ~loc ~pat:(env_pvar ~loc env "$")
                        ~expr:[%expr lazy [%e compile_expr env Self]];
                    ]
                else Fun.id)
@@ -281,16 +335,13 @@ let rec compile_expr ?toplevel:_ ({ loc; _ } as env) :
                          [%e
                            pexp_let ~loc Nonrecursive
                              [
-                               value_binding ~loc
-                                 ~pat:
-                                   (ppat_var ~loc
-                                      { loc; txt = Hashtbl.find env.vars x })
+                               value_binding ~loc ~pat:(env_pvar ~loc env x)
                                  ~expr:[%expr v];
                              ]
                              [%expr
                                object_field' [%e compiled_e1] [%e compiled_e2]]])
                   |> Hashtbl.add_seq tbl;
-                  ([], tbl)]])]
+                  ([||], [], tbl)]])]
   | (Import file_path | Importbin file_path | Importstr file_path) as node ->
       let import_id =
         get_import_id
@@ -301,17 +352,11 @@ let rec compile_expr ?toplevel:_ ({ loc; _ } as env) :
           | _ -> assert false)
           file_path
       in
-      [%expr Lazy.force [%e evar ~loc (Hashtbl.find env.vars import_id)]]
+      [%expr Lazy.force [%e env_evar ~loc env import_id]]
   | InSuper e ->
-      [%expr
-        in_super
-          [%e evar ~loc (Hashtbl.find env.vars "super")]
-          [%e compile_expr env e]]
+      [%expr in_super [%e env_evar ~loc env "super"] [%e compile_expr env e]]
   | SuperIndex e ->
-      [%expr
-        super_index
-          [%e evar ~loc (Hashtbl.find env.vars "super")]
-          [%e compile_expr env e]]
+      [%expr super_index [%e env_evar ~loc env "super"] [%e compile_expr env e]]
 
 and compile_expr_lazy ?(toplevel = false) ?(in_bind = false) ({ loc; _ } as env)
     e =
@@ -342,12 +387,7 @@ let compile ?(target = `Main) root_prog_path progs bins strs =
     progs
     |> List.map (fun (path, e) ->
            value_binding ~loc
-             ~pat:
-               (ppat_var ~loc
-                  {
-                    loc;
-                    txt = Hashtbl.find env.vars (get_import_id `Import path);
-                  })
+             ~pat:(env_pvar ~loc env (get_import_id `Import path))
              ~expr:
                [%expr [%e compile_expr_lazy ~toplevel:true ~in_bind:true env e]])
   in
@@ -355,12 +395,7 @@ let compile ?(target = `Main) root_prog_path progs bins strs =
     bins
     |> List.map (fun path ->
            value_binding ~loc
-             ~pat:
-               (ppat_var ~loc
-                  {
-                    loc;
-                    txt = Hashtbl.find env.vars (get_import_id `Importbin path);
-                  })
+             ~pat:(env_pvar ~loc env (get_import_id `Importbin path))
              ~expr:
                [%expr
                  lazy
@@ -386,12 +421,7 @@ let compile ?(target = `Main) root_prog_path progs bins strs =
     strs
     |> List.map (fun path ->
            value_binding ~loc
-             ~pat:
-               (ppat_var ~loc
-                  {
-                    loc;
-                    txt = Hashtbl.find env.vars (get_import_id `Importstr path);
-                  })
+             ~pat:(env_pvar ~loc env (get_import_id `Importstr path))
              ~expr:
                [%expr
                  lazy
@@ -410,25 +440,25 @@ let compile ?(target = `Main) root_prog_path progs bins strs =
     open Common
 
     module Compiled = struct
-      let [%p pvar ~loc (Hashtbl.find env.vars "std")] =
+      let [%p env_pvar ~loc env "std"] =
         lazy
           [%e
             match target with
-            | `Stdjsonnet -> [%expr make_simple_object ([], empty_obj_fields)]
+            | `Stdjsonnet ->
+                [%expr make_simple_object ([||], [], empty_obj_fields)]
             | _ ->
                 [%expr
                   make_object (fun self super ->
                       let f = get_object_f (Lazy.force Stdjsonnet.Compiled.v) in
-                      let assrts, _ = f self super in
+                      let _, assrts, _ = f self super in
                       append_to_std self;
-                      (assrts, self))]]
+                      ([||], assrts, self))]]
 
       let v =
         [%e
           pexp_let ~loc Recursive
             (progs_bindings @ bins_bindings @ strs_bindings)
-            (evar ~loc
-               (Hashtbl.find env.vars (get_import_id `Import root_prog_path)))]
+            (env_evar ~loc env (get_import_id `Import root_prog_path))]
 
       let () =
         [%e
