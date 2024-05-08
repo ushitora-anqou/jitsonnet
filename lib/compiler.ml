@@ -59,7 +59,7 @@ let rec compile_expr ?toplevel:_ ({ loc; _ } as env) :
   | Null -> [%expr Null]
   | True -> [%expr True]
   | False -> [%expr False]
-  | String s -> [%expr String [%e estring ~loc s]]
+  | String s -> [%expr SmartString (SmartString.of_string [%e estring ~loc s])]
   | Number n -> [%expr Double [%e efloat ~loc (string_of_float n)]]
   | Array xs ->
       [%expr
@@ -450,15 +450,16 @@ let compile ?(target = `Main) root_prog_path progs bins strs =
              ~expr:
                [%expr
                  lazy
-                   (String
-                      (let path = [%e estring ~loc path] in
-                       let ic =
-                         try open_in_bin path
-                         with _ -> failwith ("cannot open file: " ^ path)
-                       in
-                       Fun.protect
-                         ~finally:(fun () -> close_in ic)
-                         (fun () -> In_channel.input_all ic)))])
+                   (SmartString
+                      (SmartString.of_string
+                         (let path = [%e estring ~loc path] in
+                          let ic =
+                            try open_in_bin path
+                            with _ -> failwith ("cannot open file: " ^ path)
+                          in
+                          Fun.protect
+                            ~finally:(fun () -> close_in ic)
+                            (fun () -> In_channel.input_all ic))))])
   in
 
   [%str

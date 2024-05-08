@@ -1,9 +1,94 @@
+module SmartString = struct
+  type desc =
+    | Raw of string
+    | Rope of Rope.t
+    | Buffer of { buf : Buffer.t; len : int; mutable mut : bool }
+
+  type t = { mutable v : desc }
+
+  let make v = { v }
+
+  let length x =
+    match x.v with
+    | Raw s -> String.length s
+    | Rope r -> Rope.length r
+    | Buffer { len; _ } -> len
+
+  let of_string x = { v = Raw x }
+
+  let to_string x =
+    match x.v with
+    | Raw s -> s
+    | Rope r -> Rope.to_string r
+    | Buffer { buf; len; mut } ->
+        let s = Buffer.sub buf 0 len in
+        if not mut then x.v <- Raw s;
+        s
+
+  let to_rope x =
+    match x.v with
+    | Raw s -> Rope.of_string s
+    | Rope r -> r
+    | _ -> Rope.of_string (to_string x)
+
+  let sub x off len =
+    match x.v with
+    | Raw s -> make (Raw (String.sub s off len))
+    | Rope r -> make (Rope (Rope.sub r off len))
+    | Buffer b ->
+        assert (off + len <= b.len);
+        make (Raw (Buffer.sub b.buf off len))
+
+  let compare x y =
+    match (x.v, y.v) with
+    | Raw x, Raw y -> String.compare x y
+    | Rope x, Rope y -> Rope.compare x y
+    | _ -> String.compare (to_string x) (to_string y)
+
+  let equal x y =
+    match (x.v, y.v) with
+    | Raw x, Raw y -> String.equal x y
+    | Rope x, Rope y -> Rope.equal x y
+    | _ -> String.equal (to_string x) (to_string y)
+
+  let concat2 x y =
+    let rec aux = function
+      | Raw x, _ ->
+          let y = to_string y in
+          let len = String.length x + String.length y in
+          let buf = Buffer.create len in
+          Buffer.add_string buf x;
+          Buffer.add_string buf y;
+          Buffer { buf; len; mut = true }
+      | Buffer x, _ when x.mut ->
+          Buffer.add_string x.buf (to_string y);
+          x.mut <- false;
+          Buffer { buf = x.buf; len = Buffer.length x.buf; mut = true }
+      | _ -> Rope (Rope.concat2 (to_rope x) (to_rope y))
+    in
+    make (aux (x.v, y.v))
+
+  let concat sep xs =
+    let rec loop acc = function
+      | [] -> acc
+      | x :: xs -> loop (concat2 (concat2 acc sep) x) xs
+    in
+    match xs with [] -> of_string "" | x :: xs -> loop x xs
+
+  let get x i =
+    match x.v with
+    | Raw s -> String.get s i
+    | Rope r -> Rope.get r i
+    | Buffer b ->
+        assert (i < b.len);
+        Buffer.nth b.buf i
+end
+
 type value =
   | Null
   | True
   | False
-  | String of string
-  | Rope of Rope.t
+  | SmartString of SmartString.t
   | Double of float
   | Object of object_
   | Function of (value Lazy.t array * (string * value Lazy.t) list -> value)
@@ -55,8 +140,7 @@ let get_function = function
   | _ -> failwith "expect function got something else"
 
 let get_string = function
-  | String s -> s
-  | Rope r -> Rope.to_string r
+  | SmartString s -> SmartString.to_string s
   | _ -> failwith "expect string got something else"
 
 let rec std_cmp = function
@@ -71,10 +155,7 @@ let rec std_cmp = function
             if r = 0 then aux (ia + 1) (ib + 1) else r
       in
       aux 0 0
-  | String s1, String s2 -> String.compare s1 s2
-  | Rope r1, Rope r2 -> Rope.compare r1 r2
-  | Rope r1, String s2 -> Rope.compare r1 (Rope.of_string s2)
-  | String s1, Rope r2 -> Rope.compare (Rope.of_string s1) r2
+  | SmartString s1, SmartString s2 -> SmartString.compare s1 s2
   | Double n1, Double n2 -> Float.compare n1 n2
   | _ -> failwith "std_cmp: invalid arguments"
 
@@ -84,7 +165,8 @@ let manifestation ppf v =
     | Null -> fprintf ppf "null"
     | True -> fprintf ppf "true"
     | False -> fprintf ppf "false"
-    | String s ->
+    | SmartString s ->
+        let s = SmartString.to_string s in
         let buf = Buffer.create (String.length s) in
         let rec loop i =
           if i >= String.length s then ()
@@ -103,7 +185,6 @@ let manifestation ppf v =
         in
         loop 0;
         fprintf ppf "\"%s\"" (Buffer.contents buf)
-    | Rope r -> aux ppf (String (Rope.to_string r))
     | Double f -> fprintf ppf "%s" (string_of_double f)
     | Array [||] -> fprintf ppf "[ ]"
     | Array xs ->
@@ -136,10 +217,7 @@ let manifestation ppf v =
 
 let std_primitive_equals ([| v; v' |], []) =
   (match (Lazy.force v, Lazy.force v') with
-  | String lhs, String rhs -> lhs = rhs
-  | Rope lhs, Rope rhs -> Rope.equal lhs rhs
-  | Rope lhs, String rhs -> Rope.equal lhs (Rope.of_string rhs)
-  | String lhs, Rope rhs -> Rope.equal (Rope.of_string lhs) rhs
+  | SmartString lhs, SmartString rhs -> SmartString.equal lhs rhs
   | Double lhs, Double rhs -> lhs = rhs
   | True, True | False, False | Null, Null -> true
   | _ -> false)
@@ -148,8 +226,7 @@ let std_primitive_equals ([| v; v' |], []) =
 let std_length ([| v |], []) =
   match v with
   | (lazy (Array xs)) -> Double (xs |> Array.length |> float_of_int)
-  | (lazy (String s)) -> Double (s |> String.length |> float_of_int)
-  | (lazy (Rope r)) -> Double (r |> Rope.length |> float_of_int)
+  | (lazy (SmartString s)) -> Double (float_of_int (SmartString.length s))
   | (lazy (Object _ as x)) ->
       let _, _, fields = get_object x in
       Double
@@ -168,13 +245,14 @@ let std_make_array ([| n; f |], []) =
 let std_type' = function
   | Null -> "null"
   | True | False -> "boolean"
-  | String _ | Rope _ -> "string"
+  | SmartString _ -> "string"
   | Function _ -> "function"
   | Double _ -> "number"
   | Object _ -> "object"
   | Array _ -> "array"
 
-let std_type ([| v |], []) = String (std_type' (Lazy.force v))
+let std_type ([| v |], []) =
+  SmartString (SmartString.of_string (std_type' (Lazy.force v)))
 
 let std_filter ([| f; ary |], []) =
   let f = f |> Lazy.force |> get_function in
@@ -199,7 +277,7 @@ let std_object_fields_ex ([| obj; b' |], []) =
     (fields |> Hashtbl.to_seq
     |> Seq.filter_map (fun (f, (h, _)) -> if h <> 2 || b' then Some f else None)
     |> List.of_seq |> List.sort String.compare |> Array.of_list
-    |> Array.map (fun x -> lazy (String x)))
+    |> Array.map (fun x -> lazy (SmartString (SmartString.of_string x))))
 
 let std_modulo ([| a; b |], []) =
   Double (Float.rem (get_double (Lazy.force a)) (get_double (Lazy.force b)))
@@ -217,7 +295,7 @@ let std_char ([| n |], []) =
   let e = Uutf.encoder `UTF_8 (`Buffer buf) in
   ignore (Uutf.encode e (`Uchar (Uchar.of_int n)));
   ignore (Uutf.encode e `End);
-  String (Buffer.contents buf)
+  SmartString (SmartString.of_string (Buffer.contents buf))
 
 let std_floor ([| f |], []) = Double (Float.floor (get_double (Lazy.force f)))
 
@@ -244,25 +322,27 @@ let array_index_s v1 key =
 let array_index v1 v2 =
   match v1 with
   | Array a -> a.(get_double v2 |> int_of_float) |> Lazy.force
-  | String s -> String (String.make 1 s.[int_of_float (get_double v2)])
-  | Rope r -> Rope (Rope.sub r (int_of_float (get_double v2)) 1)
+  | SmartString s ->
+      SmartString (SmartString.sub s (int_of_float (get_double v2)) 1)
   | Object (General (obj, _)) ->
       let key = get_string v2 in
       array_index_s' obj key
   | _ -> failwith "ArrayIndex: expect array got something else"
 
-let rec value_to_string = function
-  | String s -> s
-  | Double f -> string_of_double f
-  | True -> "true"
-  | False -> "false"
+let rec value_to_smart_string = function
+  | SmartString s -> s
+  | Double f -> SmartString.of_string (string_of_double f)
+  | True -> SmartString.of_string "true"
+  | False -> SmartString.of_string "false"
   | Array xs ->
-      "["
-      ^ String.concat ", "
-          (xs |> Array.to_list
-          |> List.map (fun x -> value_to_string (Lazy.force x)))
-      ^ "]"
-  | v -> failwith ("value_to_string: " ^ std_type' v)
+      SmartString.(
+        concat2
+          (concat2 (of_string "[")
+             (concat (of_string ", ")
+                (xs |> Array.to_list
+                |> List.map (fun (lazy x) -> value_to_smart_string x))))
+          (of_string "]"))
+  | v -> failwith ("value_to_smart_string: " ^ std_type' v)
 
 let make_object f =
   Object (General (f (gen_empty_self ()) empty_obj_fields, Some f))
@@ -273,18 +353,11 @@ let binary_add lhs rhs =
   match (lhs, rhs) with
   | Double f1, Double f2 -> Double (f1 +. f2)
   | Array xs, _ -> Array (Array.append xs (get_array rhs))
-  | Rope lhs, Rope rhs -> Rope (Rope.concat2 lhs rhs)
-  | Rope lhs, String rhs -> Rope (Rope.concat2 lhs (Rope.of_string rhs))
-  | String lhs, Rope rhs -> Rope (Rope.concat2 (Rope.of_string lhs) rhs)
-  | Rope lhs, _ ->
-      Rope (Rope.concat2 lhs (Rope.of_string (value_to_string rhs)))
-  | _, Rope rhs ->
-      Rope (Rope.concat2 (Rope.of_string (value_to_string lhs)) rhs)
-  | String _, _ | _, String _ ->
-      Rope
-        (Rope.concat2
-           (Rope.of_string (value_to_string lhs))
-           (Rope.of_string (value_to_string rhs)))
+  | SmartString _, _ | _, SmartString _ ->
+      SmartString
+        (SmartString.concat2
+           (value_to_smart_string lhs)
+           (value_to_smart_string rhs))
   | Object _, _ ->
       make_object (fun self super ->
           let _, assrts1, _ = get_object_f lhs self super in
@@ -314,15 +387,13 @@ let binary_add lhs rhs =
 let object_field tbl h k v =
   match k with
   | Null -> ()
-  | String k -> Hashtbl.add tbl k (h, v)
-  | Rope r -> Hashtbl.add tbl (Rope.to_string r) (h, v)
+  | SmartString k -> Hashtbl.add tbl (SmartString.to_string k) (h, v)
   | _ -> failwith "field name must be string, got something else"
 
 let object_field' k v =
   match k with
   | Null -> None
-  | String s -> Some (s, (1, v))
-  | Rope r -> Some (Rope.to_string r, (1, v))
+  | SmartString s -> Some (SmartString.to_string s, (1, v))
   | _ -> failwith "field name must be string, got something else"
 
 let function_param i positional id named v =
