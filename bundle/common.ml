@@ -206,7 +206,7 @@ let manifestation ppf v =
              ~pp_sep:(fun ppf () -> fprintf ppf ",@,")
              (fun ppf (lazy x) -> aux ppf x))
           xs
-    | Function _ -> ()
+    | Function f -> aux ppf (f ([||], []))
     | Object _ as x ->
         let _, assrts, tbl = get_object x in
         assrts |> List.iter (fun (lazy _) -> ());

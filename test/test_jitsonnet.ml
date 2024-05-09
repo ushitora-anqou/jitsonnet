@@ -936,7 +936,7 @@ let test_compiler_with_go_jsonnet_testdata () =
   (*assert_compile "foldr_various" `Success;*)
   assert_compile "function_capturing" `Success;
   assert_compile "function_in_object" `Success;
-  (*assert_compile "function_no_params" `Success;*)
+  assert_compile "function_no_params" `Success;
   assert_compile "function_with_argument" `Success;
   assert_compile "greater" `Success;
   assert_compile "greaterEq" `Success;
