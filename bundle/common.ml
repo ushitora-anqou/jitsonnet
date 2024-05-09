@@ -316,6 +316,7 @@ let std_asin ([| f |], []) = Double (Float.asin (get_double (Lazy.force f)))
 let std_atan ([| f |], []) = Double (Float.atan (get_double (Lazy.force f)))
 let std_cos ([| f |], []) = Double (Float.cos (get_double (Lazy.force f)))
 let std_sin ([| f |], []) = Double (Float.sin (get_double (Lazy.force f)))
+let std_tan ([| f |], []) = Double (Float.tan (get_double (Lazy.force f)))
 let std_exp ([| f |], []) = Double (Float.exp (get_double (Lazy.force f)))
 let std_log ([| f |], []) = Double (Float.log (get_double (Lazy.force f)))
 let std_sqrt ([| f |], []) = Double (Float.sqrt (get_double (Lazy.force f)))
@@ -469,6 +470,7 @@ let append_to_std tbl =
   Hashtbl.add tbl "atan" (1, lazy (Function std_atan));
   Hashtbl.add tbl "cos" (1, lazy (Function std_cos));
   Hashtbl.add tbl "sin" (1, lazy (Function std_sin));
+  Hashtbl.add tbl "tan" (1, lazy (Function std_tan));
   Hashtbl.add tbl "exp" (1, lazy (Function std_exp));
   Hashtbl.add tbl "log" (1, lazy (Function std_log));
   Hashtbl.add tbl "sqrt" (1, lazy (Function std_sqrt));

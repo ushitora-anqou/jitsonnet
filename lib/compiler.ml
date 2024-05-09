@@ -240,6 +240,7 @@ let rec compile_expr ?toplevel:_ ({ loc; _ } as env) :
         | ArrayIndex (Var "std", String "ceil") -> [%expr std_ceil]
         | ArrayIndex (Var "std", String "cos") -> [%expr std_cos]
         | ArrayIndex (Var "std", String "sin") -> [%expr std_sin]
+        | ArrayIndex (Var "std", String "tan") -> [%expr std_tan]
         | ArrayIndex (Var "std", String "exp") -> [%expr std_exp]
         | ArrayIndex (Var "std", String "log") -> [%expr std_log]
         | ArrayIndex (Var "std", String "sqrt") -> [%expr std_sqrt]

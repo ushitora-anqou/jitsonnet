@@ -898,9 +898,7 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "builtin_sqrt" `Success;
   assert_compile "builtin_stripChars" `Success;
   assert_compile "builtin_substr_multibyte" `Success;
-  (*
   assert_compile "builtin_tan" `Success;
-  *)
   assert_compile "comparisons" `Success;
   (*
   assert_compile "decodeUTF8" `Success;
