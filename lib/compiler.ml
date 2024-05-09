@@ -385,17 +385,26 @@ let rec compile_expr ?toplevel:_ ({ loc; _ } as env) :
 
 and compile_expr_lazy ?(toplevel = false) ?(in_bind = false) ({ loc; _ } as env)
     e =
-  match compile_expr ~toplevel env e with
-  | {
-   pexp_desc =
-     Parsetree.Pexp_apply
-       ( { pexp_desc = Pexp_ident { txt = Ldot (Lident "Lazy", "force"); _ }; _ },
-         [ (Nolabel, ({ pexp_desc = Pexp_ident _; _ } as var)) ] );
-   _;
-  }
+  match e with
+  | Null | True | False | String _ | Number _ | Array _ | Function _ | Self
+  | Object _ | ObjectFor _
     when not in_bind ->
-      var
-  | e -> [%expr lazy [%e e]]
+      [%expr Lazy.from_val [%e compile_expr env e]]
+  | _ -> (
+      match compile_expr ~toplevel env e with
+      | {
+       pexp_desc =
+         Parsetree.Pexp_apply
+           ( {
+               pexp_desc = Pexp_ident { txt = Ldot (Lident "Lazy", "force"); _ };
+               _;
+             },
+             [ (Nolabel, ({ pexp_desc = Pexp_ident _; _ } as var)) ] );
+       _;
+      }
+        when not in_bind ->
+          var
+      | e -> [%expr lazy [%e e]])
 
 let compile ?(target = `Main) root_prog_path progs bins strs =
   let loc = !Ast_helper.default_loc in
