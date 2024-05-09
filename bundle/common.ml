@@ -248,13 +248,6 @@ let std_length ([| v |], []) =
         |> Seq.length |> float_of_int)
   | _ -> failwith "std.length: invalid type argument"
 
-let std_make_array ([| n; f |], []) =
-  let n = n |> Lazy.force |> get_double in
-  let f = f |> Lazy.force |> get_function in
-  Array
-    (Array.init (int_of_float n) (fun i ->
-         lazy (f ([| lazy (Double (float_of_int i)) |], []))))
-
 let std_type' = function
   | Null -> "null"
   | True | False -> "boolean"
@@ -463,6 +456,17 @@ let object_field_plus_value super key value =
 
 let object_field_plus super key value tbl h =
   object_field tbl h key (object_field_plus_value super key value)
+
+let std_make_array (positional, named) =
+  let n =
+    get_double (Lazy.force (function_param 0 positional "sz" named None))
+  in
+  let f =
+    get_function (Lazy.force (function_param 1 positional "func" named None))
+  in
+  Array
+    (Array.init (int_of_float n) (fun i ->
+         lazy (f ([| lazy (Double (float_of_int i)) |], []))))
 
 let append_to_std tbl =
   Hashtbl.add tbl "primitiveEquals" (1, lazy (Function std_primitive_equals));
