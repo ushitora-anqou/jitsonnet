@@ -916,7 +916,7 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "equals4" `Success;
   assert_compile "equals5" `Success;
   assert_compile "equals6" `Success;
-  (*assert_compile "escaped_fields" `Success;*)
+  assert_compile "escaped_fields" `Success;
   assert_compile "escaped_single_quote" `Success;
   (*
   assert_compile "extvar_code" `Success;
@@ -1024,7 +1024,7 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "object_super" `Success;
   assert_compile "object_super_deep" `Success;
   assert_compile "object_super_within" `Success;
-  (*assert_compile "object_various_field_types" `Success;*)
+  assert_compile "object_various_field_types" `Success;
   assert_compile "object_within_object" `Success;
   assert_compile "optional_args" `Success;
   assert_compile "optional_args10" `Success;

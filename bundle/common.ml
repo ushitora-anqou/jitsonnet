@@ -174,30 +174,32 @@ let rec std_cmp = function
 
 let manifestation ppf v =
   let open Format in
+  let quoted_string s =
+    let buf = Buffer.create (String.length s) in
+    let rec loop i =
+      if i >= String.length s then ()
+      else (
+        (match s.[i] with
+        | '"' -> Buffer.add_string buf {|\"|}
+        | '\\' -> Buffer.add_string buf {|\\|}
+        | '\b' -> Buffer.add_string buf {|\b|}
+        | '\012' -> Buffer.add_string buf {|\f|}
+        | '\n' -> Buffer.add_string buf {|\n|}
+        | '\r' -> Buffer.add_string buf {|\r|}
+        | '\t' -> Buffer.add_string buf {|\t|}
+        | '\000' -> Buffer.add_string buf {|\u0000|}
+        | ch -> Buffer.add_char buf ch);
+        loop (i + 1))
+    in
+    loop 0;
+    "\"" ^ Buffer.contents buf ^ "\""
+  in
   let rec aux ppf = function
     | Null -> fprintf ppf "null"
     | True -> fprintf ppf "true"
     | False -> fprintf ppf "false"
     | SmartString s ->
-        let s = SmartString.to_string s in
-        let buf = Buffer.create (String.length s) in
-        let rec loop i =
-          if i >= String.length s then ()
-          else (
-            (match s.[i] with
-            | '"' -> Buffer.add_string buf {|\"|}
-            | '\\' -> Buffer.add_string buf {|\\|}
-            | '\b' -> Buffer.add_string buf {|\b|}
-            | '\012' -> Buffer.add_string buf {|\f|}
-            | '\n' -> Buffer.add_string buf {|\n|}
-            | '\r' -> Buffer.add_string buf {|\r|}
-            | '\t' -> Buffer.add_string buf {|\t|}
-            | '\000' -> Buffer.add_string buf {|\u0000|}
-            | ch -> Buffer.add_char buf ch);
-            loop (i + 1))
-        in
-        loop 0;
-        fprintf ppf "\"%s\"" (Buffer.contents buf)
+        fprintf ppf "%s" (quoted_string (SmartString.to_string s))
     | Double f -> fprintf ppf "%s" (string_of_double f)
     | Array [||] -> fprintf ppf "[ ]"
     | Array xs ->
@@ -222,7 +224,7 @@ let manifestation ppf v =
             (pp_print_list
                ~pp_sep:(fun ppf () -> fprintf ppf ",@,")
                (fun ppf (k, (lazy v)) ->
-                 fprintf ppf "@<0>\"@<0>%s@<0>\"@<0>:@<0> %a" k aux v))
+                 fprintf ppf "@<0>%s@<0>:@<0> %a" (quoted_string k) aux v))
             xs
   in
   aux ppf v;
