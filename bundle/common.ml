@@ -332,6 +332,11 @@ let std_pow ([| f1; f2 |], []) =
 
 let std_ceil ([| f |], []) = Double (Float.ceil (get_double (Lazy.force f)))
 
+let std_md5 ([| s |], []) =
+  SmartString
+    (SmartString.of_string
+       (Digest.to_hex (Digest.string (get_string (Lazy.force s)))))
+
 let in_super super key =
   if Hashtbl.mem super (get_string key) then True else False
 
@@ -484,4 +489,5 @@ let append_to_std tbl =
   Hashtbl.add tbl "ceil" (1, lazy (Function std_ceil));
   Hashtbl.add tbl "exponent" (1, lazy (Function std_exponent));
   Hashtbl.add tbl "mantissa" (1, lazy (Function std_mantissa));
+  Hashtbl.add tbl "md5" (1, lazy (Function std_md5));
   ()

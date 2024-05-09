@@ -1139,13 +1139,11 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "std.mantissa5" `Success;
   assert_compile "std.mantissa6" `Success;
   assert_compile "std.mantissa7" `Success;
-  (*
   assert_compile "std.md5" `Success;
   assert_compile "std.md5_2" `Success;
   assert_compile "std.md5_3" `Success;
   assert_compile "std.md5_4" `Success;
   assert_compile "std.md5_5" `Success;
-  *)
   assert_compile "std.mod_int" `Success;
   assert_compile "std.mod_string" `Success;
   assert_compile "std.modulo" `Success;
