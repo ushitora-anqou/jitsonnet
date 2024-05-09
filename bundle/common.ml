@@ -314,6 +314,9 @@ let std_floor ([| f |], []) = Double (Float.floor (get_double (Lazy.force f)))
 let std_acos ([| f |], []) = Double (Float.acos (get_double (Lazy.force f)))
 let std_asin ([| f |], []) = Double (Float.asin (get_double (Lazy.force f)))
 
+let std_pow ([| f1; f2 |], []) =
+  Double (Float.pow (get_double (Lazy.force f1)) (get_double (Lazy.force f2)))
+
 let in_super super key =
   if Hashtbl.mem super (get_string key) then True else False
 
@@ -455,4 +458,5 @@ let append_to_std tbl =
   Hashtbl.add tbl "floor" (1, lazy (Function std_floor));
   Hashtbl.add tbl "acos" (1, lazy (Function std_acos));
   Hashtbl.add tbl "asin" (1, lazy (Function std_asin));
+  Hashtbl.add tbl "pow" (1, lazy (Function std_pow));
   ()

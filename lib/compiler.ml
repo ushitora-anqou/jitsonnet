@@ -235,6 +235,7 @@ let rec compile_expr ?toplevel:_ ({ loc; _ } as env) :
         | ArrayIndex (Var "std", String "floor") -> [%expr std_floor]
         | ArrayIndex (Var "std", String "acos") -> [%expr std_acos]
         | ArrayIndex (Var "std", String "asin") -> [%expr std_asin]
+        | ArrayIndex (Var "std", String "pow") -> [%expr std_pow]
         | _ -> [%expr get_function [%e compile_expr env e]]
       in
       [%expr

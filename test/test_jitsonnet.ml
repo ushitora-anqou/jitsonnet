@@ -1079,13 +1079,11 @@ let test_compiler_with_go_jsonnet_testdata () =
   (*assert_compile "plus8" `Success;*)
   assert_compile "plus9" `Success;
   assert_compile "positional_after_optional" `Success;
-  (*
   assert_compile "pow" `Success;
   assert_compile "pow2" `Success;
   assert_compile "pow3" `Success;
   assert_compile "pow5" `Success;
-  assert_compile "pow6" `Success;
-  *)
+  (*assert_compile "pow6" `Success;*)
   assert_compile "proto_object_comp" `Success;
   assert_compile "recursive_local" `Success;
   assert_compile "self" `Success;
