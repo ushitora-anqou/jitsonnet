@@ -314,6 +314,7 @@ let std_floor ([| f |], []) = Double (Float.floor (get_double (Lazy.force f)))
 let std_acos ([| f |], []) = Double (Float.acos (get_double (Lazy.force f)))
 let std_asin ([| f |], []) = Double (Float.asin (get_double (Lazy.force f)))
 let std_atan ([| f |], []) = Double (Float.atan (get_double (Lazy.force f)))
+let std_cos ([| f |], []) = Double (Float.cos (get_double (Lazy.force f)))
 
 let std_pow ([| f1; f2 |], []) =
   Double (Float.pow (get_double (Lazy.force f1)) (get_double (Lazy.force f2)))
@@ -462,6 +463,7 @@ let append_to_std tbl =
   Hashtbl.add tbl "acos" (1, lazy (Function std_acos));
   Hashtbl.add tbl "asin" (1, lazy (Function std_asin));
   Hashtbl.add tbl "atan" (1, lazy (Function std_atan));
+  Hashtbl.add tbl "cos" (1, lazy (Function std_cos));
   Hashtbl.add tbl "pow" (1, lazy (Function std_pow));
   Hashtbl.add tbl "ceil" (1, lazy (Function std_ceil));
   ()
