@@ -311,6 +311,7 @@ let std_char ([| n |], []) =
   SmartString (SmartString.of_string (Buffer.contents buf))
 
 let std_floor ([| f |], []) = Double (Float.floor (get_double (Lazy.force f)))
+let std_acos ([| f |], []) = Double (Float.acos (get_double (Lazy.force f)))
 
 let in_super super key =
   if Hashtbl.mem super (get_string key) then True else False
@@ -451,4 +452,5 @@ let append_to_std tbl =
   Hashtbl.add tbl "codepoint" (1, lazy (Function std_codepoint));
   Hashtbl.add tbl "char" (1, lazy (Function std_char));
   Hashtbl.add tbl "floor" (1, lazy (Function std_floor));
+  Hashtbl.add tbl "acos" (1, lazy (Function std_acos));
   ()
