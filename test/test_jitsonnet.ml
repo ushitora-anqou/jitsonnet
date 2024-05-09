@@ -888,16 +888,14 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "builtin_log4" `Success;
   assert_compile "builtin_log6" `Success;
   assert_compile "builtin_lstripChars" `Success;
-  (*
-  assert_compile "builtin_manifestTomlEx" `Success;
-  *)
+  (*assert_compile "builtin_manifestTomlEx" `Success;*)
   assert_compile "builtin_member_array" `Success;
   assert_compile "builtin_member_string" `Success;
   assert_compile "builtin_parseInt" `Success;
   assert_compile "builtin_parseInt2" `Success;
   assert_compile "builtin_rstripChars" `Success;
-  (*
   assert_compile "builtin_sin" `Success;
+  (*
   assert_compile "builtin_sqrt" `Success;
   *)
   assert_compile "builtin_stripChars" `Success;
