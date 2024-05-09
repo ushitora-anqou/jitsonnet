@@ -318,6 +318,7 @@ let std_cos ([| f |], []) = Double (Float.cos (get_double (Lazy.force f)))
 let std_sin ([| f |], []) = Double (Float.sin (get_double (Lazy.force f)))
 let std_exp ([| f |], []) = Double (Float.exp (get_double (Lazy.force f)))
 let std_log ([| f |], []) = Double (Float.log (get_double (Lazy.force f)))
+let std_sqrt ([| f |], []) = Double (Float.sqrt (get_double (Lazy.force f)))
 
 let std_pow ([| f1; f2 |], []) =
   Double (Float.pow (get_double (Lazy.force f1)) (get_double (Lazy.force f2)))
@@ -470,6 +471,7 @@ let append_to_std tbl =
   Hashtbl.add tbl "sin" (1, lazy (Function std_sin));
   Hashtbl.add tbl "exp" (1, lazy (Function std_exp));
   Hashtbl.add tbl "log" (1, lazy (Function std_log));
+  Hashtbl.add tbl "sqrt" (1, lazy (Function std_sqrt));
   Hashtbl.add tbl "pow" (1, lazy (Function std_pow));
   Hashtbl.add tbl "ceil" (1, lazy (Function std_ceil));
   ()

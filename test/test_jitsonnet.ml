@@ -895,9 +895,7 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "builtin_parseInt2" `Success;
   assert_compile "builtin_rstripChars" `Success;
   assert_compile "builtin_sin" `Success;
-  (*
   assert_compile "builtin_sqrt" `Success;
-  *)
   assert_compile "builtin_stripChars" `Success;
   assert_compile "builtin_substr_multibyte" `Success;
   (*
