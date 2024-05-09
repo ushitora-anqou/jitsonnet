@@ -324,6 +324,9 @@ let std_sqrt ([| f |], []) = Double (Float.sqrt (get_double (Lazy.force f)))
 let std_exponent ([| f |], []) =
   Double (float_of_int (snd (Float.frexp (get_double (Lazy.force f)))))
 
+let std_mantissa ([| f |], []) =
+  Double (fst (Float.frexp (get_double (Lazy.force f))))
+
 let std_pow ([| f1; f2 |], []) =
   Double (Float.pow (get_double (Lazy.force f1)) (get_double (Lazy.force f2)))
 
@@ -480,4 +483,5 @@ let append_to_std tbl =
   Hashtbl.add tbl "pow" (1, lazy (Function std_pow));
   Hashtbl.add tbl "ceil" (1, lazy (Function std_ceil));
   Hashtbl.add tbl "exponent" (1, lazy (Function std_exponent));
+  Hashtbl.add tbl "mantissa" (1, lazy (Function std_mantissa));
   ()

@@ -1131,13 +1131,15 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "std.makeArrayNamed2" `Success;
   assert_compile "std.makeArrayNamed4" `Success;
   assert_compile "std.makeArray_recursive" `Success;
+  *)
   assert_compile "std.mantissa" `Success;
   assert_compile "std.mantissa2" `Success;
-  assert_compile "std.mantissa3" `Success;
+  (*assert_compile "std.mantissa3" `Success;*)
   assert_compile "std.mantissa4" `Success;
   assert_compile "std.mantissa5" `Success;
   assert_compile "std.mantissa6" `Success;
   assert_compile "std.mantissa7" `Success;
+  (*
   assert_compile "std.md5" `Success;
   assert_compile "std.md5_2" `Success;
   assert_compile "std.md5_3" `Success;
