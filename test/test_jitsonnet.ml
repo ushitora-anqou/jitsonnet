@@ -900,9 +900,7 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "builtin_substr_multibyte" `Success;
   assert_compile "builtin_tan" `Success;
   assert_compile "comparisons" `Success;
-  (*
-  assert_compile "decodeUTF8" `Success;
-  *)
+  (*assert_compile "decodeUTF8" `Success;*)
   assert_compile "div1" `Success;
   assert_compile "div2" `Success;
   (*assert_compile "div3" `Success;*)
@@ -1095,7 +1093,6 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "std.codepoint2" `Success;
   assert_compile "std.codepoint4" `Success;
   assert_compile "std.codepoint5" `Success;
-  (*
   assert_compile "std.exponent" `Success;
   assert_compile "std.exponent2" `Success;
   assert_compile "std.exponent3" `Success;
@@ -1103,7 +1100,6 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "std.exponent5" `Success;
   assert_compile "std.exponent6" `Success;
   assert_compile "std.exponent7" `Success;
-  *)
   assert_compile "std.filter" `Success;
   assert_compile "std.filter3" `Success;
   assert_compile "std.filter7" `Success;
