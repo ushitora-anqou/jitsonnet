@@ -871,8 +871,8 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "builtinXor" `Success;
   assert_compile "builtinXor1" `Success;
   assert_compile "builtin_acos" `Success;
-  (*
   assert_compile "builtin_asin" `Success;
+  (*
   assert_compile "builtin_atan" `Success;
   assert_compile "builtin_ceil" `Success;
   assert_compile "builtin_cos" `Success;
