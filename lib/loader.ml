@@ -90,6 +90,9 @@ let rec load is_stdjsonnet src t =
       in
       Hashtbl.replace t.ext_codes key (Ok desugared);
       Ok ()
+  | `Ext_str (key, value) ->
+      Hashtbl.replace t.ext_codes key (Ok (Syntax.Core.String value));
+      Ok ()
 
 let compile ?multi ?string ?target t =
   Compiler.compile ?multi ?string ?target t.root_prog_path
@@ -98,25 +101,28 @@ let compile ?multi ?string ?target t =
     (t.importstrs |> Hashtbl.to_seq_keys |> List.of_seq)
     (t.ext_codes |> Hashtbl.to_seq |> List.of_seq)
 
+let load_ext ext_code =
+  match String.index_opt ext_code '=' with
+  | None -> (
+      match Sys.getenv_opt ext_code with
+      | None -> failwith ("environment variable " ^ ext_code ^ " was undefined.")
+      | Some value -> (ext_code, value))
+  | Some i ->
+      ( String.sub ext_code 0 i,
+        String.sub ext_code (i + 1) (String.length ext_code - (i + 1)) )
+
 let load_ext_codes ext_codes t =
   ext_codes
   |> List.iter (fun ext_code ->
-         let key, value =
-           match String.index_opt ext_code '=' with
-           | None -> (
-               match Sys.getenv_opt ext_code with
-               | None ->
-                   failwith
-                     ("environment variable " ^ ext_code ^ " was undefined.")
-               | Some value -> (ext_code, value))
-           | Some i ->
-               ( String.sub ext_code 0 i,
-                 String.sub ext_code (i + 1) (String.length ext_code - (i + 1))
-               )
-         in
-         ignore (load false (`Ext_code (key, value)) t))
+         ignore (load false (`Ext_code (load_ext ext_code)) t))
 
-let load_root ?(is_stdjsonnet = false) ?(ext_codes = []) root_prog_path =
+let load_ext_strs ext_strs t =
+  ext_strs
+  |> List.iter (fun ext_str ->
+         ignore (load false (`Ext_str (load_ext ext_str)) t))
+
+let load_root ?(is_stdjsonnet = false) ?(ext_codes = []) ?(ext_strs = [])
+    root_prog_path =
   let ( let* ) = Result.bind in
   let* root_prog_path = get_real_path root_prog_path in
   let t =
@@ -129,4 +135,5 @@ let load_root ?(is_stdjsonnet = false) ?(ext_codes = []) root_prog_path =
     }
   in
   load_ext_codes ext_codes t;
+  load_ext_strs ext_strs t;
   load is_stdjsonnet (`File root_prog_path) t |> Result.map (Fun.const t)

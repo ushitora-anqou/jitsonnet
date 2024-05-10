@@ -694,15 +694,15 @@ let test_static_check_basics () =
 
 let assert_compile ?remove_work_dir ?(bundle_path = "../../../bundle")
     ?(test_cases_dir = "../../../test/cases") ?(expected_suffix = ".expected")
-    ?(multi = false) ?(string = false) ?(ext_codes = []) src_file_path
-    result_pat =
+    ?(multi = false) ?(string = false) ?(ext_codes = []) ?(ext_strs = [])
+    src_file_path result_pat =
   let input_file_path =
     Filename.concat test_cases_dir (src_file_path ^ ".jsonnet")
   in
   let expected_path =
     Filename.concat test_cases_dir (src_file_path ^ expected_suffix)
   in
-  match Loader.load_root ~ext_codes input_file_path with
+  match Loader.load_root ~ext_codes ~ext_strs input_file_path with
   | Error msg ->
       Logs.err (fun m ->
           m "assert_compile_expr: failed to load: %s: %s" input_file_path msg);
@@ -944,7 +944,7 @@ let test_compiler_with_go_jsonnet_testdata () =
     ~ext_codes:
       [ {|selfRecursiveVar=[42, std.extVar("selfRecursiveVar")[0] + 1]|} ]
     "extvar_self_recursive" `Success;
-  (*assert_compile ~ext_strs:[ {|2 + 2|} ] "extvar_string" `Success;*)
+  assert_compile ~ext_strs:[ {|stringVar=2 + 2|} ] "extvar_string" `Success;
   assert_compile "false" `Success;
   assert_compile "filled_thunk" `Success;
   assert_compile "foldl_empty" `Success;

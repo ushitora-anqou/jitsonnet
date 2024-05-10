@@ -3,8 +3,8 @@ open Ppxlib
 let errf fmt = Printf.ksprintf (fun s -> Error s) fmt
 
 let run file_path bundle_path show_profile work_dir_prefix native mold
-    (multi : string option) (string : bool) ext_codes =
-  match Loader.load_root ~ext_codes file_path with
+    (multi : string option) (string : bool) ext_codes ext_strs =
+  match Loader.load_root ~ext_codes ~ext_strs file_path with
   | Error msg ->
       Logs.err (fun m -> m "%s" msg);
       exit 1
