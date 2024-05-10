@@ -1,6 +1,6 @@
 .PHONY: build
 build:
-	dune build bin lib test thirdparty/ocaml-dtoa/src thirdparty/ocaml-rope/src
+	dune build bin lib test thirdparty/ocaml-dtoa thirdparty/ocaml-rope
 	cp thirdparty/uutf/src/uutf.ml bundle/
 	cd bundle && ocamlc -w -a -c uutf.ml
 	cd bundle && ocamlopt -w -a -c uutf.ml
