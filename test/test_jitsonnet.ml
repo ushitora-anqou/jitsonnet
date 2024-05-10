@@ -694,14 +694,15 @@ let test_static_check_basics () =
 
 let assert_compile ?remove_work_dir ?(bundle_path = "../../../bundle")
     ?(test_cases_dir = "../../../test/cases") ?(expected_suffix = ".expected")
-    ?(multi = false) ?(string = false) src_file_path result_pat =
+    ?(multi = false) ?(string = false) ?(ext_codes = []) src_file_path
+    result_pat =
   let input_file_path =
     Filename.concat test_cases_dir (src_file_path ^ ".jsonnet")
   in
   let expected_path =
     Filename.concat test_cases_dir (src_file_path ^ expected_suffix)
   in
-  match Loader.load_root false input_file_path with
+  match Loader.load_root ~ext_codes input_file_path with
   | Error msg ->
       Logs.err (fun m ->
           m "assert_compile_expr: failed to load: %s: %s" input_file_path msg);
@@ -931,12 +932,19 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "equals6" `Success;
   assert_compile "escaped_fields" `Success;
   assert_compile "escaped_single_quote" `Success;
-  (*
-  assert_compile "extvar_code" `Success;
-  assert_compile "extvar_mutually_recursive" `Success;
-  assert_compile "extvar_self_recursive" `Success;
-  assert_compile "extvar_string" `Success;
-  *)
+  assert_compile ~ext_codes:[ "codeVar=3+3" ] "extvar_code" `Success;
+  assert_compile
+    ~ext_codes:
+      [
+        {|mutuallyRecursiveVar1=[42, std.extVar("mutuallyRecursiveVar2")[0] + 1]|};
+        {|mutuallyRecursiveVar2=[42, std.extVar("mutuallyRecursiveVar1")[0] + 1]|};
+      ]
+    "extvar_mutually_recursive" `Success;
+  assert_compile
+    ~ext_codes:
+      [ {|selfRecursiveVar=[42, std.extVar("selfRecursiveVar")[0] + 1]|} ]
+    "extvar_self_recursive" `Success;
+  (*assert_compile ~ext_strs:[ {|2 + 2|} ] "extvar_string" `Success;*)
   assert_compile "false" `Success;
   assert_compile "filled_thunk" `Success;
   assert_compile "foldl_empty" `Success;

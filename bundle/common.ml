@@ -496,6 +496,12 @@ let std_make_array (positional, named) =
     (Array.init (int_of_float n) (fun i ->
          lazy (f ([| lazy (Double (float_of_int i)) |], []))))
 
+let make_std_ext_var tbl
+    ([| (name : value Lazy.t) |], ([] : (string * value Lazy.t) list)) =
+  match Hashtbl.find_opt tbl (get_string (Lazy.force name)) with
+  | None -> failwith "std.extVar: not found"
+  | Some v -> Lazy.force v
+
 let append_to_std tbl =
   Hashtbl.add tbl "primitiveEquals" (1, lazy (Function std_primitive_equals));
   Hashtbl.add tbl "length" (1, lazy (Function std_length));

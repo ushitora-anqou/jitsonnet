@@ -51,6 +51,8 @@ let get_import_id kind file_path =
   | `Importstr -> "str/")
   ^ file_path
 
+let get_ext_code_id key = "extCode/" ^ key
+
 let pexp_let ~loc recflag binds body =
   match binds with [] -> body | _ -> pexp_let ~loc recflag binds body
 
@@ -421,7 +423,7 @@ and compile_expr_lazy ?(toplevel = false) ?(in_bind = false) ({ loc; _ } as env)
       | e -> [%expr lazy [%e e]])
 
 let compile ?multi ?(string = false) ?(target = `Main) root_prog_path progs bins
-    strs =
+    strs ext_codes =
   let loc = !Ast_helper.default_loc in
   let env = { loc; vars = Hashtbl.create 0 } in
 
@@ -429,7 +431,8 @@ let compile ?multi ?(string = false) ?(target = `Main) root_prog_path progs bins
     "std"
     :: ((progs |> List.map (fun (path, _) -> get_import_id `Import path))
        @ (bins |> List.map (get_import_id `Importbin))
-       @ (strs |> List.map (get_import_id `Importstr)))
+       @ (strs |> List.map (get_import_id `Importstr))
+       @ (ext_codes |> List.map fst |> List.map get_ext_code_id))
   in
   with_binds env bind_ids @@ fun () ->
   let progs_bindings =
@@ -485,29 +488,68 @@ let compile ?multi ?(string = false) ?(target = `Main) root_prog_path progs bins
                             ~finally:(fun () -> close_in ic)
                             (fun () -> In_channel.input_all ic))))])
   in
+  let ext_codes_bindings =
+    ext_codes
+    |> List.map (function
+         | key, Error msg ->
+             value_binding ~loc
+               ~pat:(env_pvar ~loc env (get_ext_code_id key))
+               ~expr:[%expr lazy (failwith [%e estring ~loc msg])]
+         | key, Ok code ->
+             value_binding ~loc
+               ~pat:(env_pvar ~loc env (get_ext_code_id key))
+               ~expr:(compile_expr_lazy ~toplevel:true ~in_bind:true env code))
+  in
+  let other_bindings =
+    [
+      value_binding ~loc ~pat:(env_pvar ~loc env "std")
+        ~expr:
+          [%expr
+            lazy
+              [%e
+                match target with
+                | `Stdjsonnet ->
+                    [%expr make_simple_object ([||], [], empty_obj_fields)]
+                | _ ->
+                    [%expr
+                      make_object (fun self super ->
+                          let f =
+                            get_object_f (Lazy.force Stdjsonnet.Compiled.v)
+                          in
+                          let _, assrts, _ = f self super in
+                          append_to_std self;
+                          Hashtbl.add self "extVar" (1, std_ext_var);
+                          ([||], assrts, self))]]];
+      value_binding ~loc
+        ~pat:[%pat? std_ext_var]
+        ~expr:
+          [%expr
+            lazy
+              (Function
+                 (make_std_ext_var
+                    (Hashtbl.of_seq
+                       (List.to_seq
+                          [%e
+                            ext_codes
+                            |> List.map (fun (key, _) ->
+                                   pexp_tuple ~loc
+                                     [
+                                       estring ~loc key;
+                                       env_evar ~loc env (get_ext_code_id key);
+                                     ])
+                            |> elist ~loc]))))];
+    ]
+  in
 
   [%str
     open Common
 
     module Compiled = struct
-      let [%p env_pvar ~loc env "std"] =
-        lazy
-          [%e
-            match target with
-            | `Stdjsonnet ->
-                [%expr make_simple_object ([||], [], empty_obj_fields)]
-            | _ ->
-                [%expr
-                  make_object (fun self super ->
-                      let f = get_object_f (Lazy.force Stdjsonnet.Compiled.v) in
-                      let _, assrts, _ = f self super in
-                      append_to_std self;
-                      ([||], assrts, self))]]
-
       let v =
         [%e
           pexp_let ~loc Recursive
-            (progs_bindings @ bins_bindings @ strs_bindings)
+            (other_bindings @ progs_bindings @ bins_bindings @ strs_bindings
+           @ ext_codes_bindings)
             (env_evar ~loc env (get_import_id `Import root_prog_path))]
 
       let () =

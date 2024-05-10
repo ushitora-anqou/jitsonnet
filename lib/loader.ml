@@ -3,6 +3,7 @@ type t = {
   importbins : (string, unit) Hashtbl.t;
   importstrs : (string, unit) Hashtbl.t;
   root_prog_path : string;
+  ext_codes : (string, (Syntax.Core.expr, string) result) Hashtbl.t;
 }
 
 let list_imported_files e =
@@ -48,36 +49,74 @@ let make_imported_files_real root desugared =
          desugared)
   with Make_imported_files_real_error file -> Error ("invalid import: " ^ file)
 
-let rec load is_stdjsonnet file_path t =
+let rec load is_stdjsonnet src t =
   let ( let* ) = Result.bind in
-  let* file_path = get_real_path file_path in
-  match Hashtbl.find_opt t.loaded file_path with
-  | Some _ -> Ok ()
-  | None ->
-      let* prog = Parser.parse_file file_path in
-      let* desugared =
-        Syntax.desugar prog
-        |> make_imported_files_real (Filename.dirname file_path)
-      in
+  match src with
+  | `File path -> (
+      let* file_path = get_real_path path in
+      match Hashtbl.find_opt t.loaded file_path with
+      | Some _ -> Ok ()
+      | None ->
+          let* prog = Parser.parse_file file_path in
+          let* desugared =
+            Syntax.desugar prog
+            |> make_imported_files_real (Filename.dirname file_path)
+          in
+          let* () = Static_check.f is_stdjsonnet desugared in
+          Hashtbl.add t.loaded file_path desugared;
+          let progs, bins, strs = list_imported_files desugared in
+          bins |> List.iter (fun k -> Hashtbl.replace t.importbins k ());
+          strs |> List.iter (fun k -> Hashtbl.replace t.importstrs k ());
+          progs
+          |> List.fold_left
+               (fun res file ->
+                 let* () = res in
+                 t |> load is_stdjsonnet (`File file))
+               (Ok ()))
+  | `Ext_code (key, prog_src) ->
+      let* prog = Parser.parse_string prog_src in
+      let desugared = Syntax.desugar prog in
       let* () = Static_check.f is_stdjsonnet desugared in
-      Hashtbl.add t.loaded file_path desugared;
       let progs, bins, strs = list_imported_files desugared in
       bins |> List.iter (fun k -> Hashtbl.replace t.importbins k ());
       strs |> List.iter (fun k -> Hashtbl.replace t.importstrs k ());
-      progs
-      |> List.fold_left
-           (fun res file ->
-             let* () = res in
-             t |> load is_stdjsonnet file)
-           (Ok ())
+      let* () =
+        progs
+        |> List.fold_left
+             (fun res file ->
+               let* () = res in
+               t |> load is_stdjsonnet (`File file))
+             (Ok ())
+      in
+      Hashtbl.replace t.ext_codes key (Ok desugared);
+      Ok ()
 
 let compile ?multi ?string ?target t =
   Compiler.compile ?multi ?string ?target t.root_prog_path
     (t.loaded |> Hashtbl.to_seq |> List.of_seq)
     (t.importbins |> Hashtbl.to_seq_keys |> List.of_seq)
     (t.importstrs |> Hashtbl.to_seq_keys |> List.of_seq)
+    (t.ext_codes |> Hashtbl.to_seq |> List.of_seq)
 
-let load_root is_stdjsonnet root_prog_path =
+let load_ext_codes ext_codes t =
+  ext_codes
+  |> List.iter (fun ext_code ->
+         let key, value =
+           match String.index_opt ext_code '=' with
+           | None -> (
+               match Sys.getenv_opt ext_code with
+               | None ->
+                   failwith
+                     ("environment variable " ^ ext_code ^ " was undefined.")
+               | Some value -> (ext_code, value))
+           | Some i ->
+               ( String.sub ext_code 0 i,
+                 String.sub ext_code (i + 1) (String.length ext_code - (i + 1))
+               )
+         in
+         ignore (load false (`Ext_code (key, value)) t))
+
+let load_root ?(is_stdjsonnet = false) ?(ext_codes = []) root_prog_path =
   let ( let* ) = Result.bind in
   let* root_prog_path = get_real_path root_prog_path in
   let t =
@@ -86,6 +125,8 @@ let load_root is_stdjsonnet root_prog_path =
       importbins = Hashtbl.create 0;
       importstrs = Hashtbl.create 0;
       root_prog_path;
+      ext_codes = Hashtbl.create 0;
     }
   in
-  load is_stdjsonnet root_prog_path t |> Result.map (Fun.const t)
+  load_ext_codes ext_codes t;
+  load is_stdjsonnet (`File root_prog_path) t |> Result.map (Fun.const t)
