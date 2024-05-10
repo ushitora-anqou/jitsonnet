@@ -8,6 +8,7 @@ build:
 	cp _build/default/thirdparty/ocaml-dtoa/src/dtoa.cmxa bundle/
 	cp _build/default/thirdparty/ocaml-dtoa/src/dtoa.a bundle/
 	cp _build/default/thirdparty/ocaml-dtoa/src/dlldtoa_stubs.so bundle/
+	cp _build/default/thirdparty/ocaml-dtoa/src/libdtoa_stubs.a bundle/
 	cp _build/default/thirdparty/ocaml-rope/src/rope.a bundle/
 	cp _build/default/thirdparty/ocaml-rope/src/rope.cma bundle/
 	cp _build/default/thirdparty/ocaml-rope/src/rope.cmxa bundle/
