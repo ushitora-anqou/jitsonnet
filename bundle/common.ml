@@ -172,6 +172,13 @@ let rec std_cmp = function
   | Double n1, Double n2 -> Float.compare n1 n2
   | _ -> failwith "std_cmp: invalid arguments"
 
+let eval_asserts assrts = List.iter (fun (lazy _) -> ()) assrts
+
+let extract_visible_fields tbl =
+  tbl |> Hashtbl.to_seq |> List.of_seq
+  |> List.filter_map (fun (k, (h, v)) -> if h = 2 then None else Some (k, v))
+  |> List.sort (fun (k1, _) (k2, _) -> String.compare k1 k2)
+
 let manifestation ppf v =
   let open Format in
   let quoted_string s =
@@ -209,26 +216,45 @@ let manifestation ppf v =
              (fun ppf (lazy x) -> aux ppf x))
           xs
     | Function f -> aux ppf (f ([||], []))
-    | Object _ as x ->
+    | Object _ as x -> (
         let _, assrts, tbl = get_object x in
-        assrts |> List.iter (fun (lazy _) -> ());
-        let xs =
-          tbl |> Hashtbl.to_seq |> List.of_seq
-          |> List.filter_map (fun (k, (h, v)) ->
-                 if h = 2 then None else Some (k, v))
-          |> List.sort (fun (k1, _) (k2, _) -> String.compare k1 k2)
-        in
-        if xs = [] then fprintf ppf "{ }"
-        else
-          fprintf ppf "@[<v 3>{@,%a@]@,}"
-            (pp_print_list
-               ~pp_sep:(fun ppf () -> fprintf ppf ",@,")
-               (fun ppf (k, (lazy v)) ->
-                 fprintf ppf "@<0>%s@<0>:@<0> %a" (quoted_string k) aux v))
-            xs
+        eval_asserts assrts;
+        match extract_visible_fields tbl with
+        | [] -> fprintf ppf "{ }"
+        | xs ->
+            fprintf ppf "@[<v 3>{@,%a@]@,}"
+              (pp_print_list
+                 ~pp_sep:(fun ppf () -> fprintf ppf ",@,")
+                 (fun ppf (k, (lazy v)) ->
+                   fprintf ppf "@<0>%s@<0>:@<0> %a" (quoted_string k) aux v))
+              xs)
   in
   aux ppf v;
-  fprintf ppf "\n"
+  fprintf ppf "\n@?"
+
+let string_manifestation = function
+  | SmartString s -> print_string (SmartString.to_string s)
+  | _ -> failwith "expect string, but got something else"
+
+let multi_manifestation ~target_dir ~string v =
+  let with_file k f =
+    let oc = open_out_bin (Filename.concat target_dir k) in
+    Fun.protect ~finally:(fun () -> close_out oc) (fun () -> f oc)
+  in
+  match Lazy.force v with
+  | Object (General ((_, assrts, tbl), _)) ->
+      eval_asserts assrts;
+      tbl |> extract_visible_fields
+      |> List.iter (function
+           | k, (lazy (SmartString s)) when string ->
+               with_file k (fun oc ->
+                   Out_channel.output_string oc (SmartString.to_string s))
+           | _ when string ->
+               failwith "expect string vavlues in object, got something else"
+           | k, (lazy v) ->
+               with_file k (fun oc ->
+                   manifestation (Format.formatter_of_out_channel oc) v))
+  | _ -> failwith "expect object, got something else"
 
 let std_primitive_equals ([| v; v' |], []) =
   (match (Lazy.force v, Lazy.force v') with
@@ -342,7 +368,7 @@ let super_index super key =
   | Some (_, (lazy v)) -> v
 
 let array_index_s' (_, assrts, tbl) key =
-  assrts |> List.iter (fun (lazy _) -> ());
+  eval_asserts assrts;
   match Hashtbl.find_opt tbl key with
   | None -> failwith ("field does not exist: " ^ key)
   | Some (_, (lazy v)) -> v

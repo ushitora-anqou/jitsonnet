@@ -693,13 +693,13 @@ let test_static_check_basics () =
   ()
 
 let assert_compile ?remove_work_dir ?(bundle_path = "../../../bundle")
-    ?(test_cases_dir = "../../../test/cases")
-    ?(expected_file_suffix = ".expected") src_file_path result_pat =
+    ?(test_cases_dir = "../../../test/cases") ?(expected_suffix = ".expected")
+    ?(multi = false) ?(string = false) src_file_path result_pat =
   let input_file_path =
     Filename.concat test_cases_dir (src_file_path ^ ".jsonnet")
   in
-  let expected_file_path =
-    Filename.concat test_cases_dir (src_file_path ^ expected_file_suffix)
+  let expected_path =
+    Filename.concat test_cases_dir (src_file_path ^ expected_suffix)
   in
   match Loader.load_root false input_file_path with
   | Error msg ->
@@ -707,8 +707,11 @@ let assert_compile ?remove_work_dir ?(bundle_path = "../../../bundle")
           m "assert_compile_expr: failed to load: %s: %s" input_file_path msg);
       assert false
   | Ok t -> (
+      let multi_output_dir =
+        if multi then Some (Filename.temp_dir "jitsonnet_" "") else None
+      in
       match
-        let compiled = Loader.compile t in
+        let compiled = Loader.compile ?multi:multi_output_dir ~string t in
         Executor.(
           execute
             (make_config ~mode:`Bytecode ~bundle_path ?remove_work_dir
@@ -717,8 +720,16 @@ let assert_compile ?remove_work_dir ?(bundle_path = "../../../bundle")
       with
       | Unix.WEXITED 0, got, _ -> (
           match result_pat with
+          | `Success when multi ->
+              let exit_code =
+                Sys.command
+                  (Filename.quote_command "diff"
+                     [ "-r"; Option.get multi_output_dir; expected_path ])
+              in
+              Alcotest.(check int) "" 0 exit_code;
+              ()
           | `Success ->
-              let expected = read_all expected_file_path in
+              let expected = read_all expected_path in
               Alcotest.(check string) "" expected got;
               ()
           | `Error -> assert false)
@@ -728,7 +739,7 @@ let assert_compile ?remove_work_dir ?(bundle_path = "../../../bundle")
               Logs.err (fun m -> m "failed to execute: '%s'" got);
               assert false
           | `Error -> (
-              let expected = read_all expected_file_path |> String.trim in
+              let expected = read_all expected_path |> String.trim in
               match Str.(search_forward (regexp expected) got 0) with
               | exception Not_found ->
                   Logs.err (fun m ->
@@ -759,12 +770,14 @@ let test_compiler_error () =
 
 let test_compiler () =
   assert_compile "success00" `Success;
+  assert_compile ~multi:true ~string:true "success01_multi_string" `Success;
+  assert_compile ~string:true "success02_string" `Success;
   ()
 
 let test_compiler_with_go_jsonnet_testdata () =
   let assert_compile =
     assert_compile ~test_cases_dir:"../../../thirdparty/go-jsonnet/testdata"
-      ~expected_file_suffix:".golden"
+      ~expected_suffix:".golden"
   in
 
   assert_compile "argcapture_builtin_call" `Success;
@@ -1232,6 +1245,7 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "variable" `Success;
   assert_compile "verbatim_string" `Success;
 
+  assert_compile ~multi:true ~string:false "multi" `Success;
   ()
 
 let () =

@@ -420,7 +420,8 @@ and compile_expr_lazy ?(toplevel = false) ?(in_bind = false) ({ loc; _ } as env)
           var
       | e -> [%expr lazy [%e e]])
 
-let compile ?(target = `Main) root_prog_path progs bins strs =
+let compile ?multi ?(string = false) ?(target = `Main) root_prog_path progs bins
+    strs =
   let loc = !Ast_helper.default_loc in
   let env = { loc; vars = Hashtbl.create 0 } in
 
@@ -512,6 +513,16 @@ let compile ?(target = `Main) root_prog_path progs bins strs =
       let () =
         [%e
           match target with
+          | `Main when Option.is_some multi ->
+              let target_dir =
+                if Filename.is_relative (Option.get multi) then
+                  Filename.concat (Sys.getcwd ()) (Option.get multi)
+                else Option.get multi
+              in
+              [%expr
+                multi_manifestation ~target_dir:[%e estring ~loc target_dir]
+                  ~string:[%e ebool ~loc string] v]
+          | `Main when string -> [%expr string_manifestation (Lazy.force v)]
           | `Main -> [%expr manifestation Format.std_formatter (Lazy.force v)]
           | _ -> [%expr ()]]
     end]

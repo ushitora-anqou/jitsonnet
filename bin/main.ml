@@ -20,7 +20,9 @@ let () =
               $ Arg.(value & flag & info [ "profile" ])
               $ Arg.(value & opt (some string) None & info [ "work-dir" ])
               $ Arg.(value & flag & info [ "native" ])
-              $ Arg.(value & opt (some string) None & info [ "mold" ]));
+              $ Arg.(value & opt (some string) None & info [ "mold" ])
+              $ Arg.(value & opt (some string) None & info [ "m"; "multi" ])
+              $ Arg.(value & flag & info [ "S"; "string" ]));
           v (info "compile")
             Term.(
               const compile

@@ -71,8 +71,8 @@ let rec load is_stdjsonnet file_path t =
              t |> load is_stdjsonnet file)
            (Ok ())
 
-let compile ?target t =
-  Compiler.compile ?target t.root_prog_path
+let compile ?multi ?string ?target t =
+  Compiler.compile ?multi ?string ?target t.root_prog_path
     (t.loaded |> Hashtbl.to_seq |> List.of_seq)
     (t.importbins |> Hashtbl.to_seq_keys |> List.of_seq)
     (t.importstrs |> Hashtbl.to_seq_keys |> List.of_seq)

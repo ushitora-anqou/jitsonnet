@@ -2,13 +2,14 @@ open Ppxlib
 
 let errf fmt = Printf.ksprintf (fun s -> Error s) fmt
 
-let run file_path bundle_path show_profile work_dir_prefix native mold =
+let run file_path bundle_path show_profile work_dir_prefix native mold
+    (multi : string option) (string : bool) =
   match Loader.load_root false file_path with
   | Error msg ->
       Logs.err (fun m -> m "%s" msg);
       exit 1
   | Ok t -> (
-      let compiled = Loader.compile t in
+      let compiled = Loader.compile ?multi ~string t in
       match
         Executor.(
           execute
