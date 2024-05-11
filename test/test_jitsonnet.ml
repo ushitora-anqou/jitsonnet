@@ -663,6 +663,36 @@ let test_desugar_array () =
     {|[x for x in xs]|};
   ()
 
+let assert_freevars expected got =
+  match Parser.parse_string got with
+  | Error msg ->
+      Logs.err (fun m -> m "failed to parse: %s" msg);
+      assert false
+  | Ok { expr = got } ->
+      let got = Syntax.desugar_expr false got |> Syntax.freevars in
+      Logs.info (fun m ->
+          m "got [%s], expected [%s]"
+            (got |> Syntax.StringSet.to_list |> String.concat ", ")
+            (expected |> String.concat ", "));
+      assert (Syntax.StringSet.equal got (Syntax.StringSet.of_list expected));
+      ()
+
+let test_freevars_local () =
+  assert_freevars [ "y"; "a" ] "local x = y, z = w, w = 4; local x = z; w + a";
+  assert_freevars [ "x" ] "local y = x; local x = 3; y";
+  ()
+
+let test_freevars_function () =
+  assert_freevars [ "a"; "w"; "z" ]
+    "local f(x) = local y = x + 3 + z; a + x + y; f(1, w)";
+  ()
+
+let test_freevars_object () =
+  assert_freevars [ "x"; "z" ] "{ local x = 1, y: z, [ x ]: x }";
+  assert_freevars [ "std"; "x"; "w"; "z" ]
+    "{ [ x + z ]: x + w for x in [ x ] for y in [ x ] }";
+  ()
+
 let assert_static_check good src =
   match Parser.parse_string src with
   | Error msg ->
@@ -1293,6 +1323,12 @@ let () =
         [
           test_case "object" `Quick test_desugar_object;
           test_case "array" `Quick test_desugar_array;
+        ] );
+      ( "freevars",
+        [
+          test_case "local" `Quick test_freevars_local;
+          test_case "function" `Quick test_freevars_function;
+          test_case "object" `Quick test_freevars_object;
         ] );
       ("static check", [ test_case "basics" `Quick test_static_check_basics ]);
       ( "compiler",

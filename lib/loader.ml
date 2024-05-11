@@ -59,7 +59,7 @@ let rec load is_stdjsonnet src t =
       | None ->
           let* prog = Parser.parse_file file_path in
           let* desugared =
-            Syntax.desugar prog
+            Syntax.desugar prog |> Syntax.alpha_conv |> Syntax.float_let_binds
             |> make_imported_files_real (Filename.dirname file_path)
           in
           let* () = Static_check.f is_stdjsonnet desugared in

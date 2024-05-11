@@ -235,9 +235,9 @@ end
 let gensym_i = ref 0
 let reset_gensym_i () = gensym_i := 0 (* for tests *)
 
-let gensym () =
+let gensym ?(suffix = "") () =
   gensym_i := !gensym_i + 1;
-  "$v" ^ string_of_int !gensym_i
+  "$v" ^ string_of_int !gensym_i ^ suffix
 
 let rec desugar_expr b = function
   | Array xs -> Core.Array (xs |> List.map (desugar_expr b))
@@ -424,3 +424,261 @@ and desugar_param b = function
   | id, Some e -> (id, Some (desugar_expr b e))
 
 let desugar { expr } = desugar_expr false expr
+
+module StringSet = Set.Make (String)
+
+let with_binds ?(as_is = false) env ids f =
+  ids
+  |> List.iter (fun id ->
+         Hashtbl.add env id (if as_is then id else gensym ~suffix:id ()));
+  Fun.protect
+    ~finally:(fun () -> ids |> List.iter (fun id -> Hashtbl.remove env id))
+    f
+
+let alpha_conv (e : Core.expr) =
+  let open Core in
+  let rec aux env = function
+    | ( False | Import _ | Importbin _ | Importstr _ | Null | Number _ | Self
+      | String _ | True ) as x ->
+        x
+    | Var name -> Var (Hashtbl.find env name)
+    | Array xs -> Array (List.map (aux env) xs)
+    | ArrayIndex (e1, e2) -> ArrayIndex (aux env e1, aux env e2)
+    | Binary (e1, op, e2) -> Binary (aux env e1, op, aux env e2)
+    | Call (e1, xs, ys) ->
+        Call
+          ( aux env e1,
+            List.map (aux env) xs,
+            List.map (fun (x, y) -> (x, aux env y)) ys )
+    | Error e -> Error (aux env e)
+    | Unary (op, e) -> Unary (op, aux env e)
+    | Function (xs, e) ->
+        with_binds ~as_is:true env (List.map fst xs) @@ fun () ->
+        Function
+          (List.map (fun (x, y) -> (x, Option.map (aux env) y)) xs, aux env e)
+    | Local (xs, e) ->
+        with_binds env (List.map fst xs) @@ fun () ->
+        Local
+          ( List.map (fun (x, y) -> (Hashtbl.find env x, aux env y)) xs,
+            aux env e )
+    | If (e1, e2, e3) -> If (aux env e1, aux env e2, aux env e3)
+    | InSuper e -> InSuper (aux env e)
+    | ObjectFor (e1, e2, x, e3) ->
+        let e3 = aux env e3 in
+        with_binds env [ x ] @@ fun () ->
+        let e1 = aux env e1 in
+        let ids = [ "self"; "super" ] in
+        with_binds env ids @@ fun () ->
+        let e2 = aux env e2 in
+        ObjectFor (e1, e2, Hashtbl.find env x, e3)
+    | Object { binds; assrts; fields } ->
+        let fields =
+          List.map (fun (e1, b, h, e2) -> (aux env e1, b, h, e2)) fields
+        in
+        with_binds env ("self" :: "super" :: List.map fst binds) @@ fun () ->
+        Object
+          {
+            binds =
+              List.map (fun (id, x) -> (Hashtbl.find env id, aux env x)) binds;
+            assrts = List.map (aux env) assrts;
+            fields =
+              List.map (fun (e1, b, h, e2) -> (e1, b, h, aux env e2)) fields;
+          }
+    | SuperIndex e -> SuperIndex (aux env e)
+  in
+  aux ([ ("std", "std") ] |> List.to_seq |> Hashtbl.of_seq) e
+
+(* freevars don't include self and super, but may include $. *)
+let freevars e =
+  let rec aux = function
+    | Core.False | Import _ | Importbin _ | Importstr _ | Null | Number _ | Self
+    | String _ | True ->
+        StringSet.empty
+    | Var x -> StringSet.singleton x
+    | Array xs ->
+        List.fold_left
+          (fun acc x -> StringSet.union acc (aux x))
+          StringSet.empty xs
+    | ArrayIndex (e1, e2) | Binary (e1, _, e2) ->
+        StringSet.union (aux e1) (aux e2)
+    | Call (e1, xs, ys) ->
+        let acc = aux e1 in
+        let acc =
+          xs |> List.fold_left (fun acc x -> StringSet.union acc (aux x)) acc
+        in
+        let acc =
+          ys
+          |> List.fold_left (fun acc (_, y) -> StringSet.union acc (aux y)) acc
+        in
+        acc
+    | Error e | InSuper e | SuperIndex e | Unary (_, e) -> aux e
+    | Function (xs, e) ->
+        let acc =
+          xs
+          |> List.fold_left
+               (fun acc (_, x) ->
+                 match x with
+                 | None -> acc
+                 | Some x -> StringSet.union acc (aux x))
+               StringSet.empty
+        in
+        let acc = StringSet.union acc (aux e) in
+        List.fold_left (fun acc (x, _) -> StringSet.remove x acc) acc xs
+    | Local (xs, e) ->
+        let acc =
+          xs
+          |> List.fold_left
+               (fun acc (_, x) -> StringSet.union acc (aux x))
+               StringSet.empty
+        in
+        let acc = StringSet.union acc (aux e) in
+        List.fold_left (fun acc (x, _) -> StringSet.remove x acc) acc xs
+    | If (e1, e2, e3) ->
+        let acc = aux e1 in
+        let acc = StringSet.union acc (aux e2) in
+        let acc = StringSet.union acc (aux e3) in
+        acc
+    | ObjectFor (e1, e2, x, e3) ->
+        let acc = aux e2 in
+        let acc = StringSet.union acc (aux e1) in
+        let acc = StringSet.remove x acc in
+        let acc = StringSet.union acc (aux e3) in
+        acc
+    | Object { binds; assrts; fields } ->
+        let acc =
+          binds
+          |> List.fold_left
+               (fun acc (_, x) -> StringSet.union acc (aux x))
+               StringSet.empty
+        in
+        let acc =
+          assrts
+          |> List.fold_left (fun acc x -> StringSet.union acc (aux x)) acc
+        in
+        let acc =
+          fields
+          |> List.fold_left
+               (fun acc (_, _, _, e2) -> StringSet.union acc (aux e2))
+               acc
+        in
+        let acc =
+          List.fold_left (fun acc (x, _) -> StringSet.remove x acc) acc binds
+        in
+        let acc =
+          fields
+          |> List.fold_left
+               (fun acc (e1, _, _, _) -> StringSet.union acc (aux e1))
+               acc
+        in
+        acc
+  in
+  aux e
+
+(* float_let_binds requires e is alpha-converted *)
+let float_let_binds (e : Core.expr) =
+  let local (binds, body) =
+    match binds with [] -> body | _ -> Core.Local (binds, body)
+  in
+  let rec aux = function
+    | ( Core.False | Import _ | Importbin _ | Importstr _ | Null | Number _
+      | Self | String _ | True | Var _ ) as x ->
+        ([], x)
+    | Array xs ->
+        let floating_binds, xs = xs |> List.map aux |> List.split in
+        (List.flatten floating_binds, Array xs)
+    | ArrayIndex (e1, e2) ->
+        let floating_binds1, e1 = aux e1 in
+        let floating_binds2, e2 = aux e2 in
+        (floating_binds1 @ floating_binds2, ArrayIndex (e1, e2))
+    | Binary (e1, op, e2) ->
+        let floating_binds1, e1 = aux e1 in
+        let floating_binds2, e2 = aux e2 in
+        (floating_binds1 @ floating_binds2, Binary (e1, op, e2))
+    | Call (e1, xs, ys) ->
+        let floating_binds1, e1 = aux e1 in
+        let floating_binds2, xs = xs |> List.map aux |> List.split in
+        let floating_binds3, ys =
+          ys
+          |> List.map (fun (id, y) ->
+                 let floating_binds, y = aux y in
+                 (floating_binds, (id, y)))
+          |> List.split
+        in
+        ( List.flatten (floating_binds1 :: (floating_binds2 @ floating_binds3)),
+          Call (e1, xs, ys) )
+    | Error e ->
+        let floating_binds, e = aux e in
+        (floating_binds, Error e)
+    | Function (xs, body) ->
+        (* FIXME: optimize default arguments *)
+        let floating_binds, body = aux body in
+        let floating_binds, fixed_binds =
+          let rec loop (floating_binds, fixed_binds) =
+            let defvars =
+              StringSet.of_list (List.map fst xs @ List.map fst fixed_binds)
+            in
+            let floating_binds', fixed_binds' =
+              floating_binds
+              |> List.partition (fun (_, e) ->
+                     StringSet.disjoint defvars (freevars e))
+            in
+            if List.length floating_binds = List.length floating_binds' then
+              (floating_binds, fixed_binds)
+            else loop (floating_binds', fixed_binds @ fixed_binds')
+          in
+          loop (floating_binds, [])
+        in
+        (floating_binds, Function (xs, local (fixed_binds, body)))
+    | If (e1, e2, e3) ->
+        let floating_binds1, e1 = aux e1 in
+        let floating_binds2, e2 = aux e2 in
+        let floating_binds3, e3 = aux e3 in
+        (floating_binds1 @ floating_binds2 @ floating_binds3, If (e1, e2, e3))
+    | InSuper e ->
+        let floating_binds, e = aux e in
+        (floating_binds, InSuper e)
+    | Local (binds, body) ->
+        let floating_binds, body = aux body in
+        let floating_binds =
+          binds
+          |> List.fold_left
+               (fun acc (id, e) ->
+                 let floating_binds', e' = aux e in
+                 (id, e') :: (floating_binds' @ acc))
+               floating_binds
+        in
+        (floating_binds, body)
+    | Object { binds; assrts; fields } ->
+        (* FIXME: move binds outside of binds,assrts,fields *)
+        let floating_binds, binds =
+          binds
+          |> List.fold_left
+               (fun (floating_binds, binds) (id, e) ->
+                 let floating_binds', bind' = aux e in
+                 (floating_binds @ floating_binds', (id, bind') :: binds))
+               ([], [])
+        in
+        let binds = List.rev binds @ floating_binds in
+        let assrts = assrts |> List.map (fun e -> local (aux e)) in
+        let fields =
+          fields
+          |> List.map (fun (e1, b, h, e2) ->
+                 let e1 = local (aux e1) in
+                 let e2 = local (aux e2) in
+                 (e1, b, h, e2))
+        in
+        ([], Object { binds; assrts; fields })
+    | ObjectFor (e1, e2, x, e3) ->
+        (* FIXME: move binds outside of e1, e2, e3 *)
+        let e1 = local (aux e1) in
+        let e2 = local (aux e2) in
+        let e3 = local (aux e3) in
+        ([], ObjectFor (e1, e2, x, e3))
+    | SuperIndex e ->
+        let floating_binds, e = aux e in
+        (floating_binds, SuperIndex e)
+    | Unary (op, e) ->
+        let floating_binds, e = aux e in
+        (floating_binds, Unary (op, e))
+  in
+  local (aux e)
