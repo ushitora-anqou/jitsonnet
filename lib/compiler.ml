@@ -6,7 +6,12 @@ type var_desc =
   | VarObject of { key_to_value_ary_index : (string, int) Hashtbl.t }
 
 type var_in_env = { name_in_target : string; desc : var_desc }
-type env = { vars : (string, var_in_env) Hashtbl.t; loc : location }
+
+type env = {
+  vars : (string, var_in_env) Hashtbl.t;
+  loc : location;
+  is_stdjsonnet : bool;
+}
 
 let env_evar ~loc env name =
   evar ~loc (Hashtbl.find env.vars name).name_in_target
@@ -56,7 +61,35 @@ let get_ext_code_id key = "extCode/" ^ key
 let pexp_let ~loc recflag binds body =
   match binds with [] -> body | _ -> pexp_let ~loc recflag binds body
 
-let rec compile_expr ?toplevel:_ ({ loc; _ } as env) :
+let compile_builtin_std loc = function
+  | "length" -> Ok [%expr std_length]
+  | "makeArray" -> Ok [%expr std_make_array]
+  | "type" -> Ok [%expr std_type]
+  | "primitiveEquals" -> Ok [%expr std_primitive_equals]
+  | "filter" -> Ok [%expr std_filter]
+  | "objectHasEx" -> Ok [%expr std_object_has_ex]
+  | "objectFieldsEx" -> Ok [%expr std_object_fields_ex]
+  | "modulo" -> Ok [%expr std_modulo]
+  | "codepoint" -> Ok [%expr std_codepoint]
+  | "char" -> Ok [%expr std_char]
+  | "floor" -> Ok [%expr std_floor]
+  | "acos" -> Ok [%expr std_acos]
+  | "asin" -> Ok [%expr std_asin]
+  | "atan" -> Ok [%expr std_atan]
+  | "pow" -> Ok [%expr std_pow]
+  | "ceil" -> Ok [%expr std_ceil]
+  | "cos" -> Ok [%expr std_cos]
+  | "sin" -> Ok [%expr std_sin]
+  | "tan" -> Ok [%expr std_tan]
+  | "exp" -> Ok [%expr std_exp]
+  | "log" -> Ok [%expr std_log]
+  | "sqrt" -> Ok [%expr std_sqrt]
+  | "exponent" -> Ok [%expr std_exponent]
+  | "mantissa" -> Ok [%expr std_mantissa]
+  | "md5" -> Ok [%expr std_md5]
+  | _ -> Error "not found"
+
+let rec compile_expr ?toplevel:_ ({ loc; is_stdjsonnet; _ } as env) :
     Syntax.Core.expr -> Parsetree.expression = function
   | Null -> [%expr Null]
   | True -> [%expr True]
@@ -220,36 +253,15 @@ let rec compile_expr ?toplevel:_ ({ loc; _ } as env) :
                 binds (compile_expr env body)])]
   | Call (e, positional, named) ->
       let fun_expr =
-        match e with
-        | ArrayIndex (Var "std", String "length") -> [%expr std_length]
-        | ArrayIndex (Var "std", String "makeArray") -> [%expr std_make_array]
-        | ArrayIndex (Var "std", String "type") -> [%expr std_type]
-        | ArrayIndex (Var "std", String "primitiveEquals") ->
-            [%expr std_primitive_equals]
-        | ArrayIndex (Var "std", String "filter") -> [%expr std_filter]
-        | ArrayIndex (Var "std", String "objectHasEx") ->
-            [%expr std_object_has_ex]
-        | ArrayIndex (Var "std", String "objectFieldsEx") ->
-            [%expr std_object_fields_ex]
-        | ArrayIndex (Var "std", String "modulo") -> [%expr std_modulo]
-        | ArrayIndex (Var "std", String "codepoint") -> [%expr std_codepoint]
-        | ArrayIndex (Var "std", String "char") -> [%expr std_char]
-        | ArrayIndex (Var "std", String "floor") -> [%expr std_floor]
-        | ArrayIndex (Var "std", String "acos") -> [%expr std_acos]
-        | ArrayIndex (Var "std", String "asin") -> [%expr std_asin]
-        | ArrayIndex (Var "std", String "atan") -> [%expr std_atan]
-        | ArrayIndex (Var "std", String "pow") -> [%expr std_pow]
-        | ArrayIndex (Var "std", String "ceil") -> [%expr std_ceil]
-        | ArrayIndex (Var "std", String "cos") -> [%expr std_cos]
-        | ArrayIndex (Var "std", String "sin") -> [%expr std_sin]
-        | ArrayIndex (Var "std", String "tan") -> [%expr std_tan]
-        | ArrayIndex (Var "std", String "exp") -> [%expr std_exp]
-        | ArrayIndex (Var "std", String "log") -> [%expr std_log]
-        | ArrayIndex (Var "std", String "sqrt") -> [%expr std_sqrt]
-        | ArrayIndex (Var "std", String "exponent") -> [%expr std_exponent]
-        | ArrayIndex (Var "std", String "mantissa") -> [%expr std_mantissa]
-        | ArrayIndex (Var "std", String "md5") -> [%expr std_md5]
-        | _ -> [%expr get_function [%e compile_expr env e]]
+        match
+          match e with
+          | ArrayIndex (Var "$std", String name) -> compile_builtin_std loc name
+          | ArrayIndex (Var "std", String name) when is_stdjsonnet ->
+              compile_builtin_std loc name
+          | _ -> Error "not available"
+        with
+        | Ok e -> e
+        | Error _ -> [%expr get_function [%e compile_expr env e]]
       in
       [%expr
         [%e fun_expr]
@@ -410,10 +422,12 @@ and compile_expr_lazy ?(toplevel = false) ?(in_bind = false) ({ loc; _ } as env)
 let compile ?multi ?(string = false) ?(target = `Main) root_prog_path progs bins
     strs ext_codes =
   let loc = !Ast_helper.default_loc in
-  let env = { loc; vars = Hashtbl.create 0 } in
+  let env =
+    { loc; vars = Hashtbl.create 0; is_stdjsonnet = target = `Stdjsonnet }
+  in
 
   let bind_ids =
-    "std"
+    "$std"
     :: ((progs |> List.map (fun (path, _) -> get_import_id `Import path))
        @ (bins |> List.map (get_import_id `Importbin))
        @ (strs |> List.map (get_import_id `Importstr))
@@ -487,7 +501,7 @@ let compile ?multi ?(string = false) ?(target = `Main) root_prog_path progs bins
   in
   let other_bindings =
     [
-      value_binding ~loc ~pat:(env_pvar ~loc env "std")
+      value_binding ~loc ~pat:(env_pvar ~loc env "$std")
         ~expr:
           [%expr
             lazy

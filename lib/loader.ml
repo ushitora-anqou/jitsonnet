@@ -59,7 +59,9 @@ let rec load is_stdjsonnet src t =
       | None ->
           let* prog = Parser.parse_file file_path in
           let* desugared =
-            Syntax.desugar prog |> Syntax.alpha_conv |> Syntax.float_let_binds
+            Syntax.desugar prog
+            |> Syntax.alpha_conv ~is_stdjsonnet
+            |> Syntax.float_let_binds
             |> make_imported_files_real (Filename.dirname file_path)
           in
           let* () = Static_check.f is_stdjsonnet desugared in
@@ -75,7 +77,11 @@ let rec load is_stdjsonnet src t =
                (Ok ()))
   | `Ext_code (key, prog_src) ->
       let* prog = Parser.parse_string prog_src in
-      let desugared = Syntax.desugar prog in
+      let desugared =
+        Syntax.desugar prog
+        |> Syntax.alpha_conv ~is_stdjsonnet
+        |> Syntax.float_let_binds
+      in
       let* () = Static_check.f is_stdjsonnet desugared in
       let progs, bins, strs = list_imported_files desugared in
       bins |> List.iter (fun k -> Hashtbl.replace t.importbins k ());

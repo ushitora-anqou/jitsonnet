@@ -7,7 +7,7 @@ open struct
     let compare = compare
   end)
 
-  type t = { g : G.t; allow_define_std : bool }
+  type t = { g : G.t }
 
   let is_in g x =
     if G.mem x g.g then Ok ()
@@ -20,10 +20,7 @@ open struct
     in
     aux xs
 
-  let add x g =
-    if (not g.allow_define_std) && x = Var "std" then
-      Error "variable name 'std' is not allowed in jitsonnet"
-    else Ok { g with g = G.add x g.g }
+  let add x g = Ok { g = G.add x g.g }
 
   let should_be_unique xs =
     if List.length (List.sort_uniq compare xs) = List.length xs then Ok ()
@@ -132,5 +129,5 @@ let rec f g =
       Ok ()
   | Error e -> f g e
 
-let f allow_define_std =
-  f { g = G.empty |> G.add (Var "std"); allow_define_std }
+let f is_stdjsonnet =
+  f { g = (if is_stdjsonnet then G.empty else G.add (Var "$std") G.empty) }

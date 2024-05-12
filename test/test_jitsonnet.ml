@@ -1286,6 +1286,18 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile ~multi:true ~string:false "multi" `Success;
   ()
 
+let test_alpha_conversion_basics () =
+  let got =
+    Parser.parse_string {|std.foo()|}
+    |> Result.get_ok |> Syntax.desugar |> Syntax.alpha_conv
+  in
+  let expected =
+    Syntax.Core.(Call (ArrayIndex (Var "$std", String "foo"), [], []))
+  in
+  Logs.info (fun m -> m "%s" (Syntax.Core.show_expr got));
+  assert (got = expected);
+  ()
+
 let () =
   let open Alcotest in
   Fmt.set_style_renderer Fmt.stderr `Ansi_tty;
@@ -1330,6 +1342,8 @@ let () =
           test_case "function" `Quick test_freevars_function;
           test_case "object" `Quick test_freevars_object;
         ] );
+      ( "alpha conversion",
+        [ test_case "basics" `Quick test_alpha_conversion_basics ] );
       ("static check", [ test_case "basics" `Quick test_static_check_basics ]);
       ( "compiler",
         [

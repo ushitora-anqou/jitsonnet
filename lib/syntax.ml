@@ -435,12 +435,13 @@ let with_binds ?(as_is = false) env ids f =
     ~finally:(fun () -> ids |> List.iter (fun id -> Hashtbl.remove env id))
     f
 
-let alpha_conv (e : Core.expr) =
+let alpha_conv ?(is_stdjsonnet = false) (e : Core.expr) =
   let open Core in
   let rec aux env = function
     | ( False | Import _ | Importbin _ | Importstr _ | Null | Number _ | Self
       | String _ | True ) as x ->
         x
+    | Var "std" when is_stdjsonnet -> Var "std"
     | Var name -> Var (Hashtbl.find env name)
     | Array xs -> Array (List.map (aux env) xs)
     | ArrayIndex (e1, e2) -> ArrayIndex (aux env e1, aux env e2)
@@ -475,18 +476,31 @@ let alpha_conv (e : Core.expr) =
         let fields =
           List.map (fun (e1, b, h, e2) -> (aux env e1, b, h, e2)) fields
         in
-        with_binds env ("self" :: "super" :: List.map fst binds) @@ fun () ->
+        with_binds env
+          ("self" :: "super"
+          :: List.filter_map
+               (function
+                 | "std", _ when is_stdjsonnet -> None | id, _ -> Some id)
+               binds)
+        @@ fun () ->
         Object
           {
             binds =
-              List.map (fun (id, x) -> (Hashtbl.find env id, aux env x)) binds;
+              List.map
+                (function
+                  | "std", x when is_stdjsonnet -> ("std", aux env x)
+                  | id, x -> (Hashtbl.find env id, aux env x))
+                binds;
             assrts = List.map (aux env) assrts;
             fields =
               List.map (fun (e1, b, h, e2) -> (e1, b, h, aux env e2)) fields;
           }
     | SuperIndex e -> SuperIndex (aux env e)
   in
-  aux ([ ("std", "std") ] |> List.to_seq |> Hashtbl.of_seq) e
+  aux
+    ((if is_stdjsonnet then [] else [ ("std", "$std") ])
+    |> List.to_seq |> Hashtbl.of_seq)
+    e
 
 (* freevars don't include self and super, but may include $. *)
 let freevars e =
