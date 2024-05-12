@@ -347,42 +347,27 @@ let rec compile_expr ?toplevel:_ ({ loc; _ } as env) :
         make_object
           (fun [%p env_pvar ~loc env "self"] [%p env_pvar ~loc env "super"] ->
             [%e body])]
-  | ObjectFor (outermost, e1, e2, x, e3) ->
+  | ObjectFor (e1, e2, x, e3) ->
       let compiled_e3 (* with env *) = compile_expr env e3 in
       with_binds env [ x ] @@ fun () ->
       let compiled_e1 (* with env + x *) = compile_expr env e1 in
-      with_binds env
-        (let a = [ "self"; "super" ] in
-         if outermost then "$" :: a else a)
-      @@ fun () ->
-      let compiled_e2 (* with env + x (+ $), self *) =
-        compile_expr_lazy env e2
-      in
+      with_binds env [ "self"; "super" ] @@ fun () ->
+      let compiled_e2 (* with env + x, self *) = compile_expr_lazy env e2 in
       [%expr
         make_object
           (fun [%p env_pvar ~loc env "self"] [%p env_pvar ~loc env "super"] ->
             let tbl = [%e env_evar ~loc env "self"] in
-            [%e
-              (if outermost then
-                 pexp_let ~loc Nonrecursive
-                   [
-                     value_binding ~loc ~pat:(env_pvar ~loc env "$")
-                       ~expr:[%expr lazy [%e compile_expr env Self]];
-                   ]
-               else Fun.id)
-                [%expr
-                  [%e compiled_e3] |> get_array |> Array.to_seq
-                  |> Seq.filter_map (fun v ->
-                         [%e
-                           pexp_let ~loc Nonrecursive
-                             [
-                               value_binding ~loc ~pat:(env_pvar ~loc env x)
-                                 ~expr:[%expr v];
-                             ]
-                             [%expr
-                               object_field' [%e compiled_e1] [%e compiled_e2]]])
-                  |> Hashtbl.add_seq tbl;
-                  ([||], [], tbl)]])]
+            [%e compiled_e3] |> get_array |> Array.to_seq
+            |> Seq.filter_map (fun v ->
+                   [%e
+                     pexp_let ~loc Nonrecursive
+                       [
+                         value_binding ~loc ~pat:(env_pvar ~loc env x)
+                           ~expr:[%expr v];
+                       ]
+                       [%expr object_field' [%e compiled_e1] [%e compiled_e2]]])
+            |> Hashtbl.add_seq tbl;
+            ([||], [], tbl))]
   | (Import file_path | Importbin file_path | Importstr file_path) as node ->
       let import_id =
         get_import_id

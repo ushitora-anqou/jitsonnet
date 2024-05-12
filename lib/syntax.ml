@@ -130,7 +130,7 @@ module Core = struct
         assrts : expr list;
         fields : (expr * bool * h * expr) list;
       }
-    | ObjectFor of (bool (* outermost? *) * expr * expr * id * expr)
+    | ObjectFor of (expr * expr * id * expr)
     | Self
     | String of string
     | SuperIndex of expr
@@ -163,8 +163,7 @@ module Core = struct
           f (Local (List.map (fun (x, y) -> (x, aux y)) xs, aux e))
       | If (e1, e2, e3) -> f (If (aux e1, aux e2, aux e3))
       | InSuper e -> f (InSuper (aux e))
-      | ObjectFor (b, e1, e2, x, e3) ->
-          f (ObjectFor (b, aux e1, aux e2, x, aux e3))
+      | ObjectFor (e1, e2, x, e3) -> f (ObjectFor (aux e1, aux e2, x, aux e3))
       | Object { binds; assrts; fields } ->
           f
             (Object
@@ -214,7 +213,7 @@ module Core = struct
           let acc = xs |> List.fold_left (fun acc (_, x) -> aux acc x) acc in
           let acc = aux acc e in
           f acc node
-      | If (e1, e2, e3) | ObjectFor (_, e1, e2, _, e3) ->
+      | If (e1, e2, e3) | ObjectFor (e1, e2, _, e3) ->
           let acc = aux acc e1 in
           let acc = aux acc e2 in
           let acc = aux acc e3 in
@@ -314,7 +313,12 @@ let rec desugar_expr b = function
       if b then obj else obj
   | Object (ObjectFor ([], Var x1, e1, [], (x2, e2), [])) when x1 = x2 ->
       (* Optimized desugaring *)
-      Core.ObjectFor (not b, Var x1, desugar_expr true e1, x2, desugar_expr b e2)
+      Core.ObjectFor
+        ( Var x1,
+          (let e1 = desugar_expr true e1 in
+           if b then e1 else Local ([ ("$", Self) ], e1)),
+          x2,
+          desugar_expr b e2 )
   | Object (ObjectFor (binds, ef, ebody, binds', forspec, compspec)) ->
       let arr = gensym () in
       let xs =
@@ -331,9 +335,11 @@ let rec desugar_expr b = function
       in
       let vars_xs = xs |> List.map (fun x -> Var x) in
       Core.ObjectFor
-        ( not b,
-          desugar_expr b (Local (binds_xs, ef)),
-          desugar_expr true (Local (binds_xs @ binds @ binds', ebody)),
+        ( desugar_expr b (Local (binds_xs, ef)),
+          (let e2 =
+             desugar_expr true (Local (binds_xs @ binds @ binds', ebody))
+           in
+           if b then e2 else Local ([ ("$", Self) ], e2)),
           arr,
           desugar_expr b (ArrayFor (Array vars_xs, forspec, compspec)) )
   | ObjectSeq (e, objinside) ->

@@ -71,13 +71,12 @@ let rec f g =
         |> should_be_unique
       in
       Ok ()
-  | ObjectFor (outermost, e1, e2, x, e3) ->
+  | ObjectFor (e1, e2, x, e3) ->
       let* _ =
         let* g' = g |> add (Var x) in
         e1 |> f g'
       in
       let* _ =
-        let* g = if outermost then add (Var "$") g else Ok g in
         let* g = g |> add (Var x) in
         let* g = g |> add Self in
         let* g = g |> add Super in

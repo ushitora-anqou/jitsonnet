@@ -600,11 +600,12 @@ let test_desugar_object () =
     "{x: {y: 1}}";
   assert_core_expr
     (ObjectFor
-       ( true,
-         Local
+       ( Local
            ( [ ("x", ArrayIndex (Var "$v1", Number 0.)) ],
              Binary (Var "x", `Add, String "foo") ),
-         Local ([ ("x", ArrayIndex (Var "$v1", Number 0.)) ], String "y"),
+         Local
+           ( [ ("$", Self) ],
+             Local ([ ("x", ArrayIndex (Var "$v1", Number 0.)) ], String "y") ),
          "$v1",
          Local
            ( [ ("$v2", Var "a") ],
@@ -630,7 +631,7 @@ let test_desugar_object () =
                  [] ) ) ))
     {|{[x+"foo"]: "y" for x in a}|};
   assert_core_expr
-    (ObjectFor (true, Var "x", String "y", "x", Var "a"))
+    (ObjectFor (Var "x", Local ([ ("$", Self) ], String "y"), "x", Var "a"))
     {|{[x]: "y" for x in a}|};
   ()
 
