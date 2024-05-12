@@ -1,100 +1,32 @@
-module SmartString = struct
-  type desc =
-    | Raw of string
-    | Rope of Rope.t
-    | Buffer of { buf : Buffer.t; len : int; mutable mut : bool }
-    | Char of char
+module SmartString : sig
+  type t
 
-  type t = { mutable v : desc }
+  val length : t -> int
+  val of_string : string -> t
+  val to_string : t -> string
+  val get : t -> int -> char
+  val sub : t -> int -> int -> t
+  val compare : t -> t -> int
+  val equal : t -> t -> bool
+  val concat2 : t -> t -> t
+  val concat : t -> t list -> t
+end = struct
+  type t = string
 
-  let make v = { v }
-
-  let length x =
-    match x.v with
-    | Raw s -> String.length s
-    | Rope r -> Rope.length r
-    | Buffer { len; _ } -> len
-    | Char _ -> 1
-
-  let of_string x = { v = Raw x }
-
-  let to_string x =
-    match x.v with
-    | Raw s -> s
-    | Rope r -> Rope.to_string r
-    | Buffer { buf; len; mut } ->
-        let s = Buffer.sub buf 0 len in
-        if not mut then x.v <- Raw s;
-        s
-    | Char c -> String.make 1 c
-
-  let to_rope x =
-    match x.v with
-    | Raw s -> Rope.of_string s
-    | Rope r -> r
-    | _ -> Rope.of_string (to_string x)
-
-  let get x i =
-    match x.v with
-    | Raw s -> String.get s i
-    | Rope r -> Rope.get r i
-    | Buffer b ->
-        assert (i < b.len);
-        Buffer.nth b.buf i
-    | Char c ->
-        assert (i = 0);
-        c
-
-  let sub x off len =
-    if len = 1 then make (Char (get x off))
-    else
-      match x.v with
-      | Raw s -> make (Raw (String.sub s off len))
-      | Rope r -> make (Rope (Rope.sub r off len))
-      | Buffer b ->
-          assert (off + len <= b.len);
-          make (Raw (Buffer.sub b.buf off len))
-      | Char _ ->
-          assert (off = 0 && len = 1);
-          make x.v
-
-  let compare x y =
-    match (x.v, y.v) with
-    | Raw x, Raw y -> String.compare x y
-    | Rope x, Rope y -> Rope.compare x y
-    | _ -> String.compare (to_string x) (to_string y)
-
-  let equal x y =
-    match (x.v, y.v) with
-    | Raw x, Raw y -> String.equal x y
-    | Rope x, Rope y -> Rope.equal x y
-    | _ -> String.equal (to_string x) (to_string y)
+  let make v = v
+  let length x = match x with s -> String.length s
+  let of_string x = x
+  let to_string x = match x with s -> s
+  let get x i = match x with s -> String.get s i
+  let sub x off len = match x with s -> make (String.sub s off len)
+  let compare x y = match (x, y) with x, y -> String.compare x y
+  let equal x y = match (x, y) with x, y -> String.equal x y
 
   let concat2 x y =
-    let rec aux = function
-      | Raw x, _ ->
-          let y = to_string y in
-          let len = String.length x + String.length y in
-          let buf = Buffer.create len in
-          Buffer.add_string buf x;
-          Buffer.add_string buf y;
-          Buffer { buf; len; mut = true }
-      | Buffer x, _ when x.mut ->
-          (match y.v with
-          | Char c -> Buffer.add_char x.buf c
-          | _ -> Buffer.add_string x.buf (to_string y));
-          x.mut <- false;
-          Buffer { buf = x.buf; len = Buffer.length x.buf; mut = true }
-      | _ -> Rope (Rope.concat2 (to_rope x) (to_rope y))
-    in
-    make (aux (x.v, y.v))
+    let rec aux = function x, y -> x ^ y in
+    make (aux (x, y))
 
-  let concat sep xs =
-    let rec loop acc = function
-      | [] -> acc
-      | x :: xs -> loop (concat2 (concat2 acc sep) x) xs
-    in
-    match xs with [] -> of_string "" | x :: xs -> loop x xs
+  let concat = String.concat
 end
 
 type value =
