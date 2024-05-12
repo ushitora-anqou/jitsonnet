@@ -239,52 +239,58 @@ let gensym ?(suffix = "") () =
   gensym_i := !gensym_i + 1;
   "$v" ^ string_of_int !gensym_i ^ suffix
 
-let rec desugar_expr b = function
-  | Array xs -> Core.Array (xs |> List.map (desugar_expr b))
+let rec desugar_expr std b = function
+  | Array xs -> Core.Array (xs |> List.map (desugar_expr std b))
   | ArrayFor (e, forspec, compspec) ->
-      desugar_arrcomp e b (Forspec forspec :: compspec)
-  | ArrayIndex (e1, e2) -> Core.ArrayIndex (desugar_expr b e1, desugar_expr b e2)
+      desugar_arrcomp std e b (Forspec forspec :: compspec)
+  | ArrayIndex (e1, e2) ->
+      Core.ArrayIndex (desugar_expr std b e1, desugar_expr std b e2)
   | ArraySlice (e, e', e'', e''') ->
       let e' = e' |> Option.value ~default:Null in
       let e'' = e'' |> Option.value ~default:Null in
       let e''' = e''' |> Option.value ~default:Null in
-      desugar_expr b
-        (Call (Select (Var "std", "slice"), ([ e; e'; e''; e''' ], []), false))
+      desugar_expr std b
+        (Call (Select (Var std, "slice"), ([ e; e'; e''; e''' ], []), false))
   | Assert ((e, None), e') ->
-      desugar_expr b (Assert ((e, Some (String "Assertion failed")), e'))
-  | Assert ((e, Some e'), e'') -> desugar_expr b (If (e, e'', Some (Error e')))
+      desugar_expr std b (Assert ((e, Some (String "Assertion failed")), e'))
+  | Assert ((e, Some e'), e'') ->
+      desugar_expr std b (If (e, e'', Some (Error e')))
   | Binary (e, `NotEqual, e') ->
-      desugar_expr b (Unary (Not, Binary (e, `Equal, e')))
+      desugar_expr std b (Unary (Not, Binary (e, `Equal, e')))
   | Binary (e, `Equal, e') ->
-      desugar_expr b
-        (Call (Select (Var "std", "equals"), ([ e; e' ], []), false))
+      desugar_expr std b
+        (Call (Select (Var std, "equals"), ([ e; e' ], []), false))
   | Binary (e, `Mod, e') ->
-      desugar_expr b (Call (Select (Var "std", "mod"), ([ e; e' ], []), false))
+      desugar_expr std b
+        (Call (Select (Var std, "mod"), ([ e; e' ], []), false))
   | Binary (e, `In, e') ->
-      desugar_expr b
-        (Call (Select (Var "std", "objectHasEx"), ([ e'; e; True ], []), false))
+      desugar_expr std b
+        (Call (Select (Var std, "objectHasEx"), ([ e'; e; True ], []), false))
   | Binary (e1, (#Core.binop as op), e2) ->
-      Core.Binary (desugar_expr b e1, op, desugar_expr b e2)
+      Core.Binary (desugar_expr std b e1, op, desugar_expr std b e2)
   | Call (e, (xs, ys), _) ->
       Core.Call
-        ( desugar_expr b e,
-          xs |> List.map (desugar_expr b),
-          ys |> List.map (fun (id, y) -> (id, desugar_expr b y)) )
+        ( desugar_expr std b e,
+          xs |> List.map (desugar_expr std b),
+          ys |> List.map (fun (id, y) -> (id, desugar_expr std b y)) )
   | Dollar -> Var "$"
-  | Error e -> Core.Error (desugar_expr b e)
+  | Error e -> Core.Error (desugar_expr std b e)
   | False -> Core.False
   | Function (params, e) ->
-      Core.Function (params |> List.map (desugar_param b), desugar_expr b e)
-  | If (e, e', None) -> Core.If (desugar_expr b e, desugar_expr b e', Null)
+      Core.Function
+        (params |> List.map (desugar_param std b), desugar_expr std b e)
+  | If (e, e', None) ->
+      Core.If (desugar_expr std b e, desugar_expr std b e', Null)
   | If (e, e', Some e'') ->
-      Core.If (desugar_expr b e, desugar_expr b e', desugar_expr b e'')
+      Core.If
+        (desugar_expr std b e, desugar_expr std b e', desugar_expr std b e'')
   | Import s -> Core.Import s
   | Importbin s -> Core.Importbin s
   | Importstr s -> Core.Importstr s
-  | InSuper e -> Core.InSuper (desugar_expr b e)
+  | InSuper e -> Core.InSuper (desugar_expr std b e)
   | Local (binds, e) ->
-      let binds = binds |> List.map (desugar_bind b) in
-      let e = desugar_expr b e in
+      let binds = binds |> List.map (desugar_bind std b) in
+      let e = desugar_expr std b e in
       Core.Local (binds, e)
   | Null -> Core.Null
   | Number v -> Core.Number v
@@ -295,18 +301,18 @@ let rec desugar_expr b = function
       in
       let binds =
         (if b then binds else Bind ("$", Self) :: binds)
-        |> List.map (desugar_bind b)
+        |> List.map (desugar_bind std b)
       in
       let assrts =
         members
         |> List.filter_map (function
-             | MemberAssert assrt -> Some (desugar_assert [] assrt)
+             | MemberAssert assrt -> Some (desugar_assert std [] assrt)
              | _ -> None)
       in
       let fields =
         members
         |> List.filter_map (function
-             | MemberField field -> Some (desugar_field [] b field)
+             | MemberField field -> Some (desugar_field std [] b field)
              | _ -> None)
       in
       let obj = Core.Object { binds; assrts; fields } in
@@ -315,10 +321,10 @@ let rec desugar_expr b = function
       (* Optimized desugaring *)
       Core.ObjectFor
         ( Var x1,
-          (let e1 = desugar_expr true e1 in
+          (let e1 = desugar_expr std true e1 in
            if b then e1 else Local ([ ("$", Self) ], e1)),
           x2,
-          desugar_expr b e2 )
+          desugar_expr std b e2 )
   | Object (ObjectFor (binds, ef, ebody, binds', forspec, compspec)) ->
       let arr = gensym () in
       let xs =
@@ -335,24 +341,24 @@ let rec desugar_expr b = function
       in
       let vars_xs = xs |> List.map (fun x -> Var x) in
       Core.ObjectFor
-        ( desugar_expr b (Local (binds_xs, ef)),
+        ( desugar_expr std b (Local (binds_xs, ef)),
           (let e2 =
-             desugar_expr true (Local (binds_xs @ binds @ binds', ebody))
+             desugar_expr std true (Local (binds_xs @ binds @ binds', ebody))
            in
            if b then e2 else Local ([ ("$", Self) ], e2)),
           arr,
-          desugar_expr b (ArrayFor (Array vars_xs, forspec, compspec)) )
+          desugar_expr std b (ArrayFor (Array vars_xs, forspec, compspec)) )
   | ObjectSeq (e, objinside) ->
-      desugar_expr b (Binary (e, `Add, Object objinside))
-  | Select (e, id) -> Core.ArrayIndex (desugar_expr b e, String id)
+      desugar_expr std b (Binary (e, `Add, Object objinside))
+  | Select (e, id) -> Core.ArrayIndex (desugar_expr std b e, String id)
   | Self -> Core.Self
   | String s -> Core.String s
-  | SuperIndex e -> Core.SuperIndex (desugar_expr b e)
+  | SuperIndex e -> Core.SuperIndex (desugar_expr std b e)
   | True -> Core.True
-  | Unary (op, e) -> Core.Unary (op, desugar_expr b e)
+  | Unary (op, e) -> Core.Unary (op, desugar_expr std b e)
   | Var s -> Core.Var s
 
-and desugar_arrcomp e b compspec =
+and desugar_arrcomp std e b compspec =
   let rec aux e = function
     | [] -> Array [ e ]
     | Ifspec e' :: compspec -> If (e', aux e compspec, Some (Array []))
@@ -362,14 +368,14 @@ and desugar_arrcomp e b compspec =
         Local
           ( [ Bind (arr, e') ],
             Call
-              ( Select (Var "std", "join"),
+              ( Select (Var std, "join"),
                 ( [
                     Array [];
                     Call
-                      ( Select (Var "std", "makeArray"),
+                      ( Select (Var std, "makeArray"),
                         ( [
                             Call
-                              ( Select (Var "std", "length"),
+                              ( Select (Var std, "length"),
                                 ([ Var arr ], []),
                                 false );
                             Function
@@ -384,25 +390,25 @@ and desugar_arrcomp e b compspec =
                   [] ),
                 false ) )
   in
-  desugar_expr b (aux e compspec)
+  desugar_expr std b (aux e compspec)
 
-and desugar_assert binds = function
-  | e, None -> desugar_assert binds (e, Some (String "Assertion failed"))
+and desugar_assert std binds = function
+  | e, None -> desugar_assert std binds (e, Some (String "Assertion failed"))
   | e, Some e' ->
       assert (binds = []);
-      desugar_expr true (If (e, Null, Some (Error e')))
+      desugar_expr std true (If (e, Null, Some (Error e')))
 
-and desugar_field binds b = function
+and desugar_field std binds b = function
   | Field ((FieldnameID id | FieldnameString id), plus, h, e) ->
-      desugar_field binds b (Field (FieldnameExpr (String id), plus, h, e))
+      desugar_field std binds b (Field (FieldnameExpr (String id), plus, h, e))
   | FieldFunc ((FieldnameID id | FieldnameString id), params, h, e) ->
-      desugar_field binds b
+      desugar_field std binds b
         (FieldFunc (FieldnameExpr (String id), params, h, e))
   | Field (FieldnameExpr e, b, h, e') ->
       assert (binds = []);
-      (desugar_expr b e, b, h, desugar_expr true e')
+      (desugar_expr std b e, b, h, desugar_expr std true e')
   | FieldFunc (FieldnameExpr e, params, h, e') ->
-      desugar_field binds b
+      desugar_field std binds b
         (Field (FieldnameExpr e, false, h, Function (params, e')))
 (*
   | Field (FieldnameExpr e, true, h, e') ->
@@ -412,18 +418,19 @@ and desugar_field binds b = function
          in *)
       let e'' = e in
       let e''' = If (InSuper e'', Binary (SuperIndex e'', `Add, e'), Some e') in
-      desugar_field binds b (Field (FieldnameExpr e, false, h, e'''))
+      desugar_field std binds b (Field (FieldnameExpr e, false, h, e'''))
 *)
 
-and desugar_bind b = function
-  | Bind (id, e) -> (id, desugar_expr b e)
-  | BindFunc (id, params, e) -> (id, desugar_expr b (Function (params, e)))
+and desugar_bind std b = function
+  | Bind (id, e) -> (id, desugar_expr std b e)
+  | BindFunc (id, params, e) -> (id, desugar_expr std b (Function (params, e)))
 
-and desugar_param b = function
+and desugar_param std b = function
   | id, None -> (id, None)
-  | id, Some e -> (id, Some (desugar_expr b e))
+  | id, Some e -> (id, Some (desugar_expr std b e))
 
-let desugar { expr } = desugar_expr false expr
+let desugar ?(is_stdjsonnet = false) { expr } =
+  desugar_expr (if is_stdjsonnet then "std" else "$std") false expr
 
 module StringSet = Set.Make (String)
 
@@ -498,7 +505,7 @@ let alpha_conv ?(is_stdjsonnet = false) (e : Core.expr) =
     | SuperIndex e -> SuperIndex (aux env e)
   in
   aux
-    ((if is_stdjsonnet then [] else [ ("std", "$std") ])
+    ((if is_stdjsonnet then [] else [ ("std", "$std"); ("$std", "$std") ])
     |> List.to_seq |> Hashtbl.of_seq)
     e
 

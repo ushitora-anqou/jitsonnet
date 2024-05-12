@@ -511,8 +511,8 @@ let assert_core_expr expected got =
       Logs.err (fun m -> m "failed to parse: %s" msg);
       Logs.info (fun m -> m "expected %s" (Syntax.Core.show_expr expected));
       assert false
-  | Ok { expr = got } ->
-      let got = Syntax.desugar_expr false got in
+  | Ok p ->
+      let got = Syntax.desugar p in
       Logs.info (fun m ->
           m "got %s, expected %s"
             (Syntax.Core.show_expr got)
@@ -570,7 +570,7 @@ let test_desugar_object () =
            [
              If
                ( Call
-                   ( ArrayIndex (Var "std", String "equals"),
+                   ( ArrayIndex (Var "$std", String "equals"),
                      [ Var "x"; Number 1. ],
                      [] ),
                  Null,
@@ -610,14 +610,14 @@ let test_desugar_object () =
          Local
            ( [ ("$v2", Var "a") ],
              Call
-               ( ArrayIndex (Var "std", String "join"),
+               ( ArrayIndex (Var "$std", String "join"),
                  [
                    Array [];
                    Call
-                     ( ArrayIndex (Var "std", String "makeArray"),
+                     ( ArrayIndex (Var "$std", String "makeArray"),
                        [
                          Call
-                           ( ArrayIndex (Var "std", String "length"),
+                           ( ArrayIndex (Var "$std", String "length"),
                              [ Var "$v2" ],
                              [] );
                          Function
@@ -641,14 +641,14 @@ let test_desugar_array () =
     (Local
        ( [ ("$v1", Var "xs") ],
          Call
-           ( ArrayIndex (Var "std", String "join"),
+           ( ArrayIndex (Var "$std", String "join"),
              [
                Array [];
                Call
-                 ( ArrayIndex (Var "std", String "makeArray"),
+                 ( ArrayIndex (Var "$std", String "makeArray"),
                    [
                      Call
-                       ( ArrayIndex (Var "std", String "length"),
+                       ( ArrayIndex (Var "$std", String "length"),
                          [ Var "$v1" ],
                          [] );
                      Function
@@ -668,8 +668,8 @@ let assert_freevars expected got =
   | Error msg ->
       Logs.err (fun m -> m "failed to parse: %s" msg);
       assert false
-  | Ok { expr = got } ->
-      let got = Syntax.desugar_expr false got |> Syntax.freevars in
+  | Ok p ->
+      let got = Syntax.desugar p |> Syntax.freevars in
       Logs.info (fun m ->
           m "got [%s], expected [%s]"
             (got |> Syntax.StringSet.to_list |> String.concat ", ")
@@ -689,7 +689,7 @@ let test_freevars_function () =
 
 let test_freevars_object () =
   assert_freevars [ "x"; "z" ] "{ local x = 1, y: z, [ x ]: x }";
-  assert_freevars [ "std"; "x"; "w"; "z" ]
+  assert_freevars [ "$std"; "x"; "w"; "z" ]
     "{ [ x + z ]: x + w for x in [ x ] for y in [ x ] }";
   ()
 
@@ -698,8 +698,8 @@ let assert_static_check good src =
   | Error msg ->
       Logs.err (fun m -> m "failed to parse: %s" msg);
       assert false
-  | Ok { expr = got } -> (
-      let desugared = Syntax.desugar_expr false got in
+  | Ok p -> (
+      let desugared = Syntax.desugar p in
       match Static_check.f false desugared with
       | Ok () when good -> ()
       | Error _ when not good -> ()
@@ -1096,8 +1096,8 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "optional_args6" `Success;
   assert_compile "optional_args7" `Success;
   assert_compile "or3" `Success;
-  (*
   assert_compile "overriding_stdlib_desugared" `Success;
+  (*
   assert_compile "parseJson" `Success;
   assert_compile "parseYaml" `Success;
   assert_compile "percent_format_float" `Success;

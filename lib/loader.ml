@@ -59,7 +59,7 @@ let rec load is_stdjsonnet src t =
       | None ->
           let* prog = Parser.parse_file file_path in
           let* desugared =
-            Syntax.desugar prog
+            Syntax.desugar ~is_stdjsonnet prog
             |> Syntax.alpha_conv ~is_stdjsonnet
             |> Syntax.float_let_binds
             |> make_imported_files_real (Filename.dirname file_path)
@@ -78,7 +78,7 @@ let rec load is_stdjsonnet src t =
   | `Ext_code (key, prog_src) ->
       let* prog = Parser.parse_string prog_src in
       let desugared =
-        Syntax.desugar prog
+        Syntax.desugar ~is_stdjsonnet prog
         |> Syntax.alpha_conv ~is_stdjsonnet
         |> Syntax.float_let_binds
       in
