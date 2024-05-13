@@ -434,6 +434,24 @@ let make_std_ext_var tbl
   | None -> failwith "std.extVar: not found"
   | Some v -> Lazy.force v
 
+let std_equals_string lhs rhs =
+  match Lazy.force lhs with
+  | SmartString lhs ->
+      value_of_bool (SmartString.equal lhs (SmartString.of_string rhs))
+  | _ -> False
+
+let std_equals_number lhs rhs =
+  match Lazy.force lhs with
+  | Double lhs -> value_of_bool (Float.equal lhs rhs)
+  | _ -> False
+
+let std_equals_null v = match Lazy.force v with Null -> True | _ -> False
+
+let std_equals_boolean lhs rhs =
+  match (Lazy.force lhs, rhs) with
+  | True, true | False, false -> True
+  | _ -> False
+
 let append_to_std tbl =
   Hashtbl.add tbl "primitiveEquals" (1, lazy (Function std_primitive_equals));
   Hashtbl.add tbl "length" (1, lazy (Function std_length));

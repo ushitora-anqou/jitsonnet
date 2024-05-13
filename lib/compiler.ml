@@ -251,27 +251,45 @@ let rec compile_expr ?toplevel:_ ({ loc; is_stdjsonnet; _ } as env) :
               pexp_let ~loc
                 (if use_rec_value then Recursive else Nonrecursive)
                 binds (compile_expr env body)])]
-  | Call (e, positional, named) ->
-      let fun_expr =
-        match
-          match e with
-          | ArrayIndex (Var "$std", String name) -> compile_builtin_std loc name
-          | ArrayIndex (Var "std", String name) when is_stdjsonnet ->
-              compile_builtin_std loc name
-          | _ -> Error "not available"
-        with
-        | Ok e -> e
-        | Error _ -> [%expr get_function [%e compile_expr env e]]
-      in
-      [%expr
-        [%e fun_expr]
-          ( [%e pexp_array ~loc (positional |> List.map (compile_expr_lazy env))],
-            [%e
-              named
-              |> List.map (fun (id, e) ->
-                     pexp_tuple ~loc
-                       [ estring ~loc id; compile_expr_lazy env e ])
-              |> elist ~loc] )]
+  | Call
+      ( ArrayIndex (Var std, String "equals"),
+        ([ e; String s ] | [ String s; e ]),
+        [] )
+    when std = "$std" || (std = "std" && is_stdjsonnet) ->
+      [%expr std_equals_string [%e compile_expr_lazy env e] [%e estring ~loc s]]
+  | Call ((ArrayIndex (Var std, String name) as e), positional, named)
+    when std = "$std" || (std = "std" && is_stdjsonnet) -> (
+      match (name, positional, named) with
+      | "equals", ([ e; Null ] | [ Null; e ]), [] ->
+          [%expr std_equals_null [%e compile_expr_lazy env e]]
+      | "equals", ([ e; True ] | [ True; e ]), [] ->
+          [%expr std_equals_boolean [%e compile_expr_lazy env e] true]
+      | "equals", ([ e; False ] | [ False; e ]), [] ->
+          [%expr std_equals_boolean [%e compile_expr_lazy env e] false]
+      | "equals", ([ e; String s ] | [ String s; e ]), [] ->
+          [%expr
+            std_equals_string [%e compile_expr_lazy env e] [%e estring ~loc s]]
+      | ( "equals",
+          ( [ e; Number n ]
+          | [ Number n; e ]
+          | [ e; Unary (Pos, Number n) ]
+          | [ Unary (Pos, Number n); e ] ),
+          [] ) ->
+          [%expr
+            std_equals_number [%e compile_expr_lazy env e]
+              [%e efloat ~loc (string_of_float n)]]
+      | ( "equals",
+          ([ e; Unary (Neg, Number n) ] | [ Unary (Neg, Number n); e ]),
+          [] ) ->
+          [%expr
+            std_equals_number [%e compile_expr_lazy env e]
+              (-.[%e efloat ~loc (string_of_float n)])]
+      | _ -> (
+          match compile_builtin_std loc name with
+          | Ok func ->
+              [%expr [%e func] [%e compile_call_args env positional named]]
+          | Error _ -> compile_generic_call env (e, positional, named)))
+  | Call call -> compile_generic_call env call
   | Error e -> [%expr error [%e compile_expr env e]]
   | Local (binds, e) ->
       with_binds env (binds |> List.map fst) @@ fun () ->
@@ -418,6 +436,20 @@ and compile_expr_lazy ?(toplevel = false) ?(in_bind = false) ({ loc; _ } as env)
         when not in_bind ->
           var
       | e -> [%expr lazy [%e e]])
+
+and compile_generic_call ({ loc; _ } as env) (e, positional, named) =
+  [%expr
+    get_function [%e compile_expr env e]
+      [%e compile_call_args env positional named]]
+
+and compile_call_args ({ loc; _ } as env) positional named =
+  [%expr
+    [%e pexp_array ~loc (positional |> List.map (compile_expr_lazy env))],
+      [%e
+        named
+        |> List.map (fun (id, e) ->
+               pexp_tuple ~loc [ estring ~loc id; compile_expr_lazy env e ])
+        |> elist ~loc]]
 
 let compile ?multi ?(string = false) ?(target = `Main) root_prog_path progs bins
     strs ext_codes =
