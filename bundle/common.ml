@@ -434,23 +434,33 @@ let make_std_ext_var tbl
   | None -> failwith "std.extVar: not found"
   | Some v -> Lazy.force v
 
-let std_equals_string lhs rhs =
-  match Lazy.force lhs with
-  | SmartString lhs ->
-      value_of_bool (SmartString.equal lhs (SmartString.of_string rhs))
-  | _ -> False
-
-let std_equals_number lhs rhs =
-  match Lazy.force lhs with
-  | Double lhs -> value_of_bool (Float.equal lhs rhs)
-  | _ -> False
-
-let std_equals_null v = match Lazy.force v with Null -> True | _ -> False
-
-let std_equals_boolean lhs rhs =
-  match (Lazy.force lhs, rhs) with
-  | True, true | False, false -> True
-  | _ -> False
+let std_equals (positional, named) =
+  let rec aux a b =
+    match (Lazy.force a, Lazy.force b) with
+    | SmartString s1, SmartString s2 -> SmartString.equal s1 s2
+    | Double n1, Double n2 -> Float.equal n1 n2
+    | Null, Null | True, True | False, False -> true
+    | Array a1, Array a2 when Array.length a1 = Array.length a2 ->
+        Array.for_all2 aux a1 a2
+    | ( Object (General ((_, _, fields1), _)),
+        Object (General ((_, _, fields2), _)) ) ->
+        let aux' fields2 k1 v1 res =
+          res
+          &&
+          match v1 with
+          | 2, _ -> res
+          | _, v1 -> (
+              match Hashtbl.find_opt fields2 k1 with
+              | None | Some (2, _) -> false
+              | Some (_, v2) -> aux v1 v2)
+        in
+        Hashtbl.fold (aux' fields2) fields1 true
+        && Hashtbl.fold (aux' fields1) fields2 true
+    | _ -> false
+  in
+  let a = function_param 0 positional "a" named None in
+  let b = function_param 1 positional "b" named None in
+  value_of_bool (aux a b)
 
 let append_to_std tbl =
   Hashtbl.add tbl "primitiveEquals" (1, lazy (Function std_primitive_equals));
@@ -478,4 +488,5 @@ let append_to_std tbl =
   Hashtbl.add tbl "exponent" (1, lazy (Function std_exponent));
   Hashtbl.add tbl "mantissa" (1, lazy (Function std_mantissa));
   Hashtbl.add tbl "md5" (1, lazy (Function std_md5));
+  Hashtbl.add tbl "equals" (1, lazy (Function std_equals));
   ()

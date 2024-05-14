@@ -87,6 +87,7 @@ let compile_builtin_std loc = function
   | "exponent" -> Ok [%expr std_exponent]
   | "mantissa" -> Ok [%expr std_mantissa]
   | "md5" -> Ok [%expr std_md5]
+  | "equals" -> Ok [%expr std_equals]
   | _ -> Error "not found"
 
 let rec compile_expr ?toplevel:_ ({ loc; is_stdjsonnet; _ } as env) :
@@ -251,44 +252,11 @@ let rec compile_expr ?toplevel:_ ({ loc; is_stdjsonnet; _ } as env) :
               pexp_let ~loc
                 (if use_rec_value then Recursive else Nonrecursive)
                 binds (compile_expr env body)])]
-  | Call
-      ( ArrayIndex (Var std, String "equals"),
-        ([ e; String s ] | [ String s; e ]),
-        [] )
-    when std = "$std" || (std = "std" && is_stdjsonnet) ->
-      [%expr std_equals_string [%e compile_expr_lazy env e] [%e estring ~loc s]]
   | Call ((ArrayIndex (Var std, String name) as e), positional, named)
     when std = "$std" || (std = "std" && is_stdjsonnet) -> (
-      match (name, positional, named) with
-      | "equals", ([ e; Null ] | [ Null; e ]), [] ->
-          [%expr std_equals_null [%e compile_expr_lazy env e]]
-      | "equals", ([ e; True ] | [ True; e ]), [] ->
-          [%expr std_equals_boolean [%e compile_expr_lazy env e] true]
-      | "equals", ([ e; False ] | [ False; e ]), [] ->
-          [%expr std_equals_boolean [%e compile_expr_lazy env e] false]
-      | "equals", ([ e; String s ] | [ String s; e ]), [] ->
-          [%expr
-            std_equals_string [%e compile_expr_lazy env e] [%e estring ~loc s]]
-      | ( "equals",
-          ( [ e; Number n ]
-          | [ Number n; e ]
-          | [ e; Unary (Pos, Number n) ]
-          | [ Unary (Pos, Number n); e ] ),
-          [] ) ->
-          [%expr
-            std_equals_number [%e compile_expr_lazy env e]
-              [%e efloat ~loc (string_of_float n)]]
-      | ( "equals",
-          ([ e; Unary (Neg, Number n) ] | [ Unary (Neg, Number n); e ]),
-          [] ) ->
-          [%expr
-            std_equals_number [%e compile_expr_lazy env e]
-              (-.[%e efloat ~loc (string_of_float n)])]
-      | _ -> (
-          match compile_builtin_std loc name with
-          | Ok func ->
-              [%expr [%e func] [%e compile_call_args env positional named]]
-          | Error _ -> compile_generic_call env (e, positional, named)))
+      match compile_builtin_std loc name with
+      | Ok func -> [%expr [%e func] [%e compile_call_args env positional named]]
+      | Error _ -> compile_generic_call env (e, positional, named))
   | Call call -> compile_generic_call env call
   | Error e -> [%expr error [%e compile_expr env e]]
   | Local (binds, e) ->
