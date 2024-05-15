@@ -219,9 +219,8 @@ let rec compile_expr ?toplevel:_ ({ loc; is_stdjsonnet; _ } as env) :
   | Unary (Pos, e) -> [%expr Double (+.get_double [%e compile_expr env e])]
   | If (e1, e2, e3) ->
       [%expr
-        if_ [%e compile_expr env e1]
-          (fun () -> [%e compile_expr env e2])
-          (fun () -> [%e compile_expr env e3])]
+        if get_bool [%e compile_expr env e1] then [%e compile_expr env e2]
+        else [%e compile_expr env e3]]
   | Function (params, body) ->
       let use_rec_value =
         params |> List.exists (fun (_, v) -> Option.is_some v)

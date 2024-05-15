@@ -290,8 +290,7 @@ let std_md5 ([| s |], []) =
     (SmartString.of_string
        (Digest.to_hex (Digest.string (get_string (Lazy.force s)))))
 
-let in_super super key =
-  if Hashtbl.mem super (get_string key) then True else False
+let in_super super key = value_of_bool (Hashtbl.mem super (get_string key))
 
 let super_index super key =
   let key = get_string key in
@@ -395,24 +394,17 @@ let function_param i positional id named v =
     | None -> (
         match v with Some v -> v | None -> failwith "Parameter not bound")
 
-let if_ v1 f2 f3 =
-  match v1 with
-  | True -> f2 ()
-  | False -> f3 ()
-  | _ -> failwith "invalid if condition"
-
 let error v =
   manifestation Format.str_formatter v;
   failwith (Format.flush_str_formatter ())
 
 let object_field_plus_value super key value =
   lazy
-    (if_ (in_super super key)
-       (fun () ->
-         let lhs = super_index super key in
-         let rhs = value in
-         binary_add lhs rhs)
-       (fun () -> value))
+    (if get_bool (in_super super key) then
+       let lhs = super_index super key in
+       let rhs = value in
+       binary_add lhs rhs
+     else value)
 
 let object_field_plus super key value tbl h =
   object_field tbl h key (object_field_plus_value super key value)
