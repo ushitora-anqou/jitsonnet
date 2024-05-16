@@ -111,28 +111,28 @@ let extract_visible_fields tbl =
   |> List.filter_map (fun (k, (h, v)) -> if h = 2 then None else Some (k, v))
   |> List.sort (fun (k1, _) (k2, _) -> String.compare k1 k2)
 
-let manifestation ppf v =
-  let open Format in
-  let quoted_string s =
-    let buf = Buffer.create (String.length s) in
-    let rec loop i =
-      if i >= String.length s then ()
-      else (
-        (match s.[i] with
-        | '"' -> Buffer.add_string buf {|\"|}
-        | '\\' -> Buffer.add_string buf {|\\|}
-        | '\b' -> Buffer.add_string buf {|\b|}
-        | '\012' -> Buffer.add_string buf {|\f|}
-        | '\n' -> Buffer.add_string buf {|\n|}
-        | '\r' -> Buffer.add_string buf {|\r|}
-        | '\t' -> Buffer.add_string buf {|\t|}
-        | '\000' -> Buffer.add_string buf {|\u0000|}
-        | ch -> Buffer.add_char buf ch);
-        loop (i + 1))
-    in
-    loop 0;
-    "\"" ^ Buffer.contents buf ^ "\""
+let quoted_string s =
+  let buf = Buffer.create (String.length s) in
+  let rec loop i =
+    if i >= String.length s then ()
+    else (
+      (match s.[i] with
+      | '"' -> Buffer.add_string buf {|\"|}
+      | '\\' -> Buffer.add_string buf {|\\|}
+      | '\b' -> Buffer.add_string buf {|\b|}
+      | '\012' -> Buffer.add_string buf {|\f|}
+      | '\n' -> Buffer.add_string buf {|\n|}
+      | '\r' -> Buffer.add_string buf {|\r|}
+      | '\t' -> Buffer.add_string buf {|\t|}
+      | '\000' -> Buffer.add_string buf {|\u0000|}
+      | ch -> Buffer.add_char buf ch);
+      loop (i + 1))
   in
+  loop 0;
+  "\"" ^ Buffer.contents buf ^ "\""
+
+let manifestation ?(multi_line = true) ppf v =
+  let open Format in
   let rec aux ppf = function
     | Null -> fprintf ppf "null"
     | True -> fprintf ppf "true"
@@ -142,9 +142,15 @@ let manifestation ppf v =
     | Double f -> fprintf ppf "%s" (string_of_double f)
     | Array [||] -> fprintf ppf "[ ]"
     | Array xs ->
-        fprintf ppf "@[<v 3>[@,%a@]@,]"
+        fprintf ppf
+          ("@[<v 3>["
+          ^^ (if multi_line then "@," else "")
+          ^^ "%a@]"
+          ^^ (if multi_line then "@," else "")
+          ^^ "]")
           (pp_print_array
-             ~pp_sep:(fun ppf () -> fprintf ppf ",@,")
+             ~pp_sep:(fun ppf () ->
+               fprintf ppf ("," ^^ if multi_line then "@," else " "))
              (fun ppf (lazy x) -> aux ppf x))
           xs
     | Function f -> aux ppf (f ([||], []))
@@ -154,15 +160,22 @@ let manifestation ppf v =
         match extract_visible_fields tbl with
         | [] -> fprintf ppf "{ }"
         | xs ->
-            fprintf ppf "@[<v 3>{@,%a@]@,}"
+            fprintf ppf
+              ("@[<v 3>{"
+              ^^ (if multi_line then "@," else "")
+              ^^ "%a@]"
+              ^^ (if multi_line then "@," else "")
+              ^^ "}")
               (pp_print_list
-                 ~pp_sep:(fun ppf () -> fprintf ppf ",@,")
+                 ~pp_sep:(fun ppf () ->
+                   fprintf ppf ("," ^^ if multi_line then "@," else " "))
                  (fun ppf (k, (lazy v)) ->
                    fprintf ppf "@<0>%s@<0>:@<0> %a" (quoted_string k) aux v))
               xs)
   in
   aux ppf v;
-  fprintf ppf "\n@?"
+  if multi_line then fprintf ppf "\n";
+  fprintf ppf "@?"
 
 let string_manifestation = function
   | SmartString s -> print_string (SmartString.to_string s)
@@ -324,14 +337,9 @@ let rec value_to_smart_string = function
   | Double f -> SmartString.of_string (string_of_double f)
   | True -> SmartString.of_string "true"
   | False -> SmartString.of_string "false"
-  | Array xs ->
-      SmartString.(
-        concat2
-          (concat2 (of_string "[")
-             (concat (of_string ", ")
-                (xs |> Array.to_list
-                |> List.map (fun (lazy x) -> value_to_smart_string x))))
-          (of_string "]"))
+  | (Array _ | Object _) as x ->
+      manifestation ~multi_line:false Format.str_formatter x;
+      SmartString.of_string (Format.flush_str_formatter ())
   | v -> failwith ("value_to_smart_string: " ^ std_type' v)
 
 let make_object f =

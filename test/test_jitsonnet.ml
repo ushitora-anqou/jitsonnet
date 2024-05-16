@@ -980,11 +980,11 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "foldl_empty" `Success;
   assert_compile "foldl_single_element" `Success;
   assert_compile "foldl_string" `Success;
-  (*assert_compile "foldl_various" `Success;*)
+  assert_compile "foldl_various" `Success;
   assert_compile "foldr_empty" `Success;
   assert_compile "foldr_single_element" `Success;
   assert_compile "foldr_string" `Success;
-  (*assert_compile "foldr_various" `Success;*)
+  assert_compile "foldr_various" `Success;
   assert_compile "function_capturing" `Success;
   assert_compile "function_in_object" `Success;
   assert_compile "function_no_params" `Success;
@@ -1227,19 +1227,17 @@ let test_compiler_with_go_jsonnet_testdata () =
   *)
   assert_compile "std.toString" `Success;
   assert_compile "std.toString2" `Success;
-  (*
   assert_compile "std.toString3" `Success;
   assert_compile "std.toString4" `Success;
   assert_compile "std.toString6" `Success;
   assert_compile "std.toString7" `Success;
   assert_compile "std.toString8" `Success;
-  *)
   assert_compile "std_in_local" `Success;
   assert_compile "std_substr" `Success;
   (*
   assert_compile "stdlib_smoke_test" `Success;
-  assert_compile "strReplace" `Success;
   *)
+  assert_compile "strReplace" `Success;
   assert_compile "strReplace2" `Success;
   assert_compile "string2" `Success;
   assert_compile "string_comparison1" `Success;
