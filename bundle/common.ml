@@ -36,7 +36,9 @@ type value =
   | SmartString of SmartString.t
   | Double of float
   | Object of object_
-  | Function of (value Lazy.t array * (string * value Lazy.t) list -> value)
+  | Function of
+      int (* # of args *)
+      * (value Lazy.t array * (string * value Lazy.t) list -> value)
   | Array of value Lazy.t array
 
 and value_ary = value Lazy.t array
@@ -81,7 +83,7 @@ let get_double = function
   | _ -> failwith "expect double got something else"
 
 let get_function = function
-  | Function f -> f
+  | Function (_, f) -> f
   | _ -> failwith "expect function got something else"
 
 let get_string = function
@@ -153,7 +155,7 @@ let manifestation ?(multi_line = true) ppf v =
                fprintf ppf ("," ^^ if multi_line then "@," else " "))
              (fun ppf (lazy x) -> aux ppf x))
           xs
-    | Function f -> aux ppf (f ([||], []))
+    | Function (_, f) -> aux ppf (f ([||], []))
     | Object _ as x -> (
         let _, assrts, tbl = get_object x in
         eval_asserts assrts;
@@ -219,6 +221,7 @@ let std_length ([| v |], []) =
         (fields |> Hashtbl.to_seq
         |> Seq.filter_map (fun (f, (h, _)) -> if h = 2 then None else Some ())
         |> Seq.length |> float_of_int)
+  | (lazy (Function (n, _))) -> Double (float_of_int n)
   | _ -> failwith "std.length: invalid type argument"
 
 let std_type' = function
@@ -463,30 +466,31 @@ let std_equals (positional, named) =
   value_of_bool (aux a b)
 
 let append_to_std tbl =
-  Hashtbl.add tbl "primitiveEquals" (1, lazy (Function std_primitive_equals));
-  Hashtbl.add tbl "length" (1, lazy (Function std_length));
-  Hashtbl.add tbl "makeArray" (1, lazy (Function std_make_array));
-  Hashtbl.add tbl "type" (1, lazy (Function std_type));
-  Hashtbl.add tbl "filter" (1, lazy (Function std_filter));
-  Hashtbl.add tbl "objectHasEx" (1, lazy (Function std_object_has_ex));
-  Hashtbl.add tbl "objectFieldsEx" (1, lazy (Function std_object_fields_ex));
-  Hashtbl.add tbl "modulo" (1, lazy (Function std_modulo));
-  Hashtbl.add tbl "codepoint" (1, lazy (Function std_codepoint));
-  Hashtbl.add tbl "char" (1, lazy (Function std_char));
-  Hashtbl.add tbl "floor" (1, lazy (Function std_floor));
-  Hashtbl.add tbl "acos" (1, lazy (Function std_acos));
-  Hashtbl.add tbl "asin" (1, lazy (Function std_asin));
-  Hashtbl.add tbl "atan" (1, lazy (Function std_atan));
-  Hashtbl.add tbl "cos" (1, lazy (Function std_cos));
-  Hashtbl.add tbl "sin" (1, lazy (Function std_sin));
-  Hashtbl.add tbl "tan" (1, lazy (Function std_tan));
-  Hashtbl.add tbl "exp" (1, lazy (Function std_exp));
-  Hashtbl.add tbl "log" (1, lazy (Function std_log));
-  Hashtbl.add tbl "sqrt" (1, lazy (Function std_sqrt));
-  Hashtbl.add tbl "pow" (1, lazy (Function std_pow));
-  Hashtbl.add tbl "ceil" (1, lazy (Function std_ceil));
-  Hashtbl.add tbl "exponent" (1, lazy (Function std_exponent));
-  Hashtbl.add tbl "mantissa" (1, lazy (Function std_mantissa));
-  Hashtbl.add tbl "md5" (1, lazy (Function std_md5));
-  Hashtbl.add tbl "equals" (1, lazy (Function std_equals));
+  Hashtbl.add tbl "primitiveEquals"
+    (1, lazy (Function (2, std_primitive_equals)));
+  Hashtbl.add tbl "length" (1, lazy (Function (1, std_length)));
+  Hashtbl.add tbl "makeArray" (1, lazy (Function (2, std_make_array)));
+  Hashtbl.add tbl "type" (1, lazy (Function (1, std_type)));
+  Hashtbl.add tbl "filter" (1, lazy (Function (2, std_filter)));
+  Hashtbl.add tbl "objectHasEx" (1, lazy (Function (3, std_object_has_ex)));
+  Hashtbl.add tbl "objectFieldsEx" (1, lazy (Function (2, std_object_fields_ex)));
+  Hashtbl.add tbl "modulo" (1, lazy (Function (2, std_modulo)));
+  Hashtbl.add tbl "codepoint" (1, lazy (Function (1, std_codepoint)));
+  Hashtbl.add tbl "char" (1, lazy (Function (1, std_char)));
+  Hashtbl.add tbl "floor" (1, lazy (Function (1, std_floor)));
+  Hashtbl.add tbl "acos" (1, lazy (Function (1, std_acos)));
+  Hashtbl.add tbl "asin" (1, lazy (Function (1, std_asin)));
+  Hashtbl.add tbl "atan" (1, lazy (Function (1, std_atan)));
+  Hashtbl.add tbl "cos" (1, lazy (Function (1, std_cos)));
+  Hashtbl.add tbl "sin" (1, lazy (Function (1, std_sin)));
+  Hashtbl.add tbl "tan" (1, lazy (Function (1, std_tan)));
+  Hashtbl.add tbl "exp" (1, lazy (Function (2, std_exp)));
+  Hashtbl.add tbl "log" (1, lazy (Function (1, std_log)));
+  Hashtbl.add tbl "sqrt" (1, lazy (Function (1, std_sqrt)));
+  Hashtbl.add tbl "pow" (1, lazy (Function (2, std_pow)));
+  Hashtbl.add tbl "ceil" (1, lazy (Function (1, std_ceil)));
+  Hashtbl.add tbl "exponent" (1, lazy (Function (1, std_exponent)));
+  Hashtbl.add tbl "mantissa" (1, lazy (Function (1, std_mantissa)));
+  Hashtbl.add tbl "md5" (1, lazy (Function (1, std_md5)));
+  Hashtbl.add tbl "equals" (1, lazy (Function (2, std_equals)));
   ()

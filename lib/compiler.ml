@@ -246,11 +246,12 @@ let rec compile_expr ?toplevel:_ ({ loc; is_stdjsonnet; _ } as env) :
       in
       [%expr
         Function
-          (fun (positional, named) ->
-            [%e
-              pexp_let ~loc
-                (if use_rec_value then Recursive else Nonrecursive)
-                binds (compile_expr env body)])]
+          ( [%e eint ~loc (List.length params)],
+            fun (positional, named) ->
+              [%e
+                pexp_let ~loc
+                  (if use_rec_value then Recursive else Nonrecursive)
+                  binds (compile_expr env body)] )]
   | Call ((ArrayIndex (Var std, String name) as e), positional, named)
     when std = "$std" || (std = "std" && is_stdjsonnet) -> (
       match compile_builtin_std loc name with
@@ -524,18 +525,19 @@ let compile ?multi ?(string = false) ?(target = `Main) root_prog_path progs bins
           [%expr
             lazy
               (Function
-                 (make_std_ext_var
-                    (Hashtbl.of_seq
-                       (List.to_seq
-                          [%e
-                            ext_codes
-                            |> List.map (fun (key, _) ->
-                                   pexp_tuple ~loc
-                                     [
-                                       estring ~loc key;
-                                       env_evar ~loc env (get_ext_code_id key);
-                                     ])
-                            |> elist ~loc]))))];
+                 ( 1,
+                   make_std_ext_var
+                     (Hashtbl.of_seq
+                        (List.to_seq
+                           [%e
+                             ext_codes
+                             |> List.map (fun (key, _) ->
+                                    pexp_tuple ~loc
+                                      [
+                                        estring ~loc key;
+                                        env_evar ~loc env (get_ext_code_id key);
+                                      ])
+                             |> elist ~loc])) ))];
     ]
   in
 
