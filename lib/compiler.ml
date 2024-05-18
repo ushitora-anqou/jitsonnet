@@ -54,7 +54,7 @@ let get_import_id kind file_path =
   | `Import -> "prog/"
   | `Importbin -> "bin/"
   | `Importstr -> "str/")
-  ^ file_path
+  ^ Unix.realpath file_path
 
 let get_ext_code_id key = "extCode/" ^ key
 
@@ -428,7 +428,8 @@ let compile ?multi ?(string = false) ?(target = `Main) root_prog_path progs bins
 
   let bind_ids =
     "$std"
-    :: ((progs |> List.map (fun (path, _) -> get_import_id `Import path))
+    :: ((progs
+        |> List.map (fun (real_path, _, _) -> get_import_id `Import real_path))
        @ (bins |> List.map (get_import_id `Importbin))
        @ (strs |> List.map (get_import_id `Importstr))
        @ (ext_codes |> List.map fst |> List.map get_ext_code_id))
@@ -436,11 +437,17 @@ let compile ?multi ?(string = false) ?(target = `Main) root_prog_path progs bins
   with_binds env bind_ids @@ fun () ->
   let progs_bindings =
     progs
-    |> List.map (fun (path, e) ->
+    |> List.map (fun (real_path, path, e) ->
            value_binding ~loc
-             ~pat:(env_pvar ~loc env (get_import_id `Import path))
+             ~pat:(env_pvar ~loc env (get_import_id `Import real_path))
              ~expr:
-               [%expr [%e compile_expr_lazy ~toplevel:true ~in_bind:true env e]])
+               (pexp_let ~loc Nonrecursive
+                  [
+                    value_binding ~loc ~pat:(env_pvar ~loc env "$std")
+                      ~expr:[%expr lazy (make_std [%e estring ~loc path])];
+                  ]
+                  [%expr
+                    [%e compile_expr_lazy ~toplevel:true ~in_bind:true env e]]))
   in
   let bins_bindings =
     bins
@@ -502,9 +509,12 @@ let compile ?multi ?(string = false) ?(target = `Main) root_prog_path progs bins
   let other_bindings =
     [
       value_binding ~loc ~pat:(env_pvar ~loc env "$std")
+        ~expr:[%expr lazy (make_std "")];
+      value_binding ~loc
+        ~pat:[%pat? make_std]
         ~expr:
           [%expr
-            lazy
+            fun this_file ->
               [%e
                 match target with
                 | `Stdjsonnet ->
@@ -518,6 +528,11 @@ let compile ?multi ?(string = false) ?(target = `Main) root_prog_path progs bins
                           let _, assrts, _ = f self super in
                           append_to_std self;
                           Hashtbl.add self "extVar" (1, std_ext_var);
+                          Hashtbl.add self "thisFile"
+                            ( 1,
+                              lazy
+                                (SmartString (SmartString.of_string this_file))
+                            );
                           ([||], assrts, self))]]];
       value_binding ~loc
         ~pat:[%pat? std_ext_var]

@@ -1,5 +1,5 @@
 type t = {
-  loaded : (string, Syntax.Core.expr) Hashtbl.t;
+  loaded : (string, string * Syntax.Core.expr) Hashtbl.t;
   importbins : (string, unit) Hashtbl.t;
   importstrs : (string, unit) Hashtbl.t;
   root_prog_path : string;
@@ -27,45 +27,34 @@ let get_real_path file_path =
       ("get_real_path: failed to call realpath(3); maybe no entry?: "
      ^ file_path)
 
-exception Make_imported_files_real_error of string
-
-let make_imported_files_real root desugared =
-  let conv file =
-    let cand =
-      if Filename.is_relative file then Filename.concat root file else file
-    in
-    match get_real_path cand with
-    | Ok s -> s
-    | Error _ -> raise (Make_imported_files_real_error file)
-  in
-  try
-    Ok
-      (Syntax.Core.map
-         (function
-           | Import file -> Import (conv file)
-           | Importbin file -> Importbin (conv file)
-           | Importstr file -> Importstr (conv file)
-           | x -> x)
-         desugared)
-  with Make_imported_files_real_error file -> Error ("invalid import: " ^ file)
+let update_imported_files root desugared =
+  if root = "." then desugared
+  else
+    Syntax.Core.map
+      (function
+        | Import file -> Import (Filename.concat root file)
+        | Importbin file -> Importbin (Filename.concat root file)
+        | Importstr file -> Importstr (Filename.concat root file)
+        | x -> x)
+      desugared
 
 let rec load is_stdjsonnet src t =
   let ( let* ) = Result.bind in
   match src with
   | `File path -> (
-      let* file_path = get_real_path path in
-      match Hashtbl.find_opt t.loaded file_path with
+      let* real_path = get_real_path path in
+      match Hashtbl.find_opt t.loaded real_path with
       | Some _ -> Ok ()
       | None ->
-          let* prog = Parser.parse_file file_path in
-          let* desugared =
+          let* prog = Parser.parse_file path in
+          let desugared =
             Syntax.desugar ~is_stdjsonnet prog
             |> Syntax.alpha_conv ~is_stdjsonnet
             |> Syntax.float_let_binds
-            |> make_imported_files_real (Filename.dirname file_path)
+            |> update_imported_files (Filename.dirname path)
           in
           let* () = Static_check.f is_stdjsonnet desugared in
-          Hashtbl.add t.loaded file_path desugared;
+          Hashtbl.add t.loaded real_path (path, desugared);
           let progs, bins, strs = list_imported_files desugared in
           bins |> List.iter (fun k -> Hashtbl.replace t.importbins k ());
           strs |> List.iter (fun k -> Hashtbl.replace t.importstrs k ());
@@ -102,7 +91,8 @@ let rec load is_stdjsonnet src t =
 
 let compile ?multi ?string ?target t =
   Compiler.compile ?multi ?string ?target t.root_prog_path
-    (t.loaded |> Hashtbl.to_seq |> List.of_seq)
+    (t.loaded |> Hashtbl.to_seq |> List.of_seq
+    |> List.map (fun (real_path, (path, e)) -> (real_path, path, e)))
     (t.importbins |> Hashtbl.to_seq_keys |> List.of_seq)
     (t.importstrs |> Hashtbl.to_seq_keys |> List.of_seq)
     (t.ext_codes |> Hashtbl.to_seq |> List.of_seq)
@@ -129,8 +119,6 @@ let load_ext_strs ext_strs t =
 
 let load_root ?(is_stdjsonnet = false) ?(ext_codes = []) ?(ext_strs = [])
     root_prog_path =
-  let ( let* ) = Result.bind in
-  let* root_prog_path = get_real_path root_prog_path in
   let t =
     {
       loaded = Hashtbl.create 1;

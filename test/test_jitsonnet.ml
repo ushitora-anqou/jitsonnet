@@ -806,9 +806,14 @@ let test_compiler () =
   ()
 
 let test_compiler_with_go_jsonnet_testdata () =
-  let assert_compile =
-    assert_compile ~test_cases_dir:"../../../thirdparty/go-jsonnet/testdata"
-      ~expected_suffix:".golden"
+  let assert_compile ?multi ?string ?ext_codes ?ext_strs src_file_path
+      result_pat =
+    let saved_wd = Unix.getcwd () in
+    Unix.chdir "../../../thirdparty/go-jsonnet";
+    Fun.protect ~finally:(fun () -> Unix.chdir saved_wd) @@ fun () ->
+    assert_compile ~test_cases_dir:"testdata" ~bundle_path:"../../bundle"
+      ~expected_suffix:".golden" ?multi ?string ?ext_codes ?ext_strs
+      src_file_path result_pat
   in
 
   assert_compile "argcapture_builtin_call" `Success;
@@ -1221,8 +1226,8 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "std.sort2" `Success;
   (*
   assert_compile "std.thisFile" `Success;
-  assert_compile "std.thisFile2" `Success;
   *)
+  assert_compile "std.thisFile2" `Success;
   assert_compile "std.toString" `Success;
   assert_compile "std.toString2" `Success;
   assert_compile "std.toString3" `Success;
