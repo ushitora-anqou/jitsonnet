@@ -306,6 +306,19 @@ let std_md5 ([| s |], []) =
     (SmartString.of_string
        (Digest.to_hex (Digest.string (get_string (Lazy.force s)))))
 
+let std_decode_utf8 ([| arr |], []) =
+  let arr = get_array (Lazy.force arr) in
+  SmartString
+    (SmartString.of_string
+       (String.init (Array.length arr) (fun i ->
+            char_of_int (int_of_float (get_double (Lazy.force arr.(i)))))))
+
+let std_encode_utf8 ([| str |], []) =
+  let str = get_string (Lazy.force str) in
+  Array
+    (Array.init (String.length str) (fun i ->
+         Lazy.from_val (Double (float_of_int (int_of_char str.[i])))))
+
 let in_super super key = value_of_bool (Hashtbl.mem super (get_string key))
 
 let super_index super key =
@@ -493,4 +506,6 @@ let append_to_std tbl =
   Hashtbl.add tbl "mantissa" (1, lazy (Function (1, std_mantissa)));
   Hashtbl.add tbl "md5" (1, lazy (Function (1, std_md5)));
   Hashtbl.add tbl "equals" (1, lazy (Function (2, std_equals)));
+  Hashtbl.add tbl "decodeUTF8" (1, lazy (Function (1, std_decode_utf8)));
+  Hashtbl.add tbl "encodeUTF8" (1, lazy (Function (1, std_encode_utf8)));
   ()

@@ -949,7 +949,7 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "builtin_substr_multibyte" `Success;
   assert_compile "builtin_tan" `Success;
   assert_compile "comparisons" `Success;
-  (*assert_compile "decodeUTF8" `Success;*)
+  assert_compile "decodeUTF8" `Success;
   assert_compile "div1" `Success;
   assert_compile "div2" `Success;
   (*assert_compile "div3" `Success;*)
@@ -958,7 +958,7 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "empty_array" `Success;
   assert_compile "empty_object" `Success;
   assert_compile "empty_object_comp" `Success;
-  (*assert_compile "encodeUTF8" `Success;*)
+  assert_compile "encodeUTF8" `Success;
   assert_compile "equals" `Success;
   assert_compile "equals2" `Success;
   assert_compile "equals3" `Success;
