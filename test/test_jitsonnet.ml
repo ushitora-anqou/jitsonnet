@@ -1030,13 +1030,6 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "mult" `Success;
   assert_compile "mult2" `Success;
   assert_compile "mult3" `Success;
-  (*
-  assert_compile "native1" `Success;
-  assert_compile "native2" `Success;
-  assert_compile "native3" `Success;
-  assert_compile "native6" `Success;
-  assert_compile "native_nonexistent" `Success;
-  *)
   assert_compile "numeric_literal" `Success;
   assert_compile "obj_local_right_level" `Success;
   assert_compile "obj_local_right_level2" `Success;
