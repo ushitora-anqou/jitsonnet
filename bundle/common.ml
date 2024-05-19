@@ -356,6 +356,34 @@ let std_md5 (positional, named) =
     (SmartString.of_string
        (Digest.to_hex (Digest.string (get_string (Lazy.force s)))))
 
+let std_sha1 (positional, named) =
+  let s = function_param 0 positional "s" named None in
+  SmartString
+    (SmartString.of_string
+       (Digestif.SHA1.to_hex
+          (Digestif.SHA1.digest_string (get_string (Lazy.force s)))))
+
+let std_sha256 (positional, named) =
+  let s = function_param 0 positional "s" named None in
+  SmartString
+    (SmartString.of_string
+       (Digestif.SHA256.to_hex
+          (Digestif.SHA256.digest_string (get_string (Lazy.force s)))))
+
+let std_sha512 (positional, named) =
+  let s = function_param 0 positional "s" named None in
+  SmartString
+    (SmartString.of_string
+       (Digestif.SHA512.to_hex
+          (Digestif.SHA512.digest_string (get_string (Lazy.force s)))))
+
+let std_sha3 (positional, named) =
+  let s = function_param 0 positional "s" named None in
+  SmartString
+    (SmartString.of_string
+       (Digestif.SHA3_512.to_hex
+          (Digestif.SHA3_512.digest_string (get_string (Lazy.force s)))))
+
 let std_decode_utf8 (positional, named) =
   let arr = function_param 0 positional "arr" named None in
   let arr = get_array (Lazy.force arr) in
@@ -572,6 +600,10 @@ let append_to_std tbl =
   Hashtbl.add tbl "exponent" (1, lazy (Function (1, std_exponent)));
   Hashtbl.add tbl "mantissa" (1, lazy (Function (1, std_mantissa)));
   Hashtbl.add tbl "md5" (1, lazy (Function (1, std_md5)));
+  Hashtbl.add tbl "sha1" (1, lazy (Function (1, std_sha1)));
+  Hashtbl.add tbl "sha256" (1, lazy (Function (1, std_sha256)));
+  Hashtbl.add tbl "sha512" (1, lazy (Function (1, std_sha512)));
+  Hashtbl.add tbl "sha3" (1, lazy (Function (1, std_sha3)));
   Hashtbl.add tbl "equals" (1, lazy (Function (2, std_equals)));
   Hashtbl.add tbl "decodeUTF8" (1, lazy (Function (1, std_decode_utf8)));
   Hashtbl.add tbl "encodeUTF8" (1, lazy (Function (1, std_encode_utf8)));

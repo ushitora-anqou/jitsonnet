@@ -33,3 +33,4 @@ bundle/stdjsonnet.ml
 bundle/uutf.ml
 bundle/*.cmt*
 bundle/dlldtoa_stubs.so
+bundle/digestif.ml

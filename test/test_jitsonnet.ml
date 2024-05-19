@@ -901,12 +901,10 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "builtinReverse_many" `Success;
   assert_compile "builtinReverse_single" `Success;
   assert_compile "builtinRound" `Success;
-  (*
   assert_compile "builtinSha1" `Success;
   assert_compile "builtinSha256" `Success;
   assert_compile "builtinSha3" `Success;
   assert_compile "builtinSha512" `Success;
-  *)
   assert_compile "builtinSubStr_length_larger" `Success;
   assert_compile "builtinSubStr_start_larger_then_size" `Success;
   assert_compile "builtinSubstr" `Success;

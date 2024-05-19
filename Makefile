@@ -18,7 +18,10 @@ build:
 	cp _build/default/thirdparty/yojson/lib/yojson.cma bundle/
 	cp _build/default/thirdparty/yojson/lib/yojson.cmxa bundle/
 	chmod u+w bundle/yojson*
+	cp thirdparty/digestif.ml bundle/
 	dune exec bin/main.exe -- compile --target=stdjsonnet thirdparty/jsonnet/stdlib/std.jsonnet > bundle/stdjsonnet.ml
+	cd bundle && ocamlc -w -a -c digestif.ml
+	cd bundle && ocamlopt -w -a -c digestif.ml
 	cd bundle && ocamlc -w -a -c common.ml
 	cd bundle && ocamlopt -w -a -c common.ml
 	cd bundle && ocamlc -w -a -c stdjsonnet.ml
