@@ -1105,8 +1105,8 @@ let test_compiler_with_go_jsonnet_testdata () =
   (*
   assert_compile "parseJson" `Success;
   assert_compile "parseYaml" `Success;
-  assert_compile "percent_format_float" `Success;
   *)
+  assert_compile "percent_format_float" `Success;
   assert_compile "percent_format_str" `Success;
   assert_compile "percent_format_str2" `Success;
   assert_compile "percent_format_str3" `Success;
@@ -1224,9 +1224,7 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "std.slice" `Success;
   assert_compile "std.sort" `Success;
   assert_compile "std.sort2" `Success;
-  (*
-  assert_compile "std.thisFile" `Success;
-  *)
+  (*assert_compile "std.thisFile" `Success;*)
   assert_compile "std.thisFile2" `Success;
   assert_compile "std.toString" `Success;
   assert_compile "std.toString2" `Success;
@@ -1237,9 +1235,7 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "std.toString8" `Success;
   assert_compile "std_in_local" `Success;
   assert_compile "std_substr" `Success;
-  (*
-  assert_compile "stdlib_smoke_test" `Success;
-  *)
+  (*assert_compile "stdlib_smoke_test" `Success;*)
   assert_compile "strReplace" `Success;
   assert_compile "strReplace2" `Success;
   assert_compile "string2" `Success;
