@@ -13,3 +13,6 @@
 [submodule "thirdparty/ocaml-rope"]
 	path = thirdparty/ocaml-rope
 	url = https://github.com/Chris00/ocaml-rope.git
+[submodule "thirdparty/yojson"]
+	path = thirdparty/yojson
+	url = https://github.com/ocaml-community/yojson.git
