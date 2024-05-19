@@ -522,6 +522,29 @@ let std_equals (positional, named) =
   let b = function_param 1 positional "b" named None in
   value_of_bool (aux a b)
 
+let std_parse_json (positional, named) =
+  let str = function_param 0 positional "str" named None in
+  let str = get_string (Lazy.force str) in
+  let rec aux : Yojson.Safe.t -> value = function
+    | `Null -> Null
+    | `Bool true -> True
+    | `Bool false -> False
+    | `Int i -> Double (float_of_int i)
+    | `Intlit s -> Double (float_of_string s)
+    | `Float f -> Double f
+    | `String s -> SmartString (SmartString.of_string s)
+    | `Assoc xs ->
+        let fields = Hashtbl.create (List.length xs) in
+        List.iter
+          (fun (k, v) -> Hashtbl.add fields k (1, Lazy.from_val (aux v)))
+          xs;
+        make_simple_object ([||], [], fields)
+    | `List xs ->
+        Array (Array.of_list (List.map (fun x -> Lazy.from_val (aux x)) xs))
+    | _ -> assert false
+  in
+  aux (Yojson.Safe.from_string str)
+
 let append_to_std tbl =
   Hashtbl.add tbl "primitiveEquals"
     (1, lazy (Function (2, std_primitive_equals)));
@@ -552,4 +575,5 @@ let append_to_std tbl =
   Hashtbl.add tbl "equals" (1, lazy (Function (2, std_equals)));
   Hashtbl.add tbl "decodeUTF8" (1, lazy (Function (1, std_decode_utf8)));
   Hashtbl.add tbl "encodeUTF8" (1, lazy (Function (1, std_encode_utf8)));
+  Hashtbl.add tbl "parseJson" (1, lazy (Function (1, std_parse_json)));
   ()

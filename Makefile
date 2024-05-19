@@ -13,6 +13,11 @@ build:
 	cp _build/default/thirdparty/ocaml-rope/src/rope.cma bundle/
 	cp _build/default/thirdparty/ocaml-rope/src/rope.cmxa bundle/
 	cp _build/default/thirdparty/ocaml-rope/src/.rope.objs/byte/rope* bundle/
+	cp _build/default/thirdparty/yojson/lib/.yojson.objs/byte/yojson*i bundle/
+	cp _build/default/thirdparty/yojson/lib/yojson.a bundle/
+	cp _build/default/thirdparty/yojson/lib/yojson.cma bundle/
+	cp _build/default/thirdparty/yojson/lib/yojson.cmxa bundle/
+	chmod u+w bundle/yojson*
 	dune exec bin/main.exe -- compile --target=stdjsonnet thirdparty/jsonnet/stdlib/std.jsonnet > bundle/stdjsonnet.ml
 	cd bundle && ocamlc -w -a -c common.ml
 	cd bundle && ocamlopt -w -a -c common.ml

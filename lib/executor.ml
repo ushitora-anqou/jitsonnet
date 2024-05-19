@@ -92,6 +92,7 @@ let compile_to_native ?mold ~ocamlopt ~main_ml ~main_exe ~bundle_path
            "rope.cmxa";
            "dtoa.cmxa";
            "uutf.cmx";
+           "yojson.cmxa";
            "common.cmx";
            "stdjsonnet.cmx";
            main_ml;
@@ -124,6 +125,7 @@ let compile_to_bytecode ~ocamlc ~main_ml ~main_exe ~bundle_path ~interactive ()
         "rope.cma";
         "dtoa.cmo";
         "uutf.cmo";
+        "yojson.cma";
         "common.cmo";
         "stdjsonnet.cmo";
         main_ml;
