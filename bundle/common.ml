@@ -106,6 +106,14 @@ let rec std_cmp = function
   | Double n1, Double n2 -> Float.compare n1 n2
   | _ -> failwith "std_cmp: invalid arguments"
 
+let function_param i positional id named v =
+  if i < Array.length positional then positional.(i)
+  else
+    match List.assoc_opt id named with
+    | Some x -> x
+    | None -> (
+        match v with Some v -> v | None -> failwith "Parameter not bound")
+
 let eval_asserts assrts = List.iter (fun (lazy _) -> ()) assrts
 
 let extract_visible_fields tbl =
@@ -211,7 +219,8 @@ let std_primitive_equals ([| v; v' |], []) =
   | _ -> false)
   |> value_of_bool
 
-let std_length ([| v |], []) =
+let std_length (positional, named) =
+  let v = function_param 0 positional "x" named None in
   match v with
   | (lazy (Array xs)) -> Double (xs |> Array.length |> float_of_int)
   | (lazy (SmartString s)) -> Double (float_of_int (SmartString.length s))
@@ -233,10 +242,13 @@ let std_type' = function
   | Object _ -> "object"
   | Array _ -> "array"
 
-let std_type ([| v |], []) =
+let std_type (positional, named) =
+  let v = function_param 0 positional "x" named None in
   SmartString (SmartString.of_string (std_type' (Lazy.force v)))
 
-let std_filter ([| f; ary |], []) =
+let std_filter (positional, named) =
+  let f = function_param 0 positional "func" named None in
+  let ary = function_param 1 positional "arr" named None in
   let f = f |> Lazy.force |> get_function in
   let xs = ary |> Lazy.force |> get_array in
   Array
@@ -264,14 +276,16 @@ let std_object_fields_ex ([| obj; b' |], []) =
 let std_modulo ([| a; b |], []) =
   Double (Float.rem (get_double (Lazy.force a)) (get_double (Lazy.force b)))
 
-let std_codepoint ([| s |], []) =
+let std_codepoint (positional, named) =
+  let s = function_param 0 positional "str" named None in
   let s = get_string (Lazy.force s) in
   let d = Uutf.decoder ~encoding:`UTF_8 (`String s) in
   match Uutf.decode d with
   | `Uchar u -> Double (float_of_int (Uchar.to_int u))
   | _ -> failwith "std.codepoint: invalid input string"
 
-let std_char ([| n |], []) =
+let std_char (positional, named) =
+  let n = function_param 0 positional "n" named None in
   let n = int_of_float (get_double (Lazy.force n)) in
   let buf = Buffer.create 10 in
   let e = Uutf.encoder `UTF_8 (`Buffer buf) in
@@ -279,41 +293,79 @@ let std_char ([| n |], []) =
   ignore (Uutf.encode e `End);
   SmartString (SmartString.of_string (Buffer.contents buf))
 
-let std_floor ([| f |], []) = Double (Float.floor (get_double (Lazy.force f)))
-let std_acos ([| f |], []) = Double (Float.acos (get_double (Lazy.force f)))
-let std_asin ([| f |], []) = Double (Float.asin (get_double (Lazy.force f)))
-let std_atan ([| f |], []) = Double (Float.atan (get_double (Lazy.force f)))
-let std_cos ([| f |], []) = Double (Float.cos (get_double (Lazy.force f)))
-let std_sin ([| f |], []) = Double (Float.sin (get_double (Lazy.force f)))
-let std_tan ([| f |], []) = Double (Float.tan (get_double (Lazy.force f)))
-let std_exp ([| f |], []) = Double (Float.exp (get_double (Lazy.force f)))
-let std_log ([| f |], []) = Double (Float.log (get_double (Lazy.force f)))
-let std_sqrt ([| f |], []) = Double (Float.sqrt (get_double (Lazy.force f)))
+let std_floor (positional, named) =
+  let f = function_param 0 positional "x" named None in
+  Double (Float.floor (get_double (Lazy.force f)))
 
-let std_exponent ([| f |], []) =
+let std_acos (positional, named) =
+  let f = function_param 0 positional "x" named None in
+  Double (Float.acos (get_double (Lazy.force f)))
+
+let std_asin (positional, named) =
+  let f = function_param 0 positional "x" named None in
+  Double (Float.asin (get_double (Lazy.force f)))
+
+let std_atan (positional, named) =
+  let f = function_param 0 positional "x" named None in
+  Double (Float.atan (get_double (Lazy.force f)))
+
+let std_cos (positional, named) =
+  let f = function_param 0 positional "x" named None in
+  Double (Float.cos (get_double (Lazy.force f)))
+
+let std_sin (positional, named) =
+  let f = function_param 0 positional "x" named None in
+  Double (Float.sin (get_double (Lazy.force f)))
+
+let std_tan (positional, named) =
+  let f = function_param 0 positional "x" named None in
+  Double (Float.tan (get_double (Lazy.force f)))
+
+let std_exp (positional, named) =
+  let f = function_param 0 positional "x" named None in
+  Double (Float.exp (get_double (Lazy.force f)))
+
+let std_log (positional, named) =
+  let f = function_param 0 positional "x" named None in
+  Double (Float.log (get_double (Lazy.force f)))
+
+let std_sqrt (positional, named) =
+  let f = function_param 0 positional "x" named None in
+  Double (Float.sqrt (get_double (Lazy.force f)))
+
+let std_exponent (positional, named) =
+  let f = function_param 0 positional "x" named None in
   Double (float_of_int (snd (Float.frexp (get_double (Lazy.force f)))))
 
-let std_mantissa ([| f |], []) =
+let std_mantissa (positional, named) =
+  let f = function_param 0 positional "x" named None in
   Double (fst (Float.frexp (get_double (Lazy.force f))))
 
-let std_pow ([| f1; f2 |], []) =
+let std_pow (positional, named) =
+  let f1 = function_param 0 positional "x" named None in
+  let f2 = function_param 1 positional "n" named None in
   Double (Float.pow (get_double (Lazy.force f1)) (get_double (Lazy.force f2)))
 
-let std_ceil ([| f |], []) = Double (Float.ceil (get_double (Lazy.force f)))
+let std_ceil (positional, named) =
+  let f = function_param 0 positional "x" named None in
+  Double (Float.ceil (get_double (Lazy.force f)))
 
-let std_md5 ([| s |], []) =
+let std_md5 (positional, named) =
+  let s = function_param 0 positional "s" named None in
   SmartString
     (SmartString.of_string
        (Digest.to_hex (Digest.string (get_string (Lazy.force s)))))
 
-let std_decode_utf8 ([| arr |], []) =
+let std_decode_utf8 (positional, named) =
+  let arr = function_param 0 positional "arr" named None in
   let arr = get_array (Lazy.force arr) in
   SmartString
     (SmartString.of_string
        (String.init (Array.length arr) (fun i ->
             char_of_int (int_of_float (get_double (Lazy.force arr.(i)))))))
 
-let std_encode_utf8 ([| str |], []) =
+let std_encode_utf8 (positional, named) =
+  let str = function_param 0 positional "str" named None in
   let str = get_string (Lazy.force str) in
   Array
     (Array.init (String.length str) (fun i ->
@@ -409,14 +461,6 @@ let object_field' k v =
   | Null -> None
   | SmartString s -> Some (SmartString.to_string s, (1, v))
   | _ -> failwith "field name must be string, got something else"
-
-let function_param i positional id named v =
-  if i < Array.length positional then positional.(i)
-  else
-    match List.assoc_opt id named with
-    | Some x -> x
-    | None -> (
-        match v with Some v -> v | None -> failwith "Parameter not bound")
 
 let error v =
   manifestation Format.str_formatter v;
