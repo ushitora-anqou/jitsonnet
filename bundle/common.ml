@@ -56,9 +56,8 @@ let gen_empty_self () = Hashtbl.create 0
 let value_of_bool = function true -> True | false -> False
 
 let string_of_double f =
-  let i64 = Int64.of_float f in
-  if f = Int64.to_float i64 then Printf.sprintf "%s" (Int64.to_string i64)
-  else Printf.sprintf "%s" (Dtoa.ecma_string_of_float f)
+  if Float.floor f = f then Printf.sprintf "%.0f" f
+  else Dtoa.ecma_string_of_float f
 
 let get_object = function
   | Object (General (obj, _)) -> obj
