@@ -16,3 +16,6 @@
 [submodule "thirdparty/yojson"]
 	path = thirdparty/yojson
 	url = https://github.com/ocaml-community/yojson.git
+[submodule "thirdparty/ocaml-yaml"]
+	path = thirdparty/ocaml-yaml
+	url = https://github.com/avsm/ocaml-yaml.git
