@@ -17,10 +17,12 @@ depends: [
   "logs"
   "menhir"
   "ocaml"
+  "dtoa"
   "odoc" {with-doc}
   "ppx_deriving"
   "rope"
   "uutf"
+  "yaml"
   "yojson"
 ]
 build: [

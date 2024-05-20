@@ -1,5 +1,37 @@
 open Ppxlib
 
+let dependent_libs =
+  [
+    "eqaf/eqaf";
+    "uutf/uutf";
+    "dtoa/dtoa";
+    "digestif/c/digestif_c";
+    "yojson/yojson";
+    "integers/integers";
+    "bigarray-compat/bigarray_compat";
+    "ctypes/ctypes";
+    "ctypes/stubs/ctypes_stubs";
+    "yaml/bindings/types/yaml_bindings_types";
+    "yaml/types/yaml_types";
+    "yaml/bindings/yaml_bindings";
+    "yaml/c/yaml_c";
+    "yaml/ffi/yaml_ffi";
+    "yaml/yaml";
+  ]
+
+let dependent_includes =
+  [
+    "ctypes";
+    "digestif/c";
+    "dtoa";
+    "integers";
+    "uutf";
+    "yaml";
+    "yaml/c";
+    "yaml/ffi";
+    "yojson";
+  ]
+
 (* `rm_rf dir_name` removes all files in `dir_name` and remove `dir_name`.
  * NOTE: `rm_rf` does NOT remove directories in `dir_name`.
  *)
@@ -74,30 +106,30 @@ let string_of_process_status = function
   | WSIGNALED n -> "signal " ^ string_of_int n
   | WSTOPPED n -> "stopped  " ^ string_of_int n
 
-let compile_to_native ?mold ~ocamlopt ~main_ml ~main_exe ~bundle_path
+let compile_to_native ?mold ~ocamlopt ~main_ml ~main_exe ~opam_lib ~lib_runtime
     ~interactive () =
+  let includes =
+    dependent_includes
+    |> List.map (fun x -> [ "-I"; Filename.concat opam_lib x ])
+    |> List.flatten
+  in
+  let libs =
+    dependent_libs |> List.map (fun x -> Filename.concat opam_lib x ^ ".cmxa")
+  in
   match
     execute_process ~interactive
       (mold |> Option.value ~default:ocamlopt)
-      (Array.append
-         (match mold with None -> [||] | Some mold -> [| mold; "-run" |])
-         [|
-           ocamlopt;
-           "-w";
-           "a";
-           "-o";
-           main_exe;
-           "-I";
-           bundle_path;
-           "rope.cmxa";
-           "dtoa.cmxa";
-           "uutf.cmx";
-           "yojson.cmxa";
-           "digestif.cmx";
-           "common.cmx";
-           "stdjsonnet.cmx";
-           main_ml;
-         |])
+      ((match mold with None -> [] | Some mold -> [ mold; "-run" ])
+       :: [
+            [ ocamlopt; "-w"; "a"; "-o"; main_exe ];
+            includes;
+            libs;
+            [ "-I"; lib_runtime; "runtime.cmxa" ];
+            [ "-I"; Filename.concat lib_runtime ".runtime.objs/byte" ];
+            [ "-open"; "Runtime" ];
+            [ main_ml ];
+          ]
+      |> List.flatten |> Array.of_list)
   with
   | Unix.WEXITED 0, _, _ -> ()
   | status, stdout_content, stderr_content ->
@@ -111,29 +143,28 @@ let compile_to_native ?mold ~ocamlopt ~main_ml ~main_exe ~bundle_path
         (Compilation_failed
            (Printf.sprintf "unexpected error: %s" (Printexc.to_string exc)))
 
-let compile_to_bytecode ~ocamlc ~main_ml ~main_exe ~bundle_path ~interactive ()
-    =
+let compile_to_bytecode ~ocamlc ~main_ml ~main_exe ~opam_lib ~lib_runtime
+    ~interactive () =
+  let includes =
+    dependent_includes
+    |> List.map (fun x -> [ "-I"; Filename.concat opam_lib x ])
+    |> List.flatten
+  in
+  let libs =
+    dependent_libs |> List.map (fun x -> Filename.concat opam_lib x ^ ".cma")
+  in
   match
     execute_process ~interactive ocamlc
-      [|
-        ocamlc;
-        "-w";
-        "a";
-        "-o";
-        main_exe;
-        "-I";
-        bundle_path;
-        "rope.cma";
-        "dtoa.cmo";
-        "uutf.cmo";
-        "yojson.cma";
-        "digestif.cmo";
-        "common.cmo";
-        "stdjsonnet.cmo";
-        main_ml;
-        "-dllib";
-        "-ldtoa_stubs";
-      |]
+      ([
+         [ ocamlc; "-w"; "a"; "-o"; main_exe ];
+         includes;
+         libs;
+         [ "-I"; lib_runtime; "runtime.cma" ];
+         [ "-I"; Filename.concat lib_runtime ".runtime.objs/byte" ];
+         [ "-open"; "Runtime" ];
+         [ main_ml ];
+       ]
+      |> List.flatten |> Array.of_list)
   with
   | Unix.WEXITED 0, _, _ -> ()
   | status, stdout_content, stderr_content ->
@@ -147,10 +178,10 @@ let compile_to_bytecode ~ocamlc ~main_ml ~main_exe ~bundle_path ~interactive ()
         (Compilation_failed
            (Printf.sprintf "unexpected error: %s" (Printexc.to_string exc)))
 
-let run_executable ~main_exe ~bundle_path ~interactive () =
+let run_executable ~main_exe ~opam_lib ~interactive () =
   try
     execute_process ~interactive main_exe [| main_exe |]
-      ~env:[| "LD_LIBRARY_PATH=" ^ bundle_path |]
+      ~env:[| "LD_LIBRARY_PATH=" ^ Filename.concat opam_lib "stublibs/" |]
   with exc ->
     raise
       (Execution_failed
@@ -174,7 +205,8 @@ type config = {
   ocamlc : string; [@default "ocamlc.opt"]
   ocamlopt : string; [@default "ocamlopt"]
   ocamlcp : string; [@default "ocamlcp"]
-  bundle_path : string;
+  opam_lib : string;
+  lib_runtime : string;
   show_profile : bool; [@default false]
   mode :
     [ `Bytecode (* ocamlc *) | `Native (* ocamlopt *) | `Profile (* ocamlcp *) ];
@@ -192,7 +224,8 @@ let execute
       main_exe_file_name;
       ocamlc;
       ocamlopt;
-      bundle_path;
+      opam_lib;
+      lib_runtime;
       show_profile;
       mode;
       interactive_execute;
@@ -219,16 +252,14 @@ let execute
   match mode with
   | `Bytecode ->
       timeit show_profile "compile to bytecode" (fun () ->
-          compile_to_bytecode ~ocamlc ~main_ml ~main_exe ~bundle_path
+          compile_to_bytecode ~ocamlc ~main_ml ~main_exe ~opam_lib ~lib_runtime
             ~interactive:interactive_compile ());
       timeit show_profile "execute bytecode" (fun () ->
-          run_executable ~main_exe ~bundle_path ~interactive:interactive_execute
-            ())
+          run_executable ~main_exe ~opam_lib ~interactive:interactive_execute ())
   | `Native ->
       timeit show_profile "compile to native" (fun () ->
-          compile_to_native ?mold ~ocamlopt ~main_ml ~main_exe ~bundle_path
-            ~interactive:interactive_compile ());
+          compile_to_native ?mold ~ocamlopt ~main_ml ~main_exe ~opam_lib
+            ~lib_runtime ~interactive:interactive_compile ());
       timeit show_profile "execute native" (fun () ->
-          run_executable ~main_exe ~bundle_path ~interactive:interactive_execute
-            ())
+          run_executable ~main_exe ~opam_lib ~interactive:interactive_execute ())
   | `Profile -> failwith "profile mode not implemented"

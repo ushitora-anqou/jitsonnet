@@ -1,4 +1,5 @@
 (executable
  (public_name jitsonnet)
  (name main)
- (libraries jitsonnet logs logs.fmt cmdliner))
+ (libraries jitsonnet logs logs.fmt cmdliner runtime)
+ (modes byte exe))

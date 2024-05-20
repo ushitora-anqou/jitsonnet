@@ -1,0 +1,8 @@
+(env
+ (dev
+  (flags
+   (:standard -w -8-26-27-39))))
+
+(library
+ (name runtime)
+ (libraries uutf dtoa digestif yojson yaml))

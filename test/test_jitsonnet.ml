@@ -722,7 +722,9 @@ let test_static_check_basics () =
   assert_static_check false "local x = 1, x = 2; x";
   ()
 
-let assert_compile ?remove_work_dir ?(bundle_path = "../../../bundle")
+let assert_compile ?(mode = `Bytecode) ?remove_work_dir
+    ?(opam_lib = "../../../../_opam/lib")
+    ?(lib_runtime = "../../../_build/default/lib_runtime")
     ?(test_cases_dir = "../../../test/cases") ?(expected_suffix = ".expected")
     ?(multi = false) ?(string = false) ?(ext_codes = []) ?(ext_strs = [])
     src_file_path result_pat =
@@ -745,8 +747,8 @@ let assert_compile ?remove_work_dir ?(bundle_path = "../../../bundle")
         let compiled = Loader.compile ?multi:multi_output_dir ~string t in
         Executor.(
           execute
-            (make_config ~mode:`Bytecode ~bundle_path ?remove_work_dir
-               ~interactive_compile:true ~interactive_execute:false ())
+            (make_config ~mode ?remove_work_dir ~interactive_compile:true
+               ~interactive_execute:false ~opam_lib ~lib_runtime ())
             compiled)
       with
       | Unix.WEXITED 0, got, _ -> (
@@ -801,6 +803,7 @@ let test_compiler_error () =
 
 let test_compiler () =
   assert_compile "success00" `Success;
+  assert_compile ~mode:`Native "success00" `Success;
   assert_compile ~multi:true ~string:true "success01_multi_string" `Success;
   assert_compile ~string:true "success02_string" `Success;
   ()
@@ -811,9 +814,9 @@ let test_compiler_with_go_jsonnet_testdata () =
     let saved_wd = Unix.getcwd () in
     Unix.chdir "../../../thirdparty/go-jsonnet";
     Fun.protect ~finally:(fun () -> Unix.chdir saved_wd) @@ fun () ->
-    assert_compile ~test_cases_dir:"testdata" ~bundle_path:"../../bundle"
-      ~expected_suffix:".golden" ?multi ?string ?ext_codes ?ext_strs
-      src_file_path result_pat
+    assert_compile ~test_cases_dir:"testdata" ~expected_suffix:".golden" ?multi
+      ?string ?ext_codes ?ext_strs ~opam_lib:"../../../_opam/lib"
+      ~lib_runtime:"../../_build/default/lib_runtime" src_file_path result_pat
   in
 
   assert_compile "argcapture_builtin_call" `Success;

@@ -13,10 +13,6 @@ let () =
             Term.(
               const run
               $ Arg.(required & pos 0 (some string) None & info ~docv:"FILE" [])
-              $ Arg.(
-                  required
-                  & pos 1 (some string) None
-                  & info ~docv:"BUNDLE-PATH" [])
               $ Arg.(value & flag & info [ "profile" ])
               $ Arg.(value & opt (some string) None & info [ "work-dir" ])
               $ Arg.(value & flag & info [ "native" ])
@@ -24,7 +20,15 @@ let () =
               $ Arg.(value & opt (some string) None & info [ "m"; "multi" ])
               $ Arg.(value & flag & info [ "S"; "string" ])
               $ Arg.(value & opt_all string [] & info [ "ext-code" ])
-              $ Arg.(value & opt_all string [] & info [ "V"; "ext-str" ]));
+              $ Arg.(value & opt_all string [] & info [ "V"; "ext-str" ])
+              $ Arg.(
+                  value & opt string ""
+                  & info ~env:(Env.info "JITSONNET_OPAM_LIB") [ "opam-lib" ])
+              $ Arg.(
+                  value & opt string ""
+                  & info
+                      ~env:(Env.info "JITSONNET_LIB_RUNTIME")
+                      [ "lib-runtime" ]));
           v (info "compile")
             Term.(
               const compile
