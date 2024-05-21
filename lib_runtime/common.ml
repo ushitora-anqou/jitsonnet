@@ -572,6 +572,40 @@ let std_parse_json (positional, named) =
   in
   aux (Yojson.Safe.from_string str)
 
+let std_parse_yaml =
+  let separator = Str.regexp "^---[ \t]*$" in
+  fun (positional, named) ->
+    let str = function_param 0 positional "str" named None in
+    let str = get_string (Lazy.force str) in
+    let rec aux : Yaml.value -> value = function
+      | `Null -> Null
+      | `Bool true -> True
+      | `Bool false -> False
+      | `Float f -> Double f
+      | `String s -> SmartString (SmartString.of_string s)
+      | `A xs ->
+          Array (Array.of_list (List.map (fun x -> Lazy.from_val (aux x)) xs))
+      | `O xs ->
+          let fields = Hashtbl.create (List.length xs) in
+          List.iter
+            (fun (k, v) -> Hashtbl.add fields k (1, Lazy.from_val (aux v)))
+            xs;
+          make_simple_object ([||], [], fields)
+    in
+    match
+      Str.split separator str |> List.map Yaml.of_string
+      |> List.fold_left
+           (fun acc x ->
+             match (acc, x) with
+             | Some acc, Ok x -> Some (aux x :: acc)
+             | _ -> None)
+           (Some [])
+    with
+    | Some [ x ] -> x
+    | Some xs ->
+        Array (xs |> List.map Lazy.from_val |> List.rev |> Array.of_list)
+    | None -> failwith "std.parseYaml: failed to parse YAML"
+
 let append_to_std tbl =
   Hashtbl.add tbl "primitiveEquals"
     (1, lazy (Function (2, std_primitive_equals)));
@@ -607,4 +641,5 @@ let append_to_std tbl =
   Hashtbl.add tbl "decodeUTF8" (1, lazy (Function (1, std_decode_utf8)));
   Hashtbl.add tbl "encodeUTF8" (1, lazy (Function (1, std_encode_utf8)));
   Hashtbl.add tbl "parseJson" (1, lazy (Function (1, std_parse_json)));
+  Hashtbl.add tbl "parseYaml" (1, lazy (Function (1, std_parse_yaml)));
   ()

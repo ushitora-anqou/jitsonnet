@@ -1097,9 +1097,7 @@ let test_compiler_with_go_jsonnet_testdata () =
   assert_compile "or3" `Success;
   assert_compile "overriding_stdlib_desugared" `Success;
   assert_compile "parseJson" `Success;
-  (*
   assert_compile "parseYaml" `Success;
-  *)
   assert_compile "percent_format_float" `Success;
   assert_compile "percent_format_str" `Success;
   assert_compile "percent_format_str2" `Success;

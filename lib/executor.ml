@@ -2,6 +2,7 @@ open Ppxlib
 
 let dependent_libs =
   [
+    "ocaml/str/str";
     "eqaf/eqaf";
     "uutf/uutf";
     "dtoa/dtoa";
