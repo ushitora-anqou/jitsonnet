@@ -191,8 +191,19 @@ let string_manifestation = function
   | _ -> failwith "expect string, but got something else"
 
 let multi_manifestation ~target_dir ~string v =
+  let rec mkpath = function
+    | "" -> ()
+    | path when Sys.file_exists path && Sys.is_directory path -> ()
+    | path when Sys.file_exists path ->
+        failwith ("mkpath: already file exists: " ^ path)
+    | path ->
+        mkpath (Filename.dirname path);
+        Sys.mkdir path 0o775
+  in
   let with_file k f =
-    let oc = open_out_bin (Filename.concat target_dir k) in
+    let file_path = Filename.concat target_dir k in
+    mkpath (Filename.dirname file_path);
+    let oc = open_out_bin file_path in
     Fun.protect ~finally:(fun () -> close_out oc) (fun () -> f oc)
   in
   match Lazy.force v with
@@ -204,7 +215,7 @@ let multi_manifestation ~target_dir ~string v =
                with_file k (fun oc ->
                    Out_channel.output_string oc (SmartString.to_string s))
            | _ when string ->
-               failwith "expect string vavlues in object, got something else"
+               failwith "expect string values in object, got something else"
            | k, (lazy v) ->
                with_file k (fun oc ->
                    manifestation (Format.formatter_of_out_channel oc) v))
