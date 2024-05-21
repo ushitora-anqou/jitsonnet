@@ -70,8 +70,6 @@ rule main = parse
 }
 | "!=" { P.BANGEQ }
 | "&&" { P.ANDAND }
-| "::" { P.DOUBLECOLONS }
-| ":::" { P.TRIPLECOLONS }
 | "<<" { P.LTLT }
 | "<=" { P.LE }
 | "==" { P.EQEQ }

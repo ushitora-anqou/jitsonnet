@@ -128,6 +128,29 @@ c'|};
 
   ()
 
+let assert_tokens expected got_src =
+  let lex = Lexing.from_string got_src in
+  let got =
+    let rec loop acc =
+      match L.main lex with
+      | P.EOF -> List.rev acc
+      | token -> loop (token :: acc)
+    in
+    loop []
+  in
+  Logs.info (fun m ->
+      m "got [%s], expected [%s]"
+        (String.concat ";" (List.map Parser.string_of_token got))
+        (String.concat ";" (List.map Parser.string_of_token expected)));
+  assert (got = expected);
+  ()
+
+let test_lexer_slice () =
+  assert_tokens
+    P.[ LBRACKET; RBRACKET; LBRACKET; NUMBER 1.000000; COLON; COLON; RBRACKET ]
+    {|[][/*foo*/1/*bar*/:/*baz*/:]|};
+  ()
+
 let assert_expr expected got =
   match Parser.parse_string got with
   | Error msg ->
@@ -327,6 +350,9 @@ let test_parse_array_slice () =
     (ArraySlice
        (Var "x", Some (Number 0.0), Some (Number 0.0), Some (Number 0.0)))
     {|x[0:0:0]|};
+  assert_expr
+    (ArraySlice (Array [], Some (Number 1.), None, None))
+    {|[][/*foo*/ 1/*bar*/:/*baz*/:]|};
   ()
 
 let test_parse_call () =
@@ -1299,6 +1325,7 @@ let () =
           test_case "keyword" `Quick test_lexer_keyword;
           test_case "number" `Quick test_lexer_number;
           test_case "string" `Quick test_lexer_string;
+          test_case "slice" `Quick test_lexer_slice;
         ] );
       ( "parse",
         [
