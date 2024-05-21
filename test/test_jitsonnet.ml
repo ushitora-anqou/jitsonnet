@@ -787,6 +787,7 @@ let assert_compile ?(mode = `Bytecode) ?remove_work_dir
               in
               Alcotest.(check int) "" 0 exit_code;
               ()
+          | `SuccessSimple -> ()
           | `Success ->
               let expected = read_all expected_path in
               Alcotest.(check string) "" expected got;
@@ -794,7 +795,7 @@ let assert_compile ?(mode = `Bytecode) ?remove_work_dir
           | `Error -> assert false)
       | Unix.WEXITED _, _, got -> (
           match result_pat with
-          | `Success ->
+          | `Success | `SuccessSimple ->
               Logs.err (fun m -> m "failed to execute: '%s'" got);
               assert false
           | `Error -> (
@@ -1313,6 +1314,84 @@ let test_alpha_conversion_basics () =
   assert (got = expected);
   ()
 
+let test_compiler_with_jsonnet_test_suite () =
+  let assert_compile ?multi ?string ?ext_codes ?ext_strs src_file_path
+      result_pat =
+    let saved_wd = Unix.getcwd () in
+    Unix.chdir "../../../thirdparty/jsonnet";
+    Fun.protect ~finally:(fun () -> Unix.chdir saved_wd) @@ fun () ->
+    assert_compile ~test_cases_dir:"test_suite" ?multi ?string ?ext_codes
+      ?ext_strs ~opam_lib:"../../../_opam/lib"
+      ~lib_runtime:"../../_build/default/lib_runtime" src_file_path result_pat
+  in
+
+  assert_compile "arith_bool" `SuccessSimple;
+  assert_compile "arith_float" `SuccessSimple;
+  assert_compile "arith_string" `SuccessSimple;
+  assert_compile "array" `SuccessSimple;
+  assert_compile "array_comparison" `SuccessSimple;
+  assert_compile "array_comparison2" `SuccessSimple;
+  assert_compile "assert" `SuccessSimple;
+  assert_compile "binary" `SuccessSimple;
+  assert_compile "comments" `SuccessSimple;
+  assert_compile "condition" `SuccessSimple;
+  assert_compile "dos_line_endings" `SuccessSimple;
+  assert_compile "fmt_idempotence_issue" `SuccessSimple;
+  assert_compile "fmt_no_trailing_newline" `SuccessSimple;
+  assert_compile "fmt_trailing_c_style" `SuccessSimple;
+  assert_compile "fmt_trailing_multiple_comments" `SuccessSimple;
+  assert_compile "fmt_trailing_newlines" `SuccessSimple;
+  assert_compile "fmt_trailing_newlines2" `SuccessSimple;
+  assert_compile "fmt_trailing_same_line_comment" `SuccessSimple;
+  assert_compile "format" `SuccessSimple;
+  assert_compile "formatter" `SuccessSimple;
+  assert_compile "formatting_braces" `SuccessSimple;
+  assert_compile "formatting_braces2" `SuccessSimple;
+  assert_compile "formatting_braces3" `SuccessSimple;
+  assert_compile "functions" `SuccessSimple;
+  assert_compile "import" `SuccessSimple;
+  (*
+  assert_compile "import_sorting" `SuccessSimple;
+  assert_compile "import_sorting_by_filename" `SuccessSimple;
+  assert_compile "import_sorting_crazy" `SuccessSimple;
+  assert_compile "import_sorting_function_sugar" `SuccessSimple;
+  assert_compile "import_sorting_group_ends" `SuccessSimple;
+  assert_compile "import_sorting_groups" `SuccessSimple;
+  assert_compile "import_sorting_multiple_binds_and_comments" `SuccessSimple;
+  assert_compile "import_sorting_multiple_in_local" `SuccessSimple;
+  assert_compile "import_sorting_unicode" `SuccessSimple;
+  assert_compile "import_sorting_with_license" `SuccessSimple;
+  *)
+  (*assert_compile "invariant" `SuccessSimple;*)
+  assert_compile "invariant_manifest" `SuccessSimple;
+  assert_compile "local" `SuccessSimple;
+  assert_compile "merge" `SuccessSimple;
+  assert_compile "null" `SuccessSimple;
+  (*assert_compile "object" `SuccessSimple;
+      assert_compile "oop" `SuccessSimple;
+    assert_compile "oop_extra" `SuccessSimple;*)
+  assert_compile "parseJson_long_array_gc_test" `SuccessSimple;
+  assert_compile "parsing_edge_cases" `SuccessSimple;
+  assert_compile "precedence" `SuccessSimple;
+  assert_compile "recursive_function" `SuccessSimple;
+  assert_compile "recursive_import_ok" `SuccessSimple;
+  assert_compile "recursive_object" `SuccessSimple;
+  assert_compile "sanity" `SuccessSimple;
+  assert_compile "sanity2" `SuccessSimple;
+  assert_compile "shebang" `SuccessSimple;
+  assert_compile "slice.sugar" `SuccessSimple;
+  (*assert_compile "std_all_hidden" `SuccessSimple;*)
+  assert_compile "text_block" `SuccessSimple;
+  (*assert_compile "tla.simple" `SuccessSimple;
+        assert_compile "trace" `SuccessSimple;
+      assert_compile "unicode" `SuccessSimple;
+    assert_compile "unicode_bmp" `SuccessSimple;*)
+  assert_compile "unix_line_endings" `SuccessSimple;
+  assert_compile "unparse" `SuccessSimple;
+  assert_compile "verbatim_strings" `SuccessSimple;
+  (*assert_compile "stdlib" `SuccessSimple;*)
+  ()
+
 let () =
   let open Alcotest in
   Fmt.set_style_renderer Fmt.stderr `Ansi_tty;
@@ -1367,5 +1446,6 @@ let () =
           test_case "error" `Quick test_compiler_error;
           test_case "go-jsonnet ok" `Quick
             test_compiler_with_go_jsonnet_testdata;
+          test_case "jsonnet ok" `Quick test_compiler_with_jsonnet_test_suite;
         ] );
     ]
