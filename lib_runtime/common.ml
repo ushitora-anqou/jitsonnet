@@ -439,6 +439,7 @@ let array_index v1 v2 =
   | _ -> failwith "ArrayIndex: expect array got something else"
 
 let rec value_to_smart_string = function
+  | Null -> SmartString.of_string "null"
   | SmartString s -> s
   | Double f -> SmartString.of_string (string_of_double f)
   | True -> SmartString.of_string "true"
