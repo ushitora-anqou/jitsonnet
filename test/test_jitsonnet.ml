@@ -1380,7 +1380,7 @@ let test_compiler_with_jsonnet_test_suite () =
   assert_compile "sanity2" `SuccessSimple;
   assert_compile "shebang" `SuccessSimple;
   assert_compile "slice.sugar" `SuccessSimple;
-  (*assert_compile "std_all_hidden" `SuccessSimple;*)
+  assert_compile "std_all_hidden" `SuccessSimple;
   assert_compile "text_block" `SuccessSimple;
   (*assert_compile "tla.simple" `SuccessSimple;
         assert_compile "trace" `SuccessSimple;

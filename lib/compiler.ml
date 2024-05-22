@@ -527,9 +527,9 @@ let compile ?multi ?(string = false) ?(target = `Main) root_prog_path progs bins
                           in
                           let _, assrts, _ = f self super in
                           append_to_std self;
-                          Hashtbl.add self "extVar" (1, std_ext_var);
+                          Hashtbl.add self "extVar" (2, std_ext_var);
                           Hashtbl.add self "thisFile"
-                            ( 1,
+                            ( 2,
                               lazy
                                 (SmartString (SmartString.of_string this_file))
                             );

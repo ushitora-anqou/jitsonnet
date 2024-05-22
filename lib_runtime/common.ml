@@ -527,8 +527,8 @@ let std_make_array (positional, named) =
     (Array.init (int_of_float n) (fun i ->
          lazy (f ([| lazy (Double (float_of_int i)) |], []))))
 
-let make_std_ext_var tbl
-    ([| (name : value Lazy.t) |], ([] : (string * value Lazy.t) list)) =
+let make_std_ext_var tbl (positional, named) =
+  let name = function_param 0 positional "x" named None in
   match Hashtbl.find_opt tbl (get_string (Lazy.force name)) with
   | None -> failwith "std.extVar: not found"
   | Some v -> Lazy.force v
@@ -620,38 +620,38 @@ let std_parse_yaml =
 
 let append_to_std tbl =
   Hashtbl.add tbl "primitiveEquals"
-    (1, lazy (Function (2, std_primitive_equals)));
-  Hashtbl.add tbl "length" (1, lazy (Function (1, std_length)));
-  Hashtbl.add tbl "makeArray" (1, lazy (Function (2, std_make_array)));
-  Hashtbl.add tbl "type" (1, lazy (Function (1, std_type)));
-  Hashtbl.add tbl "filter" (1, lazy (Function (2, std_filter)));
-  Hashtbl.add tbl "objectHasEx" (1, lazy (Function (3, std_object_has_ex)));
-  Hashtbl.add tbl "objectFieldsEx" (1, lazy (Function (2, std_object_fields_ex)));
-  Hashtbl.add tbl "modulo" (1, lazy (Function (2, std_modulo)));
-  Hashtbl.add tbl "codepoint" (1, lazy (Function (1, std_codepoint)));
-  Hashtbl.add tbl "char" (1, lazy (Function (1, std_char)));
-  Hashtbl.add tbl "floor" (1, lazy (Function (1, std_floor)));
-  Hashtbl.add tbl "acos" (1, lazy (Function (1, std_acos)));
-  Hashtbl.add tbl "asin" (1, lazy (Function (1, std_asin)));
-  Hashtbl.add tbl "atan" (1, lazy (Function (1, std_atan)));
-  Hashtbl.add tbl "cos" (1, lazy (Function (1, std_cos)));
-  Hashtbl.add tbl "sin" (1, lazy (Function (1, std_sin)));
-  Hashtbl.add tbl "tan" (1, lazy (Function (1, std_tan)));
-  Hashtbl.add tbl "exp" (1, lazy (Function (2, std_exp)));
-  Hashtbl.add tbl "log" (1, lazy (Function (1, std_log)));
-  Hashtbl.add tbl "sqrt" (1, lazy (Function (1, std_sqrt)));
-  Hashtbl.add tbl "pow" (1, lazy (Function (2, std_pow)));
-  Hashtbl.add tbl "ceil" (1, lazy (Function (1, std_ceil)));
-  Hashtbl.add tbl "exponent" (1, lazy (Function (1, std_exponent)));
-  Hashtbl.add tbl "mantissa" (1, lazy (Function (1, std_mantissa)));
-  Hashtbl.add tbl "md5" (1, lazy (Function (1, std_md5)));
-  Hashtbl.add tbl "sha1" (1, lazy (Function (1, std_sha1)));
-  Hashtbl.add tbl "sha256" (1, lazy (Function (1, std_sha256)));
-  Hashtbl.add tbl "sha512" (1, lazy (Function (1, std_sha512)));
-  Hashtbl.add tbl "sha3" (1, lazy (Function (1, std_sha3)));
-  Hashtbl.add tbl "equals" (1, lazy (Function (2, std_equals)));
-  Hashtbl.add tbl "decodeUTF8" (1, lazy (Function (1, std_decode_utf8)));
-  Hashtbl.add tbl "encodeUTF8" (1, lazy (Function (1, std_encode_utf8)));
-  Hashtbl.add tbl "parseJson" (1, lazy (Function (1, std_parse_json)));
-  Hashtbl.add tbl "parseYaml" (1, lazy (Function (1, std_parse_yaml)));
+    (2, lazy (Function (2, std_primitive_equals)));
+  Hashtbl.add tbl "length" (2, lazy (Function (1, std_length)));
+  Hashtbl.add tbl "makeArray" (2, lazy (Function (2, std_make_array)));
+  Hashtbl.add tbl "type" (2, lazy (Function (1, std_type)));
+  Hashtbl.add tbl "filter" (2, lazy (Function (2, std_filter)));
+  Hashtbl.add tbl "objectHasEx" (2, lazy (Function (3, std_object_has_ex)));
+  Hashtbl.add tbl "objectFieldsEx" (2, lazy (Function (2, std_object_fields_ex)));
+  Hashtbl.add tbl "modulo" (2, lazy (Function (2, std_modulo)));
+  Hashtbl.add tbl "codepoint" (2, lazy (Function (1, std_codepoint)));
+  Hashtbl.add tbl "char" (2, lazy (Function (1, std_char)));
+  Hashtbl.add tbl "floor" (2, lazy (Function (1, std_floor)));
+  Hashtbl.add tbl "acos" (2, lazy (Function (1, std_acos)));
+  Hashtbl.add tbl "asin" (2, lazy (Function (1, std_asin)));
+  Hashtbl.add tbl "atan" (2, lazy (Function (1, std_atan)));
+  Hashtbl.add tbl "cos" (2, lazy (Function (1, std_cos)));
+  Hashtbl.add tbl "sin" (2, lazy (Function (1, std_sin)));
+  Hashtbl.add tbl "tan" (2, lazy (Function (1, std_tan)));
+  Hashtbl.add tbl "exp" (2, lazy (Function (2, std_exp)));
+  Hashtbl.add tbl "log" (2, lazy (Function (1, std_log)));
+  Hashtbl.add tbl "sqrt" (2, lazy (Function (1, std_sqrt)));
+  Hashtbl.add tbl "pow" (2, lazy (Function (2, std_pow)));
+  Hashtbl.add tbl "ceil" (2, lazy (Function (1, std_ceil)));
+  Hashtbl.add tbl "exponent" (2, lazy (Function (1, std_exponent)));
+  Hashtbl.add tbl "mantissa" (2, lazy (Function (1, std_mantissa)));
+  Hashtbl.add tbl "md5" (2, lazy (Function (1, std_md5)));
+  Hashtbl.add tbl "sha1" (2, lazy (Function (1, std_sha1)));
+  Hashtbl.add tbl "sha256" (2, lazy (Function (1, std_sha256)));
+  Hashtbl.add tbl "sha512" (2, lazy (Function (1, std_sha512)));
+  Hashtbl.add tbl "sha3" (2, lazy (Function (1, std_sha3)));
+  Hashtbl.add tbl "equals" (2, lazy (Function (2, std_equals)));
+  Hashtbl.add tbl "decodeUTF8" (2, lazy (Function (1, std_decode_utf8)));
+  Hashtbl.add tbl "encodeUTF8" (2, lazy (Function (1, std_encode_utf8)));
+  Hashtbl.add tbl "parseJson" (2, lazy (Function (1, std_parse_json)));
+  Hashtbl.add tbl "parseYaml" (2, lazy (Function (1, std_parse_yaml)));
   ()
