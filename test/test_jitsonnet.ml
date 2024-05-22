@@ -1323,19 +1323,20 @@ let test_compiler_with_jsonnet_test_suite () =
     assert_compile ~test_cases_dir:"test_suite" ?multi ?string ?ext_codes
       ?ext_strs ~opam_lib:"../../../_opam/lib"
       ~lib_runtime:"../../_build/default/lib_runtime" src_file_path result_pat
+      ~expected_suffix:".jsonnet.golden"
   in
 
   assert_compile "arith_bool" `SuccessSimple;
   assert_compile "arith_float" `SuccessSimple;
   assert_compile "arith_string" `SuccessSimple;
   assert_compile "array" `SuccessSimple;
-  assert_compile "array_comparison" `SuccessSimple;
-  assert_compile "array_comparison2" `SuccessSimple;
+  assert_compile "array_comparison" `Success;
+  assert_compile "array_comparison2" `Success;
   assert_compile "assert" `SuccessSimple;
   assert_compile "binary" `SuccessSimple;
   assert_compile "comments" `SuccessSimple;
   assert_compile "condition" `SuccessSimple;
-  assert_compile "dos_line_endings" `SuccessSimple;
+  assert_compile "dos_line_endings" `Success;
   assert_compile "fmt_idempotence_issue" `SuccessSimple;
   assert_compile "fmt_no_trailing_newline" `SuccessSimple;
   assert_compile "fmt_trailing_c_style" `SuccessSimple;
@@ -1344,9 +1345,9 @@ let test_compiler_with_jsonnet_test_suite () =
   assert_compile "fmt_trailing_newlines2" `SuccessSimple;
   assert_compile "fmt_trailing_same_line_comment" `SuccessSimple;
   assert_compile "format" `SuccessSimple;
-  assert_compile "formatter" `SuccessSimple;
-  assert_compile "formatting_braces" `SuccessSimple;
-  assert_compile "formatting_braces2" `SuccessSimple;
+  assert_compile "formatter" `Success;
+  assert_compile "formatting_braces" `Success;
+  assert_compile "formatting_braces2" `Success;
   assert_compile "formatting_braces3" `SuccessSimple;
   assert_compile "functions" `SuccessSimple;
   assert_compile "import" `SuccessSimple;
@@ -1363,33 +1364,37 @@ let test_compiler_with_jsonnet_test_suite () =
   assert_compile "import_sorting_with_license" `SuccessSimple;
   *)
   (*assert_compile "invariant" `SuccessSimple;*)
-  assert_compile "invariant_manifest" `SuccessSimple;
+  assert_compile "invariant_manifest" `Success;
   assert_compile "local" `SuccessSimple;
   assert_compile "merge" `SuccessSimple;
   assert_compile "null" `SuccessSimple;
-  (*assert_compile "object" `SuccessSimple;
-      assert_compile "oop" `SuccessSimple;
-    assert_compile "oop_extra" `SuccessSimple;*)
-  assert_compile "parseJson_long_array_gc_test" `SuccessSimple;
+  (*
+  assert_compile "object" `SuccessSimple;
+  assert_compile "oop" `SuccessSimple;
+  assert_compile "oop_extra" `SuccessSimple;
+  *)
+  assert_compile "parseJson_long_array_gc_test" `Success;
   assert_compile "parsing_edge_cases" `SuccessSimple;
   assert_compile "precedence" `SuccessSimple;
   assert_compile "recursive_function" `SuccessSimple;
   assert_compile "recursive_import_ok" `SuccessSimple;
   assert_compile "recursive_object" `SuccessSimple;
-  assert_compile "sanity" `SuccessSimple;
-  assert_compile "sanity2" `SuccessSimple;
+  assert_compile "sanity" `Success;
+  assert_compile "sanity2" `Success;
   assert_compile "shebang" `SuccessSimple;
   assert_compile "slice.sugar" `SuccessSimple;
   assert_compile "std_all_hidden" `SuccessSimple;
   assert_compile "text_block" `SuccessSimple;
-  (*assert_compile "tla.simple" `SuccessSimple;
-        assert_compile "trace" `SuccessSimple;*)
+  (*
+  assert_compile "tla.simple" `SuccessSimple;
+  assert_compile "trace" `Success;
+  *)
   assert_compile "unicode" `SuccessSimple;
-  (*assert_compile "unicode_bmp" `SuccessSimple;*)
-  assert_compile "unix_line_endings" `SuccessSimple;
-  assert_compile "unparse" `SuccessSimple;
+  (*assert_compile "unicode_bmp" `Success;*)
+  assert_compile "unix_line_endings" `Success;
+  (*assert_compile "unparse" `Success;*)
   assert_compile "verbatim_strings" `SuccessSimple;
-  (*assert_compile "stdlib" `SuccessSimple;*)
+  (*assert_compile "stdlib" `Success;*)
   ()
 
 let () =
