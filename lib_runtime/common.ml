@@ -1,32 +1,95 @@
 module SmartString : sig
   type t
 
-  val length : t -> int
   val of_string : string -> t
-  val to_string : t -> string
-  val get : t -> int -> char
-  val sub : t -> int -> int -> t
+  val concat2 : t -> t -> t
   val compare : t -> t -> int
   val equal : t -> t -> bool
-  val concat2 : t -> t -> t
-  val concat : t -> t list -> t
+  val to_string : t -> string
+  val utf8_length : t -> int
+  val utf8_get : t -> int -> Uchar.t
+  val utf8_sub : t -> int -> int -> t
+  val of_uchars : Uchar.t array -> t
 end = struct
-  type t = string
+  type t = {
+    mutable uchars : Uchar.t array option;
+    mutable str : string option;
+  }
 
-  let make v = v
-  let length x = match x with s -> String.length s
-  let of_string x = x
-  let to_string x = match x with s -> s
-  let get x i = match x with s -> String.get s i
-  let sub x off len = match x with s -> make (String.sub s off len)
-  let compare x y = match (x, y) with x, y -> String.compare x y
-  let equal x y = match (x, y) with x, y -> String.equal x y
+  let make ?uchars ?str () = { uchars; str }
+  let of_uchars uchars = make ~uchars ()
+
+  let refill_uchars x =
+    match x.uchars with
+    | Some _ -> ()
+    | None ->
+        let d = Uutf.decoder ~encoding:`UTF_8 (`String (Option.get x.str)) in
+        let rec loop acc =
+          match Uutf.decode d with
+          | `Uchar c -> loop (c :: acc)
+          | `End -> List.rev acc
+          | _ -> failwith "invalid utf-8 string"
+        in
+        x.uchars <- Some (Array.of_list (loop []))
+
+  let refill_str x =
+    match x.str with
+    | Some _ -> ()
+    | None ->
+        let buf = Buffer.create 0 in
+        let e = Uutf.encoder `UTF_8 (`Buffer buf) in
+        x.uchars |> Option.get
+        |> Array.iter (fun x -> ignore (Uutf.encode e (`Uchar x)));
+        ignore (Uutf.encode e `End);
+        x.str <- Some (Buffer.contents buf)
+
+  let of_string str = make ~str ()
+
+  let to_string x =
+    refill_str x;
+    Option.get x.str
+
+  let utf8_length x =
+    refill_uchars x;
+    Array.length (Option.get x.uchars)
+
+  let utf8_get x i =
+    refill_uchars x;
+    (Option.get x.uchars).(i)
+
+  let utf8_sub x off len =
+    refill_uchars x;
+    make ~uchars:(Array.sub (Option.get x.uchars) off len) ()
 
   let concat2 x y =
-    let rec aux = function x, y -> x ^ y in
-    make (aux (x, y))
+    match (x, y) with
+    | { uchars = None; str = Some str1 }, { uchars = None; str = Some str2 } ->
+        make ~str:(str1 ^ str2) ()
+    | _ ->
+        refill_uchars x;
+        refill_uchars y;
+        make
+          ~uchars:(Array.append (Option.get x.uchars) (Option.get y.uchars))
+          ()
 
-  let concat = String.concat
+  let compare x y =
+    let rec aux x y xi yi =
+      match (xi < Array.length x, yi < Array.length y) with
+      | false, false -> 0
+      | false, true -> -1
+      | true, false -> 1
+      | _ when x.(xi) > y.(yi) -> 1
+      | _ when x.(xi) < y.(yi) -> -1
+      | _ -> aux x y (xi + 1) (yi + 1)
+    in
+    match (x, y) with
+    | { str = Some str1; _ }, { str = Some str2; _ } -> String.compare str1 str2
+    | _ ->
+        refill_uchars x;
+        refill_uchars y;
+        aux (Option.get x.uchars) (Option.get y.uchars) 0 0
+
+  let equal x y = compare x y = 0
 end
 
 type value =
@@ -86,7 +149,7 @@ let get_function = function
   | _ -> failwith "expect function got something else"
 
 let get_string = function
-  | SmartString s -> SmartString.to_string s
+  | SmartString s -> s
   | _ -> failwith "expect string got something else"
 
 let rec std_cmp = function
@@ -233,7 +296,7 @@ let std_length (positional, named) =
   let v = function_param 0 positional "x" named None in
   match v with
   | (lazy (Array xs)) -> Double (xs |> Array.length |> float_of_int)
-  | (lazy (SmartString s)) -> Double (float_of_int (SmartString.length s))
+  | (lazy (SmartString s)) -> Double (float_of_int (SmartString.utf8_length s))
   | (lazy (Object _ as x)) ->
       let _, _, fields = get_object x in
       Double
@@ -270,7 +333,7 @@ let std_object_has_ex ([| obj; f; b' |], []) =
   let _, _, fields = get_object (Lazy.force obj) in
   let f = f |> Lazy.force |> get_string in
   let b' = b' |> Lazy.force |> get_bool in
-  match Hashtbl.find_opt fields f with
+  match Hashtbl.find_opt fields (SmartString.to_string f) with
   | Some (h, _) when h <> 2 || b' -> True
   | _ -> False
 
@@ -289,19 +352,12 @@ let std_modulo ([| a; b |], []) =
 let std_codepoint (positional, named) =
   let s = function_param 0 positional "str" named None in
   let s = get_string (Lazy.force s) in
-  let d = Uutf.decoder ~encoding:`UTF_8 (`String s) in
-  match Uutf.decode d with
-  | `Uchar u -> Double (float_of_int (Uchar.to_int u))
-  | _ -> failwith "std.codepoint: invalid input string"
+  Double (float_of_int (Uchar.to_int (SmartString.utf8_get s 0)))
 
 let std_char (positional, named) =
   let n = function_param 0 positional "n" named None in
   let n = int_of_float (get_double (Lazy.force n)) in
-  let buf = Buffer.create 10 in
-  let e = Uutf.encoder `UTF_8 (`Buffer buf) in
-  ignore (Uutf.encode e (`Uchar (Uchar.of_int n)));
-  ignore (Uutf.encode e `End);
-  SmartString (SmartString.of_string (Buffer.contents buf))
+  SmartString (SmartString.of_uchars [| Uchar.of_int n |])
 
 let std_floor (positional, named) =
   let f = function_param 0 positional "x" named None in
@@ -364,35 +420,40 @@ let std_md5 (positional, named) =
   let s = function_param 0 positional "s" named None in
   SmartString
     (SmartString.of_string
-       (Digest.to_hex (Digest.string (get_string (Lazy.force s)))))
+       (Digest.to_hex
+          (Digest.string (SmartString.to_string (get_string (Lazy.force s))))))
 
 let std_sha1 (positional, named) =
   let s = function_param 0 positional "s" named None in
   SmartString
     (SmartString.of_string
        (Digestif.SHA1.to_hex
-          (Digestif.SHA1.digest_string (get_string (Lazy.force s)))))
+          (Digestif.SHA1.digest_string
+             (SmartString.to_string (get_string (Lazy.force s))))))
 
 let std_sha256 (positional, named) =
   let s = function_param 0 positional "s" named None in
   SmartString
     (SmartString.of_string
        (Digestif.SHA256.to_hex
-          (Digestif.SHA256.digest_string (get_string (Lazy.force s)))))
+          (Digestif.SHA256.digest_string
+             (SmartString.to_string (get_string (Lazy.force s))))))
 
 let std_sha512 (positional, named) =
   let s = function_param 0 positional "s" named None in
   SmartString
     (SmartString.of_string
        (Digestif.SHA512.to_hex
-          (Digestif.SHA512.digest_string (get_string (Lazy.force s)))))
+          (Digestif.SHA512.digest_string
+             (SmartString.to_string (get_string (Lazy.force s))))))
 
 let std_sha3 (positional, named) =
   let s = function_param 0 positional "s" named None in
   SmartString
     (SmartString.of_string
        (Digestif.SHA3_512.to_hex
-          (Digestif.SHA3_512.digest_string (get_string (Lazy.force s)))))
+          (Digestif.SHA3_512.digest_string
+             (SmartString.to_string (get_string (Lazy.force s))))))
 
 let std_decode_utf8 (positional, named) =
   let arr = function_param 0 positional "arr" named None in
@@ -404,17 +465,18 @@ let std_decode_utf8 (positional, named) =
 
 let std_encode_utf8 (positional, named) =
   let str = function_param 0 positional "str" named None in
-  let str = get_string (Lazy.force str) in
+  let str = SmartString.to_string (get_string (Lazy.force str)) in
   Array
     (Array.init (String.length str) (fun i ->
          Lazy.from_val (Double (float_of_int (int_of_char str.[i])))))
 
-let in_super super key = value_of_bool (Hashtbl.mem super (get_string key))
+let in_super super key =
+  value_of_bool (Hashtbl.mem super (SmartString.to_string (get_string key)))
 
 let super_index super key =
   let key = get_string key in
-  match Hashtbl.find_opt super key with
-  | None -> failwith ("field does not exist: " ^ key)
+  match Hashtbl.find_opt super (SmartString.to_string key) with
+  | None -> failwith ("field does not exist: " ^ SmartString.to_string key)
   | Some (_, (lazy v)) -> v
 
 let array_index_s' (_, assrts, tbl) key =
@@ -432,10 +494,10 @@ let array_index v1 v2 =
   match v1 with
   | Array a -> a.(get_double v2 |> int_of_float) |> Lazy.force
   | SmartString s ->
-      SmartString (SmartString.sub s (int_of_float (get_double v2)) 1)
+      SmartString (SmartString.utf8_sub s (int_of_float (get_double v2)) 1)
   | Object (General (obj, _)) ->
       let key = get_string v2 in
-      array_index_s' obj key
+      array_index_s' obj (SmartString.to_string key)
   | _ -> failwith "ArrayIndex: expect array got something else"
 
 let rec value_to_smart_string = function
@@ -529,7 +591,9 @@ let std_make_array (positional, named) =
 
 let make_std_ext_var tbl (positional, named) =
   let name = function_param 0 positional "x" named None in
-  match Hashtbl.find_opt tbl (get_string (Lazy.force name)) with
+  match
+    Hashtbl.find_opt tbl (SmartString.to_string (get_string (Lazy.force name)))
+  with
   | None -> failwith "std.extVar: not found"
   | Some v -> Lazy.force v
 
@@ -582,7 +646,7 @@ let std_parse_json (positional, named) =
         Array (Array.of_list (List.map (fun x -> Lazy.from_val (aux x)) xs))
     | _ -> assert false
   in
-  aux (Yojson.Safe.from_string str)
+  aux (Yojson.Safe.from_string (SmartString.to_string str))
 
 let std_parse_yaml =
   let separator = Str.regexp "^---[ \t]*$" in
@@ -605,7 +669,8 @@ let std_parse_yaml =
           make_simple_object ([||], [], fields)
     in
     match
-      Str.split separator str |> List.map Yaml.of_string
+      Str.split separator (SmartString.to_string str)
+      |> List.map Yaml.of_string
       |> List.fold_left
            (fun acc x ->
              match (acc, x) with
@@ -619,39 +684,40 @@ let std_parse_yaml =
     | None -> failwith "std.parseYaml: failed to parse YAML"
 
 let append_to_std tbl =
-  Hashtbl.add tbl "primitiveEquals"
-    (2, lazy (Function (2, std_primitive_equals)));
-  Hashtbl.add tbl "length" (2, lazy (Function (1, std_length)));
-  Hashtbl.add tbl "makeArray" (2, lazy (Function (2, std_make_array)));
-  Hashtbl.add tbl "type" (2, lazy (Function (1, std_type)));
-  Hashtbl.add tbl "filter" (2, lazy (Function (2, std_filter)));
-  Hashtbl.add tbl "objectHasEx" (2, lazy (Function (3, std_object_has_ex)));
-  Hashtbl.add tbl "objectFieldsEx" (2, lazy (Function (2, std_object_fields_ex)));
-  Hashtbl.add tbl "modulo" (2, lazy (Function (2, std_modulo)));
-  Hashtbl.add tbl "codepoint" (2, lazy (Function (1, std_codepoint)));
-  Hashtbl.add tbl "char" (2, lazy (Function (1, std_char)));
-  Hashtbl.add tbl "floor" (2, lazy (Function (1, std_floor)));
-  Hashtbl.add tbl "acos" (2, lazy (Function (1, std_acos)));
-  Hashtbl.add tbl "asin" (2, lazy (Function (1, std_asin)));
-  Hashtbl.add tbl "atan" (2, lazy (Function (1, std_atan)));
-  Hashtbl.add tbl "cos" (2, lazy (Function (1, std_cos)));
-  Hashtbl.add tbl "sin" (2, lazy (Function (1, std_sin)));
-  Hashtbl.add tbl "tan" (2, lazy (Function (1, std_tan)));
-  Hashtbl.add tbl "exp" (2, lazy (Function (2, std_exp)));
-  Hashtbl.add tbl "log" (2, lazy (Function (1, std_log)));
-  Hashtbl.add tbl "sqrt" (2, lazy (Function (1, std_sqrt)));
-  Hashtbl.add tbl "pow" (2, lazy (Function (2, std_pow)));
-  Hashtbl.add tbl "ceil" (2, lazy (Function (1, std_ceil)));
-  Hashtbl.add tbl "exponent" (2, lazy (Function (1, std_exponent)));
-  Hashtbl.add tbl "mantissa" (2, lazy (Function (1, std_mantissa)));
-  Hashtbl.add tbl "md5" (2, lazy (Function (1, std_md5)));
-  Hashtbl.add tbl "sha1" (2, lazy (Function (1, std_sha1)));
-  Hashtbl.add tbl "sha256" (2, lazy (Function (1, std_sha256)));
-  Hashtbl.add tbl "sha512" (2, lazy (Function (1, std_sha512)));
-  Hashtbl.add tbl "sha3" (2, lazy (Function (1, std_sha3)));
-  Hashtbl.add tbl "equals" (2, lazy (Function (2, std_equals)));
-  Hashtbl.add tbl "decodeUTF8" (2, lazy (Function (1, std_decode_utf8)));
-  Hashtbl.add tbl "encodeUTF8" (2, lazy (Function (1, std_encode_utf8)));
-  Hashtbl.add tbl "parseJson" (2, lazy (Function (1, std_parse_json)));
-  Hashtbl.add tbl "parseYaml" (2, lazy (Function (1, std_parse_yaml)));
+  let add k v = Hashtbl.add tbl k v in
+
+  add "primitiveEquals" (2, lazy (Function (2, std_primitive_equals)));
+  add "length" (2, lazy (Function (1, std_length)));
+  add "makeArray" (2, lazy (Function (2, std_make_array)));
+  add "type" (2, lazy (Function (1, std_type)));
+  add "filter" (2, lazy (Function (2, std_filter)));
+  add "objectHasEx" (2, lazy (Function (3, std_object_has_ex)));
+  add "objectFieldsEx" (2, lazy (Function (2, std_object_fields_ex)));
+  add "modulo" (2, lazy (Function (2, std_modulo)));
+  add "codepoint" (2, lazy (Function (1, std_codepoint)));
+  add "char" (2, lazy (Function (1, std_char)));
+  add "floor" (2, lazy (Function (1, std_floor)));
+  add "acos" (2, lazy (Function (1, std_acos)));
+  add "asin" (2, lazy (Function (1, std_asin)));
+  add "atan" (2, lazy (Function (1, std_atan)));
+  add "cos" (2, lazy (Function (1, std_cos)));
+  add "sin" (2, lazy (Function (1, std_sin)));
+  add "tan" (2, lazy (Function (1, std_tan)));
+  add "exp" (2, lazy (Function (2, std_exp)));
+  add "log" (2, lazy (Function (1, std_log)));
+  add "sqrt" (2, lazy (Function (1, std_sqrt)));
+  add "pow" (2, lazy (Function (2, std_pow)));
+  add "ceil" (2, lazy (Function (1, std_ceil)));
+  add "exponent" (2, lazy (Function (1, std_exponent)));
+  add "mantissa" (2, lazy (Function (1, std_mantissa)));
+  add "md5" (2, lazy (Function (1, std_md5)));
+  add "sha1" (2, lazy (Function (1, std_sha1)));
+  add "sha256" (2, lazy (Function (1, std_sha256)));
+  add "sha512" (2, lazy (Function (1, std_sha512)));
+  add "sha3" (2, lazy (Function (1, std_sha3)));
+  add "equals" (2, lazy (Function (2, std_equals)));
+  add "decodeUTF8" (2, lazy (Function (1, std_decode_utf8)));
+  add "encodeUTF8" (2, lazy (Function (1, std_encode_utf8)));
+  add "parseJson" (2, lazy (Function (1, std_parse_json)));
+  add "parseYaml" (2, lazy (Function (1, std_parse_yaml)));
   ()

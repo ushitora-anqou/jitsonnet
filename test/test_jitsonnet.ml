@@ -1383,9 +1383,9 @@ let test_compiler_with_jsonnet_test_suite () =
   assert_compile "std_all_hidden" `SuccessSimple;
   assert_compile "text_block" `SuccessSimple;
   (*assert_compile "tla.simple" `SuccessSimple;
-        assert_compile "trace" `SuccessSimple;
-      assert_compile "unicode" `SuccessSimple;
-    assert_compile "unicode_bmp" `SuccessSimple;*)
+        assert_compile "trace" `SuccessSimple;*)
+  assert_compile "unicode" `SuccessSimple;
+  (*assert_compile "unicode_bmp" `SuccessSimple;*)
   assert_compile "unix_line_endings" `SuccessSimple;
   assert_compile "unparse" `SuccessSimple;
   assert_compile "verbatim_strings" `SuccessSimple;
