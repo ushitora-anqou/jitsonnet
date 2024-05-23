@@ -512,10 +512,11 @@ let alpha_conv ?(is_stdjsonnet = false) (e : Core.expr) =
 (* freevars don't include self and super, but may include $. *)
 let freevars e =
   let rec aux = function
-    | Core.False | Import _ | Importbin _ | Importstr _ | Null | Number _ | Self
+    | Core.False | Import _ | Importbin _ | Importstr _ | Null | Number _
     | String _ | True ->
         StringSet.empty
     | Var x -> StringSet.singleton x
+    | Self -> StringSet.singleton "self"
     | Array xs ->
         List.fold_left
           (fun acc x -> StringSet.union acc (aux x))
@@ -532,7 +533,8 @@ let freevars e =
           |> List.fold_left (fun acc (_, y) -> StringSet.union acc (aux y)) acc
         in
         acc
-    | Error e | InSuper e | SuperIndex e | Unary (_, e) -> aux e
+    | Error e | Unary (_, e) -> aux e
+    | InSuper e | SuperIndex e -> StringSet.add "super" (aux e)
     | Function (xs, e) ->
         let acc =
           xs
@@ -561,6 +563,8 @@ let freevars e =
         acc
     | ObjectFor (e1, e2, x, e3) ->
         let acc = aux e2 in
+        let acc = StringSet.remove "self" acc in
+        let acc = StringSet.remove "super" acc in
         let acc = StringSet.union acc (aux e1) in
         let acc = StringSet.remove x acc in
         let acc = StringSet.union acc (aux e3) in
@@ -585,6 +589,8 @@ let freevars e =
         let acc =
           List.fold_left (fun acc (x, _) -> StringSet.remove x acc) acc binds
         in
+        let acc = StringSet.remove "self" acc in
+        let acc = StringSet.remove "super" acc in
         let acc =
           fields
           |> List.fold_left
@@ -594,6 +600,19 @@ let freevars e =
         acc
   in
   aux e
+
+let separate_floating_binds defvars floating_binds =
+  let rec loop (floating_binds, fixed_binds) =
+    let defvars = StringSet.of_list (defvars @ List.map fst fixed_binds) in
+    let floating_binds', fixed_binds' =
+      floating_binds
+      |> List.partition (fun (_, e) -> StringSet.disjoint defvars (freevars e))
+    in
+    if List.length floating_binds = List.length floating_binds' then
+      (floating_binds, fixed_binds)
+    else loop (floating_binds', fixed_binds @ fixed_binds')
+  in
+  loop (floating_binds, [])
 
 (* float_let_binds requires e is alpha-converted *)
 let float_let_binds (e : Core.expr) =
@@ -634,20 +653,7 @@ let float_let_binds (e : Core.expr) =
         (* FIXME: optimize default arguments *)
         let floating_binds, body = aux body in
         let floating_binds, fixed_binds =
-          let rec loop (floating_binds, fixed_binds) =
-            let defvars =
-              StringSet.of_list (List.map fst xs @ List.map fst fixed_binds)
-            in
-            let floating_binds', fixed_binds' =
-              floating_binds
-              |> List.partition (fun (_, e) ->
-                     StringSet.disjoint defvars (freevars e))
-            in
-            if List.length floating_binds = List.length floating_binds' then
-              (floating_binds, fixed_binds)
-            else loop (floating_binds', fixed_binds @ fixed_binds')
-          in
-          loop (floating_binds, [])
+          separate_floating_binds (List.map fst xs) floating_binds
         in
         (floating_binds, Function (xs, local (fixed_binds, body)))
     | If (e1, e2, e3) ->
@@ -670,25 +676,38 @@ let float_let_binds (e : Core.expr) =
         in
         (floating_binds, body)
     | Object { binds; assrts; fields } ->
-        (* FIXME: move binds outside of binds,assrts,fields *)
-        let floating_binds, binds =
+        let floating_binds1, binds =
           binds
-          |> List.fold_left
-               (fun (floating_binds, binds) (id, e) ->
-                 let floating_binds', bind' = aux e in
-                 (floating_binds @ floating_binds', (id, bind') :: binds))
-               ([], [])
+          |> List.map (fun (id, e) ->
+                 let floating_binds, e = aux e in
+                 (floating_binds, (id, e)))
+          |> List.split
         in
-        let binds = List.rev binds @ floating_binds in
-        let assrts = assrts |> List.map (fun e -> local (aux e)) in
-        let fields =
+        let floating_binds1 = List.flatten floating_binds1 in
+
+        let floating_binds2, assrts = assrts |> List.map aux |> List.split in
+        let floating_binds2 = List.flatten floating_binds2 in
+
+        let floating_binds31, (floating_binds32, fields) =
           fields
           |> List.map (fun (e1, b, h, e2) ->
-                 let e1 = local (aux e1) in
-                 let e2 = local (aux e2) in
-                 (e1, b, h, e2))
+                 let floating_binds31, e1 = aux e1 in
+                 let floating_binds32, e2 = aux e2 in
+                 (floating_binds31, (floating_binds32, (e1, b, h, e2))))
+          |> List.split
+          |> fun (x, y) -> (x, List.split y)
         in
-        ([], Object { binds; assrts; fields })
+        let floating_binds31 = List.flatten floating_binds31 in
+        let floating_binds32 = List.flatten floating_binds32 in
+
+        let floating_binds, fixed_binds =
+          separate_floating_binds
+            ("self" :: "super" :: List.map fst binds)
+            (floating_binds1 @ floating_binds2 @ floating_binds32)
+        in
+
+        ( floating_binds @ floating_binds31,
+          Object { binds = fixed_binds @ binds; assrts; fields } )
     | ObjectFor (e1, e2, x, e3) ->
         (* FIXME: move binds outside of e1, e2, e3 *)
         let e1 = local (aux e1) in

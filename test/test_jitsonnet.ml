@@ -697,9 +697,10 @@ let assert_freevars expected got =
   | Ok p ->
       let got = Syntax.desugar p |> Syntax.freevars in
       Logs.info (fun m ->
-          m "got [%s], expected [%s]"
+          m "got [%s], expected [%s] %s"
             (got |> Syntax.StringSet.to_list |> String.concat ", ")
-            (expected |> String.concat ", "));
+            (expected |> String.concat ", ")
+            (Syntax.Core.show_expr (Syntax.desugar p)));
       assert (Syntax.StringSet.equal got (Syntax.StringSet.of_list expected));
       ()
 
@@ -717,6 +718,10 @@ let test_freevars_object () =
   assert_freevars [ "x"; "z" ] "{ local x = 1, y: z, [ x ]: x }";
   assert_freevars [ "$std"; "x"; "w"; "z" ]
     "{ [ x + z ]: x + w for x in [ x ] for y in [ x ] }";
+  assert_freevars [ "self"; "y" ] "self.x + y";
+  assert_freevars [ "super"; "y" ] "super.x + y";
+  assert_freevars [ "self" ] "{ [ self.x ]: 10 }";
+  assert_freevars [ "super" ] "{ [ super.x ]: 10 }";
   ()
 
 let assert_static_check good src =
