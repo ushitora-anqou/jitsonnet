@@ -1,5 +1,7 @@
 # JITsonnet
 
+A JIT compiler for Jsonnet programming language.
+
 ## How to run native mode with mold linker
 
 ```
