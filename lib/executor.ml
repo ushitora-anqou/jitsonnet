@@ -2,7 +2,6 @@ open Ppxlib
 
 let dependent_libs =
   [
-    "ocaml/str/str";
     "eqaf/eqaf";
     "uutf/uutf";
     "dtoa/dtoa";
@@ -125,6 +124,7 @@ let compile_to_native ?mold ~ocamlopt ~main_ml ~main_exe ~opam_lib ~lib_runtime
             [ ocamlopt; "-w"; "a"; "-o"; main_exe ];
             includes;
             libs;
+            [ "-I"; "+str"; "str.cmxa" ];
             [ "-I"; lib_runtime; "runtime.cmxa" ];
             [ "-I"; Filename.concat lib_runtime ".runtime.objs/byte" ];
             [ "-open"; "Runtime" ];
@@ -160,6 +160,7 @@ let compile_to_bytecode ~ocamlc ~main_ml ~main_exe ~opam_lib ~lib_runtime
          [ ocamlc; "-w"; "a"; "-o"; main_exe ];
          includes;
          libs;
+         [ "-I"; "+str"; "str.cma" ];
          [ "-I"; lib_runtime; "runtime.cma" ];
          [ "-I"; Filename.concat lib_runtime ".runtime.objs/byte" ];
          [ "-open"; "Runtime" ];
