@@ -36,7 +36,8 @@ let () =
               $ Arg.(
                   value
                   & opt (some string) None
-                  & info ~docv:"TARGET" [ "target" ]));
+                  & info ~docv:"TARGET" [ "target" ])
+              $ Arg.(value & flag & info [ "haskell" ]));
         ]
       |> eval))
   |> exit

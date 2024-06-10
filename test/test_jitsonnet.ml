@@ -1402,6 +1402,42 @@ let test_compiler_with_jsonnet_test_suite () =
   (*assert_compile "stdlib" `Success;*)
   ()
 
+let test_haskell_compiler () =
+  let env = Compiler_h.{ vars = Hashtbl.create 0; is_stdjsonnet = false } in
+  let assert_compile input expected =
+    let got = Compiler_h.compile_expr env input in
+    Logs.info (fun m ->
+        m "expected %s, got %s"
+          (Compiler_h.Haskell.show_expr expected)
+          (Compiler_h.Haskell.show_expr got));
+    assert (got = expected)
+  in
+  let make_call = Compiler_h.make_call in
+  assert_compile Null (Symbol "Null");
+  assert_compile True (Call (Symbol "Bool", Symbol "True"));
+  assert_compile False (Call (Symbol "Bool", Symbol "False"));
+  assert_compile (String "foo")
+    (Call (Symbol "makeString", StringLiteral "foo"));
+  assert_compile (Number 12.3) (Call (Symbol "Number", FloatLiteral 12.3));
+  assert_compile (Array []) (Call (Symbol "makeArrayFromList", List []));
+  assert_compile (Array [ Null ])
+    (Call (Symbol "makeArrayFromList", List [ Symbol "Null" ]));
+  assert_compile
+    (Call (Function ([], Number 1.0), [], []))
+    (make_call (Symbol "getFunction")
+       [
+         make_call (Symbol "Function")
+           [
+             IntLiteral 0;
+             Function ("args", Call (Symbol "Number", FloatLiteral 1.0));
+           ];
+         Tuple [ List []; List [] ];
+       ]);
+  assert_compile
+    (Object { binds = []; assrts = []; fields = [] })
+    (make_call (Symbol "Object") [ List []; Symbol "emptyObjectFields" ]);
+  ()
+
 let () =
   let open Alcotest in
   Fmt.set_style_renderer Fmt.stderr `Ansi_tty;
@@ -1458,4 +1494,5 @@ let () =
             test_compiler_with_go_jsonnet_testdata;
           test_case "jsonnet ok" `Quick test_compiler_with_jsonnet_test_suite;
         ] );
+      ("haskell compiler", [ test_case "ok" `Quick test_haskell_compiler ]);
     ]

@@ -97,6 +97,14 @@ let compile ?multi ?string ?target t =
     (t.importstrs |> Hashtbl.to_seq_keys |> List.of_seq)
     (t.ext_codes |> Hashtbl.to_seq |> List.of_seq)
 
+let compile_haskell ?multi ?string ?target t =
+  Compiler_h.compile ?multi ?string ?target t.root_prog_path
+    (t.loaded |> Hashtbl.to_seq |> List.of_seq
+    |> List.map (fun (real_path, (path, e)) -> (real_path, path, e)))
+    (t.importbins |> Hashtbl.to_seq_keys |> List.of_seq)
+    (t.importstrs |> Hashtbl.to_seq_keys |> List.of_seq)
+    (t.ext_codes |> Hashtbl.to_seq |> List.of_seq)
+
 let load_ext ext_code =
   match String.index_opt ext_code '=' with
   | None -> (

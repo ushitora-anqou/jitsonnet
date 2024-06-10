@@ -35,7 +35,7 @@ let run file_path show_profile work_dir_prefix native mold
           Logs.err (fun m -> m "BUG: execution failed: %s" msg);
           exit 1)
 
-let compile file_path target =
+let compile file_path target haskell =
   let target =
     match target with Some "stdjsonnet" -> `Stdjsonnet | _ -> `Main
   in
@@ -43,5 +43,6 @@ let compile file_path target =
   | Error msg ->
       Logs.err (fun m -> m "%s" msg);
       exit 1
+  | Ok t when haskell -> t |> Loader.compile_haskell ~target |> print_string
   | Ok t ->
       t |> Loader.compile ~target |> Pprintast.structure Format.std_formatter
