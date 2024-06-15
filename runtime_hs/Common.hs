@@ -280,13 +280,13 @@ manifestation' multiLine (Array _ xs)
         [ nest
             3
             ( (if multiLine then vsep else hcat)
-                [ lbracket,
-                  concatWith
+                [ lbracket
+                , concatWith
                     (surround (comma <> (if multiLine then line else space)))
                     (map (manifestation' multiLine) $ Vector.toList xs)
                 ]
-            ),
-          rbracket
+            )
+        , rbracket
         ]
 manifestation' multiLine (Object asserts fields) =
   -- FIXME: evaluate asserts
@@ -297,29 +297,29 @@ manifestation' multiLine (Object asserts fields) =
         [ nest
             3
             ( (if multiLine then vsep else hcat)
-                [ lbrace,
-                  concatWith
+                [ lbrace
+                , concatWith
                     (surround (comma <> (if multiLine then line else space)))
                     ( map
                         ( \(k, v) ->
                             hcat
-                              [ pretty $ quoteText k,
-                                colon,
-                                space,
-                                manifestation' multiLine v
+                              [ pretty $ quoteText k
+                              , colon
+                              , space
+                              , manifestation' multiLine v
                               ]
                         )
                         xs
                     )
                 ]
-            ),
-          rbrace
+            )
+        , rbrace
         ]
 
 manifestation :: Bool -> Value -> TL.Text
 manifestation multi x =
   renderLazy $
-    layoutPretty (LayoutOptions {layoutPageWidth = Unbounded}) $
+    layoutPretty (LayoutOptions{layoutPageWidth = Unbounded}) $
       manifestation' multi x
 
 stringManifestation :: Value -> TL.Text
@@ -432,19 +432,19 @@ insertStd (GeneralFields fields) =
     foldl
       (\a (k, v) -> HashMap.insert k v a)
       fields
-      [ ("primitiveEquals", (2, \_ _ -> Function 2 stdPrimitiveEquals)),
-        ("length", (2, \_ _ -> Function 1 stdLength)),
-        ("makeArray", (2, \_ _ -> Function 2 stdMakeArray)),
-        ("type", (2, \_ _ -> Function 1 stdType)),
-        ("filter", (2, \_ _ -> Function 2 stdFilter)),
-        ("objectHasEx", (2, \_ _ -> Function 3 stdObjectHasEx)),
-        ("objectFieldsEx", (2, \_ _ -> Function 2 stdObjectFieldsEx)),
-        ("modulo", (2, \_ _ -> Function 2 stdModulo)),
-        ("codepoint", (2, \_ _ -> Function 1 stdCodepoint)),
-        ("char", (2, \_ _ -> Function 1 stdChar)),
-        ("floor", (2, \_ _ -> Function 1 stdFloor)),
-        ("log", (2, \_ _ -> Function 1 stdLog)),
-        ("pow", (2, \_ _ -> Function 2 stdPow))
+      [ ("primitiveEquals", (2, \_ _ -> Function 2 stdPrimitiveEquals))
+      , ("length", (2, \_ _ -> Function 1 stdLength))
+      , ("makeArray", (2, \_ _ -> Function 2 stdMakeArray))
+      , ("type", (2, \_ _ -> Function 1 stdType))
+      , ("filter", (2, \_ _ -> Function 2 stdFilter))
+      , ("objectHasEx", (2, \_ _ -> Function 3 stdObjectHasEx))
+      , ("objectFieldsEx", (2, \_ _ -> Function 2 stdObjectFieldsEx))
+      , ("modulo", (2, \_ _ -> Function 2 stdModulo))
+      , ("codepoint", (2, \_ _ -> Function 1 stdCodepoint))
+      , ("char", (2, \_ _ -> Function 1 stdChar))
+      , ("floor", (2, \_ _ -> Function 1 stdFloor))
+      , ("log", (2, \_ _ -> Function 1 stdLog))
+      , ("pow", (2, \_ _ -> Function 2 stdPow))
       ]
 
 readBin :: String -> IO Value

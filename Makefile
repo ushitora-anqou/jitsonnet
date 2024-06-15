@@ -20,3 +20,7 @@ update-stdjsonnet-hs:
 	fourmolu -i --column-limit=120 --indentation=1 runtime_hs/Stdjsonnet.hs
 	ghc -iruntime_hs -O2 -c runtime_hs/Common.hs
 	ghc -iruntime_hs -O2 -c runtime_hs/Stdjsonnet.hs
+
+.PHONY: fmt-hs
+fmt-hs:
+	fourmolu --column-limit=90 --indentation=2 -i runtime_hs/Common.hs
