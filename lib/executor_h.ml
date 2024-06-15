@@ -72,25 +72,35 @@ let string_of_process_status = function
   | WSIGNALED n -> "signal " ^ string_of_int n
   | WSTOPPED n -> "stopped  " ^ string_of_int n
 
-let compile_to_native ?mold ~ghc ~main_hs ~main_exe ~interactive () =
-  match
-    execute_process ~interactive
-      (mold |> Option.value ~default:ghc)
-      ((match mold with None -> [] | Some mold -> [ mold; "-run" ])
-       :: [ [ ghc; "--make"; "-o"; main_exe; main_hs ] ]
-      |> List.flatten |> Array.of_list)
-  with
-  | Unix.WEXITED 0, _, _ -> ()
-  | status, stdout_content, stderr_content ->
-      raise
-        (Compilation_failed
-           (Printf.sprintf "%s failed: %s:\n%s\n%s" ghc
-              (string_of_process_status status)
-              stdout_content stderr_content))
-  | exception exc ->
-      raise
-        (Compilation_failed
-           (Printf.sprintf "unexpected error: %s" (Printexc.to_string exc)))
+let compile_to_native ~ghc ~runtime_dir ~main_hs ~main_exe ~interactive () =
+  let run_ghc args =
+    match execute_process ~interactive ghc (Array.of_list (ghc :: args)) with
+    | Unix.WEXITED 0, _, _ -> ()
+    | status, stdout_content, stderr_content ->
+        raise
+          (Compilation_failed
+             (Printf.sprintf "%s failed: %s:\n%s\n%s" ghc
+                (string_of_process_status status)
+                stdout_content stderr_content))
+  in
+  try
+    run_ghc [ "-i" ^ runtime_dir; "-c"; "-O2"; main_hs ];
+    run_ghc
+      (List.flatten
+         [
+           [ "-O2" ];
+           [ "-o"; main_exe ];
+           [ "-i" ^ runtime_dir ];
+           [
+             Filename.concat runtime_dir "Common.o";
+             Filename.concat runtime_dir "Stdjsonnet.o";
+             Filename.remove_extension main_hs ^ ".o";
+           ];
+         ])
+  with exc ->
+    raise
+      (Compilation_failed
+         (Printf.sprintf "unexpected error: %s" (Printexc.to_string exc)))
 
 let run_executable ~main_exe ~interactive () =
   try execute_process ~interactive main_exe [| main_exe |]
@@ -118,6 +128,7 @@ type config = {
   show_profile : bool; [@default false]
   interactive_compile : bool;
   interactive_execute : bool;
+  runtime_dir : string;
 }
 [@@deriving make]
 
@@ -131,6 +142,7 @@ let execute
       show_profile;
       interactive_execute;
       interactive_compile;
+      runtime_dir;
       _;
     } body =
   let work_dir = Filename.temp_dir ~temp_dir:work_dir_prefix "jitsonnet_" "" in
@@ -148,6 +160,6 @@ let execute
 
   timeit show_profile "compile to native (haskell)" (fun () ->
       compile_to_native ~ghc ~main_hs ~main_exe ~interactive:interactive_compile
-        ());
+        ~runtime_dir ());
   timeit show_profile "execute native (haskell)" (fun () ->
       run_executable ~main_exe ~interactive:interactive_execute ())
