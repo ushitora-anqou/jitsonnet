@@ -5,7 +5,7 @@ A JIT compiler for Jsonnet programming language.
 ## How to install necessary Haskell's libraries
 
 ```
-cabal install --lib vector text prettyprinter unordered-containers bytestring double-conversion deque
+cabal install --lib vector text unordered-containers bytestring double-conversion deque
 ```
 
 ## How to run native mode with mold linker

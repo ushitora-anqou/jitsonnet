@@ -20,8 +20,6 @@ import qualified Data.Vector.Unboxed as UVector
 import Deque.Lazy (Deque)
 import qualified Deque.Lazy as Deque
 import qualified GHC.IsList
-import Prettyprinter
-import Prettyprinter.Render.Text
 
 type UVector = UVector.Vector
 
@@ -241,8 +239,15 @@ objectFieldPlusValue super e1 e2 =
     then binaryAdd (superIndex super e1) e2
     else e2
 
-quoteText :: String -> TL.Text
-quoteText xs =
+extractVisibleFields :: Fields -> [(String, Value)]
+extractVisibleFields fields@(GeneralFields m) =
+  map (\(k, (_, f)) -> (k, f fields emptyObjectFields)) $
+    sortBy (\(k1, _) (k2, _) -> compare k1 k2) $
+      filter (\(_, (h, _)) -> h /= 2) $
+        HashMap.toList m
+
+quoteString :: String -> TB.Builder
+quoteString xs =
   let escape x = case x of
         '"' -> TB.fromString "\\\""
         '\\' -> TB.fromString "\\\\"
@@ -253,74 +258,59 @@ quoteText xs =
         '\t' -> TB.fromString "\\t"
         '\0' -> TB.fromString "\\u0000"
         x -> TB.singleton x
-   in TB.toLazyText $
-        TB.singleton '"'
-          <> foldr
-            (\x a -> escape x <> a)
-            (TB.singleton '"')
-            xs
+   in TB.singleton '"'
+        <> foldr
+          (\x a -> escape x <> a)
+          (TB.singleton '"')
+          xs
 
-extractVisibleFields :: Fields -> [(String, Value)]
-extractVisibleFields fields@(GeneralFields m) =
-  map (\(k, (_, f)) -> (k, f fields emptyObjectFields)) $
-    sortBy (\(k1, _) (k2, _) -> compare k1 k2) $
-      filter (\(_, (h, _)) -> h /= 2) $
-        HashMap.toList m
-
-manifestation' :: Bool -> Value -> Doc ann
-manifestation' _ Null = pretty "null"
-manifestation' _ (Bool True) = pretty "true"
-manifestation' _ (Bool False) = pretty "false"
-manifestation' _ (String s _) = pretty $ TL.unpack $ quoteText $ TL.unpack s
-manifestation' _ (Number n) = pretty $ Data.Double.Conversion.Text.toShortest n
-manifestation' multiLine (Array _ xs)
-  | Vector.null xs = pretty "[ ]"
-  | otherwise =
-      (if multiLine then vsep else hcat)
-        [ nest
-            3
-            ( (if multiLine then vsep else hcat)
-                [ lbracket
-                , concatWith
-                    (surround (comma <> (if multiLine then line else space)))
-                    (map (manifestation' multiLine) $ Vector.toList xs)
-                ]
-            )
-        , rbracket
-        ]
-manifestation' multiLine (Object asserts fields) =
-  -- FIXME: evaluate asserts
-  case extractVisibleFields fields of
-    [] -> pretty "{ }"
-    xs ->
-      (if multiLine then vsep else hcat)
-        [ nest
-            3
-            ( (if multiLine then vsep else hcat)
-                [ lbrace
-                , concatWith
-                    (surround (comma <> (if multiLine then line else space)))
-                    ( map
-                        ( \(k, v) ->
-                            hcat
-                              [ pretty $ quoteText k
-                              , colon
-                              , space
-                              , manifestation' multiLine v
-                              ]
-                        )
-                        xs
+manifestation' :: Bool -> Int -> Bool -> Value -> TB.Builder
+manifestation' hasInitInd ind multiLine v =
+  let indent = TB.fromString $ if multiLine then take ind (repeat ' ') else ""
+      newline = TB.fromString $ if multiLine then "\n" else ""
+      initInd = if hasInitInd then indent else TB.fromString ""
+   in case v of
+        Null -> initInd <> TB.fromString "null"
+        (Bool True) -> initInd <> TB.fromString "true"
+        (Bool False) -> initInd <> TB.fromString "false"
+        (String s _) -> initInd <> quoteString (TL.unpack s)
+        (Number n) -> initInd <> TB.fromText (Data.Double.Conversion.Text.toShortest n)
+        (Array _ xs) ->
+          initInd
+            <> if Vector.null xs
+              then TB.fromString "[ ]"
+              else
+                TB.fromString "["
+                  <> newline
+                  <> Vector.ifoldr
+                    ( \i x b ->
+                        manifestation' True (ind + 3) multiLine x
+                          <> TB.fromString
+                            (if i == Vector.length xs - 1 then "" else (if multiLine then "," else ", "))
+                          <> newline
+                          <> b
                     )
-                ]
-            )
-        , rbrace
-        ]
+                    (indent <> TB.fromString "]")
+                    xs
+        (Object _ fields) ->
+          let encode (k, v) =
+                TB.fromString (if multiLine then take (ind + 3) (repeat ' ') else "")
+                  <> quoteString k
+                  <> TB.fromString ": "
+                  <> manifestation' False (ind + 3) multiLine v
+           in initInd <> case reverse $ extractVisibleFields fields of
+                [] -> TB.fromString "{ }"
+                hd : tl ->
+                  TB.fromString "{"
+                    <> newline
+                    <> foldl
+                      (\b x -> encode x <> TB.fromString (if multiLine then "," else ", ") <> newline <> b)
+                      (encode hd <> newline <> indent <> TB.fromString "}")
+                      tl
 
 manifestation :: Bool -> Value -> TL.Text
 manifestation multi x =
-  renderLazy $
-    layoutPretty (LayoutOptions{layoutPageWidth = Unbounded}) $
-      manifestation' multi x
+  TB.toLazyText $ manifestation' True 0 multi x
 
 stringManifestation :: Value -> TL.Text
 stringManifestation (String s _) = s
