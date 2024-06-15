@@ -371,7 +371,7 @@ stdObjectHasEx args =
       b' = getBool $ functionParam args 2 "b'" Nothing
    in case HashMap.lookup (TL.unpack f) fields of
         Nothing -> Bool False
-        Just (h, _) -> if h == 2 then Bool False else Bool True
+        Just (h, _) -> Bool (h /= 2 || b')
 
 stdObjectFieldsEx :: Arguments -> Value
 stdObjectFieldsEx args =
