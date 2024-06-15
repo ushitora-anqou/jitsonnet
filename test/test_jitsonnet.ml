@@ -1403,16 +1403,16 @@ let test_compiler_with_jsonnet_test_suite () =
   ()
 
 let test_haskell_compiler () =
-  let env = Compiler_h.{ vars = Hashtbl.create 0; is_stdjsonnet = false } in
+  let env = Compiler_hs.{ vars = Hashtbl.create 0; is_stdjsonnet = false } in
   let assert_compile input expected =
-    let got = Compiler_h.compile_expr env input in
+    let got = Compiler_hs.compile_expr env input in
     Logs.info (fun m ->
         m "expected %s, got %s"
-          (Compiler_h.Haskell.show_expr expected)
-          (Compiler_h.Haskell.show_expr got));
+          (Compiler_hs.Haskell.show_expr expected)
+          (Compiler_hs.Haskell.show_expr got));
     assert (got = expected)
   in
-  let make_call = Compiler_h.make_call in
+  let make_call = Compiler_hs.make_call in
   assert_compile Null (Symbol "Null");
   assert_compile True (Call (Symbol "Bool", Symbol "True"));
   assert_compile False (Call (Symbol "Bool", Symbol "False"));

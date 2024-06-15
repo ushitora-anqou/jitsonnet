@@ -12,7 +12,7 @@ let run file_path show_profile work_dir_prefix native mold
   | Ok t when haskell -> (
       let compiled = Loader.compile_haskell ?multi ~string t in
       match
-        Executor_h.(
+        Executor_hs.(
           execute
             (make_config ~interactive_compile:false ~interactive_execute:true
                ~show_profile ?work_dir_prefix
