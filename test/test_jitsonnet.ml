@@ -1,3 +1,5 @@
+[@@@warning "-32"]
+
 open Jitsonnet
 
 let read_all file_path =
@@ -753,12 +755,9 @@ let test_static_check_basics () =
   assert_static_check false "local x = 1, x = 2; x";
   ()
 
-let assert_compile ?(mode = `Bytecode) ?remove_work_dir
-    ?(opam_lib = "../../../../_opam/lib")
-    ?(lib_runtime = "../../../_build/default/lib_runtime")
-    ?(test_cases_dir = "../../../test/cases") ?(expected_suffix = ".expected")
-    ?(multi = false) ?(string = false) ?(ext_codes = []) ?(ext_strs = [])
-    src_file_path result_pat =
+let assert_compile' ~compiler ?(test_cases_dir = "../../../test/cases")
+    ?(expected_suffix = ".expected") ?(multi = false) ?(string = false)
+    ?(ext_codes = []) ?(ext_strs = []) src_file_path result_pat =
   let input_file_path =
     Filename.concat test_cases_dir (src_file_path ^ ".jsonnet")
   in
@@ -774,14 +773,7 @@ let assert_compile ?(mode = `Bytecode) ?remove_work_dir
       let multi_output_dir =
         if multi then Some (Filename.temp_dir "jitsonnet_" "") else None
       in
-      match
-        let compiled = Loader.compile ?multi:multi_output_dir ~string t in
-        Executor.(
-          execute
-            (make_config ~mode ?remove_work_dir ~interactive_compile:true
-               ~interactive_execute:false ~opam_lib ~lib_runtime ())
-            compiled)
-      with
+      match compiler ~multi_output_dir ~t ~string with
       | Unix.WEXITED 0, got, _ -> (
           match result_pat with
           | `Success when multi ->
@@ -826,6 +818,21 @@ let assert_compile ?(mode = `Bytecode) ?remove_work_dir
       | exception Executor.Execution_failed msg ->
           Logs.err (fun m -> m "failed to execute: '%s'" msg);
           assert false)
+
+let assert_compile ?(mode = `Bytecode) ?remove_work_dir
+    ?(opam_lib = "../../../../_opam/lib")
+    ?(lib_runtime = "../../../_build/default/lib_runtime") ?test_cases_dir
+    ?expected_suffix ?multi ?string ?ext_codes ?ext_strs src_file_path
+    result_pat =
+  assert_compile' ?test_cases_dir ?expected_suffix ?multi ?ext_codes ?ext_strs
+    ?string src_file_path result_pat
+    ~compiler:(fun ~multi_output_dir ~t ~string ->
+      let compiled = Loader.compile ?multi:multi_output_dir ~string t in
+      Executor.(
+        execute
+          (make_config ~mode ?remove_work_dir ~interactive_compile:true
+             ~interactive_execute:false ~opam_lib ~lib_runtime ())
+          compiled))
 
 let test_compiler_error () =
   assert_compile "error00" `Error;
@@ -1402,7 +1409,7 @@ let test_compiler_with_jsonnet_test_suite () =
   (*assert_compile "stdlib" `Success;*)
   ()
 
-let test_haskell_compiler () =
+let test_haskell_compiler_ast () =
   let env = Compiler_hs.{ vars = Hashtbl.create 0; is_stdjsonnet = false } in
   let assert_compile input expected =
     let got = Compiler_hs.compile_expr env input in
@@ -1436,6 +1443,23 @@ let test_haskell_compiler () =
   assert_compile
     (Object { binds = []; assrts = []; fields = [] })
     (make_call (Symbol "Object") [ List []; Symbol "emptyObjectFields" ]);
+  ()
+
+let assert_compile_hs ?remove_work_dir ?(runtime_dir = "../../../runtime_hs")
+    ?test_cases_dir ?expected_suffix ?multi ?string ?ext_codes ?ext_strs
+    src_file_path result_pat =
+  assert_compile' ?test_cases_dir ?expected_suffix ?multi ?ext_codes ?ext_strs
+    ?string src_file_path result_pat
+    ~compiler:(fun ~multi_output_dir ~t ~string ->
+      let compiled = Loader.compile_haskell ?multi:multi_output_dir ~string t in
+      Executor_hs.(
+        execute
+          (make_config ?remove_work_dir ~interactive_compile:true
+             ~interactive_execute:false ~runtime_dir ())
+          compiled))
+
+let test_haskell_compiler () =
+  assert_compile_hs "success00" `Success;
   ()
 
 let () =
@@ -1494,5 +1518,7 @@ let () =
             test_compiler_with_go_jsonnet_testdata;
           test_case "jsonnet ok" `Quick test_compiler_with_jsonnet_test_suite;
         ] );
+      ( "haskell compiler (ast)",
+        [ test_case "ok" `Quick test_haskell_compiler_ast ] );
       ("haskell compiler", [ test_case "ok" `Quick test_haskell_compiler ]);
     ]
