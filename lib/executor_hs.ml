@@ -88,7 +88,6 @@ let compile_to_native ~ghc ~runtime_dir ~main_hs ~main_exe ~interactive () =
     run_ghc
       (List.flatten
          [
-           [ "-O2" ];
            [ "-o"; main_exe ];
            [ "-i" ^ runtime_dir ];
            [
