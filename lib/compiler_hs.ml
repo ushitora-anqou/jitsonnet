@@ -392,8 +392,8 @@ and compile_call_args env positional named =
 
 let get_ext_code_id key = "extCode/" ^ key
 
-let compile ?multi:_ ?string:_ ?(target = `Main) root_prog_path progs bins strs
-    ext_codes =
+let compile ?multi:_ ?(string = false) ?(target = `Main) root_prog_path progs
+    bins strs ext_codes =
   let env = { vars = Hashtbl.create 0; is_stdjsonnet = target = `Stdjsonnet } in
 
   let bind_ids =
@@ -446,32 +446,31 @@ let compile ?multi:_ ?string:_ ?(target = `Main) root_prog_path progs bins strs
 
   match target with
   | `Main ->
+      let v =
+        make_call
+          (Symbol (varname env (get_import_id `Import root_prog_path)))
+          [
+            Haskell.RecordConstruction
+              ( "MkImportedData",
+                bins_bindings @ strs_bindings
+                |> List.map (fun (id, _) -> (id, Haskell.Symbol id)) );
+          ]
+      in
+      let v =
+        if string then
+          make_call (Symbol "TLIO.putStr")
+            [ make_call (Symbol "stringManifestation") [ v ] ]
+        else
+          make_call (Symbol "TLIO.putStrLn")
+            [ make_call (Symbol "manifestation") [ BoolLiteral true; v ] ]
+      in
       let main =
         Haskell.Do
           (List.flatten
              [
                bins_bindings |> List.map (fun x -> Haskell.Assign x);
                strs_bindings |> List.map (fun x -> Haskell.Assign x);
-               [
-                 make_call (Symbol "TLIO.putStrLn")
-                   [
-                     make_call (Symbol "manifestation")
-                       [
-                         BoolLiteral true;
-                         make_call
-                           (Symbol
-                              (varname env
-                                 (get_import_id `Import root_prog_path)))
-                           [
-                             Haskell.RecordConstruction
-                               ( "MkImportedData",
-                                 bins_bindings @ strs_bindings
-                                 |> List.map (fun (id, _) ->
-                                        (id, Haskell.Symbol id)) );
-                           ];
-                       ];
-                   ];
-               ];
+               [ v ];
              ])
         |> Haskell.show_expr
       in

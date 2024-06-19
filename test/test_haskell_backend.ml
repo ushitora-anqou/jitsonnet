@@ -1,7 +1,7 @@
 open Jitsonnet
 open Common
 
-let assert_compile_hs ?remove_work_dir ?(runtime_dir = "../../../runtime_hs")
+let assert_compile ?remove_work_dir ?(runtime_dir = "../../../runtime_hs")
     ?test_cases_dir ?expected_suffix ?multi ?string ?ext_codes ?ext_strs
     src_file_path result_pat =
   assert_compile' ?test_cases_dir ?expected_suffix ?multi ?ext_codes ?ext_strs
@@ -15,7 +15,9 @@ let assert_compile_hs ?remove_work_dir ?(runtime_dir = "../../../runtime_hs")
           compiled))
 
 let test_ok () =
-  assert_compile_hs "success00" `Success;
+  assert_compile "success00" `Success;
+  (*assert_compile ~multi:true ~string:true "success01_multi_string" `Success;*)
+  assert_compile ~string:true "success02_string" `Success;
   ()
 
 let () =
