@@ -1,5 +1,6 @@
 module Common where
 
+import Control.Monad (forM_)
 import Data.Bits (complement, shiftL, shiftR, xor, (.&.), (.|.))
 import qualified Data.ByteString as Bytestring
 import Data.Char (chr, ord)
@@ -20,6 +21,8 @@ import qualified Data.Vector.Unboxed as UVector
 import Deque.Lazy (Deque)
 import qualified Deque.Lazy as Deque
 import qualified GHC.IsList
+import System.Directory (createDirectoryIfMissing)
+import System.FilePath (dropFileName, joinPath)
 
 type UVector = UVector.Vector
 
@@ -312,9 +315,25 @@ manifestation :: Bool -> Value -> TL.Text
 manifestation multi x =
   TB.toLazyText $ manifestation' True 0 multi x
 
-stringManifestation :: Value -> TL.Text
-stringManifestation (String s _) = s
-stringManifestation _ = error "stringManifestation: not string"
+mainNormal :: Value -> IO ()
+mainNormal v = TLIO.putStrLn $ manifestation True v
+
+mainString :: Value -> IO ()
+mainString v@(String s _) = TLIO.putStr s
+mainString _ = error "stringManifestation: not string"
+
+mainMulti :: String -> Bool -> Value -> IO ()
+mainMulti targetDir string v@(Object _ fields) =
+  forM_ (extractVisibleFields fields) $ \(k, v) ->
+    let filePath = joinPath [targetDir, k]
+     in case (v, string) of
+          (String s _, True) -> do
+            createDirectoryIfMissing True $ dropFileName filePath
+            TLIO.writeFile filePath s
+          (_, True) -> error "multiManifestation: expect string values in objects"
+          (_, False) -> do
+            createDirectoryIfMissing True $ dropFileName filePath
+            TLIO.writeFile filePath $ manifestation True v
 
 stdMakeArray :: Arguments -> Value
 stdMakeArray args =

@@ -392,8 +392,8 @@ and compile_call_args env positional named =
 
 let get_ext_code_id key = "extCode/" ^ key
 
-let compile ?multi:_ ?(string = false) ?(target = `Main) root_prog_path progs
-    bins strs ext_codes =
+let compile ?multi ?(string = false) ?(target = `Main) root_prog_path progs bins
+    strs ext_codes =
   let env = { vars = Hashtbl.create 0; is_stdjsonnet = target = `Stdjsonnet } in
 
   let bind_ids =
@@ -457,12 +457,16 @@ let compile ?multi:_ ?(string = false) ?(target = `Main) root_prog_path progs
           ]
       in
       let v =
-        if string then
-          make_call (Symbol "TLIO.putStr")
-            [ make_call (Symbol "stringManifestation") [ v ] ]
-        else
-          make_call (Symbol "TLIO.putStrLn")
-            [ make_call (Symbol "manifestation") [ BoolLiteral true; v ] ]
+        if Option.is_some multi then
+          let target_dir =
+            if Filename.is_relative (Option.get multi) then
+              Filename.concat (Sys.getcwd ()) (Option.get multi)
+            else Option.get multi
+          in
+          make_call (Symbol "mainMulti")
+            [ StringLiteral target_dir; BoolLiteral string; v ]
+        else if string then make_call (Symbol "mainString") [ v ]
+        else make_call (Symbol "mainNormal") [ v ]
       in
       let main =
         Haskell.Do

@@ -16,7 +16,7 @@ let assert_compile ?remove_work_dir ?(runtime_dir = "../../../runtime_hs")
 
 let test_ok () =
   assert_compile "success00" `Success;
-  (*assert_compile ~multi:true ~string:true "success01_multi_string" `Success;*)
+  assert_compile ~multi:true ~string:true "success01_multi_string" `Success;
   assert_compile ~string:true "success02_string" `Success;
   ()
 
