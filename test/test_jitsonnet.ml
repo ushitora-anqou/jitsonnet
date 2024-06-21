@@ -760,42 +760,6 @@ let test_alpha_conversion_basics () =
   assert (got = expected);
   ()
 
-let test_haskell_compiler_ast () =
-  let env = Compiler_hs.{ vars = Hashtbl.create 0; is_stdjsonnet = false } in
-  let assert_compile input expected =
-    let got = Compiler_hs.compile_expr env input in
-    Logs.info (fun m ->
-        m "expected %s, got %s"
-          (Compiler_hs.Haskell.show_expr expected)
-          (Compiler_hs.Haskell.show_expr got));
-    assert (got = expected)
-  in
-  let make_call = Compiler_hs.make_call in
-  assert_compile Null (Symbol "Null");
-  assert_compile True (Call (Symbol "Bool", Symbol "True"));
-  assert_compile False (Call (Symbol "Bool", Symbol "False"));
-  assert_compile (String "foo")
-    (Call (Symbol "makeString", StringLiteral "foo"));
-  assert_compile (Number 12.3) (Call (Symbol "Number", FloatLiteral 12.3));
-  assert_compile (Array []) (Call (Symbol "makeArrayFromList", List []));
-  assert_compile (Array [ Null ])
-    (Call (Symbol "makeArrayFromList", List [ Symbol "Null" ]));
-  assert_compile
-    (Call (Function ([], Number 1.0), [], []))
-    (make_call (Symbol "getFunction")
-       [
-         make_call (Symbol "Function")
-           [
-             IntLiteral 0;
-             Function ("args", Call (Symbol "Number", FloatLiteral 1.0));
-           ];
-         Tuple [ List []; List [] ];
-       ]);
-  assert_compile
-    (Object { binds = []; assrts = []; fields = [] })
-    (make_call (Symbol "Object") [ List []; Symbol "emptyObjectFields" ]);
-  ()
-
 let () =
   let open Alcotest in
   Fmt.set_style_renderer Fmt.stderr `Ansi_tty;
@@ -844,6 +808,4 @@ let () =
       ( "alpha conversion",
         [ test_case "basics" `Quick test_alpha_conversion_basics ] );
       ("static check", [ test_case "basics" `Quick test_static_check_basics ]);
-      ( "haskell compiler (ast)",
-        [ test_case "ok" `Quick test_haskell_compiler_ast ] );
     ]

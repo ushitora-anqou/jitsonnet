@@ -333,6 +333,7 @@ let rec compile_expr ?toplevel:_ env : Syntax.Core.expr -> Haskell.expr =
                  ])
              (Symbol "emptyObjectFields")
       in
+      let fields = make_call (Symbol "fillObjectCache") [ fields ] in
 
       make_let bindings1
         (make_let bindings2 (make_call (Symbol "Object") [ assrts; fields ]))
@@ -491,7 +492,7 @@ data ImportedData = MkImportedData { %s }
 makeStd :: String -> Value
 makeStd thisFile =
   case Stdjsonnet.v of
-    Object _ fields -> Object [] $ insertStd fields
+    Object _ fields -> Object [] $ fillObjectCache $ insertStd fields
 
 %s = makeStd ""
 
@@ -507,7 +508,7 @@ main = %s
 
 import Common
 
-%s = Object [] $ insertStd emptyObjectFields
+%s = Object [] $ fillObjectCache $ insertStd emptyObjectFields
 
 v :: Value
 v = %s

@@ -38,7 +38,7 @@ data Fields
   = GeneralFields
       ( HashMap
           String
-          (Int, Fields {- self -} -> Fields {- super -} -> Value)
+          (Int, Value, Fields {- self -} -> Fields {- super -} -> Value)
       )
 
 emptyObjectFields :: Fields
@@ -93,12 +93,13 @@ binaryAdd lhs (String s2 v2) =
    in String t (UVector.fromList $ TL.unpack t)
 binaryAdd (Object asserts1 fields1@(GeneralFields m1)) (Object asserts2 (GeneralFields m2)) =
   Object (asserts1 ++ map (\v self _ -> v self fields1) asserts2) $
-    GeneralFields
-      ( HashMap.unionWith
-          (\(h1, _) (h2, v2) -> (if h2 == 1 then h1 else h2, v2))
-          m1
-          (HashMap.map (\(h, v) -> (h, \self _ -> v self fields1)) m2)
-      )
+    fillObjectCache $
+      GeneralFields
+        ( HashMap.unionWith
+            (\(h1, _, _) (h2, _, v2) -> (if h2 == 1 then h1 else h2, Null, v2))
+            m1
+            (HashMap.map (\(h, _, v) -> (h, Null, \self _ -> v self fields1)) m2)
+        )
 binaryAdd _ _ = error "binaryAdd: invalid values"
 
 binarySub :: Value -> Value -> Value
@@ -211,7 +212,7 @@ superIndex super@(GeneralFields superFields) key =
   let key' = TL.unpack $ getString key
    in case HashMap.lookup key' superFields of
         Nothing -> error ("field does not exist: " ++ key')
-        Just (_, f) -> f super emptyObjectFields
+        Just (_, v, _) -> v
 
 arrayIndex :: Value -> Value -> Value
 arrayIndex (Array _ a) v2 = a Vector.! truncate (getNumber v2)
@@ -221,16 +222,21 @@ arrayIndex (String _ s) v2 =
 arrayIndex (Object _ self@(GeneralFields fields)) v2 =
   case HashMap.lookup (TL.unpack $ getString v2) fields of
     Nothing -> error ("object field not found: " ++ TL.unpack (getString v2))
-    Just (_, f) -> f self emptyObjectFields
+    Just (_, v, _) -> v
 
 objectField :: Int -> Value -> (Fields -> Fields -> Value) -> Fields -> Fields
 objectField h k v fields@(GeneralFields m) =
   case k of
     Null -> fields
-    String k _ -> GeneralFields $ HashMap.insert (TL.unpack k) (h, v) m
+    String k _ -> GeneralFields $ HashMap.insert (TL.unpack k) (h, Null, v) m
+
+fillObjectCache :: Fields -> Fields
+fillObjectCache (GeneralFields m) =
+  let self = GeneralFields $ HashMap.map (\(h, _, f) -> (h, f self emptyObjectFields, f)) m
+   in self
 
 objectFor :: (Fields -> Value -> Fields) -> Value -> Fields
-objectFor f e3 = Vector.foldl f emptyObjectFields $ getArray e3
+objectFor f e3 = fillObjectCache $ Vector.foldl f emptyObjectFields $ getArray e3
 
 error' :: Value -> a
 error' v =
@@ -244,9 +250,9 @@ objectFieldPlusValue super e1 e2 =
 
 extractVisibleFields :: Fields -> [(String, Value)]
 extractVisibleFields fields@(GeneralFields m) =
-  map (\(k, (_, f)) -> (k, f fields emptyObjectFields)) $
+  map (\(k, (_, v, _)) -> (k, v)) $
     sortBy (\(k1, _) (k2, _) -> compare k1 k2) $
-      filter (\(_, (h, _)) -> h /= 2) $
+      filter (\(_, (h, _, _)) -> h /= 2) $
         HashMap.toList m
 
 quoteString :: String -> TB.Builder
@@ -360,7 +366,7 @@ stdLength args =
       case functionParam args 0 "x" Nothing of
         Array _ xs -> Vector.length xs
         String _ xs -> UVector.length xs
-        Object _ (GeneralFields fields) -> HashMap.size $ HashMap.filter (\(h, _) -> h /= 2) fields
+        Object _ (GeneralFields fields) -> HashMap.size $ HashMap.filter (\(h, _, _) -> h /= 2) fields
         Function n _ -> n
         _ -> error "std.length: invalid type argument"
 
@@ -390,7 +396,7 @@ stdObjectHasEx args =
       b' = getBool $ functionParam args 2 "b'" Nothing
    in case HashMap.lookup (TL.unpack f) fields of
         Nothing -> Bool False
-        Just (h, _) -> Bool (h /= 2 || b')
+        Just (h, _, _) -> Bool (h /= 2 || b')
 
 stdObjectFieldsEx :: Arguments -> Value
 stdObjectFieldsEx args =
@@ -400,7 +406,7 @@ stdObjectFieldsEx args =
         map makeString $
           sort $
             map (\(k, _) -> k) $
-              filter (\(_, (h, _)) -> h /= 2 || b') $
+              filter (\(_, (h, _, _)) -> h /= 2 || b') $
                 HashMap.toList fields
 
 stdModulo :: Arguments -> Value
@@ -441,19 +447,19 @@ insertStd (GeneralFields fields) =
     foldl
       (\a (k, v) -> HashMap.insert k v a)
       fields
-      [ ("primitiveEquals", (2, \_ _ -> Function 2 stdPrimitiveEquals))
-      , ("length", (2, \_ _ -> Function 1 stdLength))
-      , ("makeArray", (2, \_ _ -> Function 2 stdMakeArray))
-      , ("type", (2, \_ _ -> Function 1 stdType))
-      , ("filter", (2, \_ _ -> Function 2 stdFilter))
-      , ("objectHasEx", (2, \_ _ -> Function 3 stdObjectHasEx))
-      , ("objectFieldsEx", (2, \_ _ -> Function 2 stdObjectFieldsEx))
-      , ("modulo", (2, \_ _ -> Function 2 stdModulo))
-      , ("codepoint", (2, \_ _ -> Function 1 stdCodepoint))
-      , ("char", (2, \_ _ -> Function 1 stdChar))
-      , ("floor", (2, \_ _ -> Function 1 stdFloor))
-      , ("log", (2, \_ _ -> Function 1 stdLog))
-      , ("pow", (2, \_ _ -> Function 2 stdPow))
+      [ ("primitiveEquals", (2, Null, \_ _ -> Function 2 stdPrimitiveEquals))
+      , ("length", (2, Null, \_ _ -> Function 1 stdLength))
+      , ("makeArray", (2, Null, \_ _ -> Function 2 stdMakeArray))
+      , ("type", (2, Null, \_ _ -> Function 1 stdType))
+      , ("filter", (2, Null, \_ _ -> Function 2 stdFilter))
+      , ("objectHasEx", (2, Null, \_ _ -> Function 3 stdObjectHasEx))
+      , ("objectFieldsEx", (2, Null, \_ _ -> Function 2 stdObjectFieldsEx))
+      , ("modulo", (2, Null, \_ _ -> Function 2 stdModulo))
+      , ("codepoint", (2, Null, \_ _ -> Function 1 stdCodepoint))
+      , ("char", (2, Null, \_ _ -> Function 1 stdChar))
+      , ("floor", (2, Null, \_ _ -> Function 1 stdFloor))
+      , ("log", (2, Null, \_ _ -> Function 1 stdLog))
+      , ("pow", (2, Null, \_ _ -> Function 2 stdPow))
       ]
 
 readBin :: String -> IO Value
