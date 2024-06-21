@@ -47,14 +47,14 @@ emptyObjectFields = GeneralFields HashMap.empty
 data Value
   = Null
   | Bool Bool
-  | String TL.Text (UVector Char)
+  | String String TB.Builder (UVector Char)
   | Number Double
   | Array (Deque (Vector Value)) (Vector Value)
   | Function Int (Arguments -> Value)
   | Object Asserts Fields
 
 makeString :: String -> Value
-makeString s = String (TL.pack s) (UVector.fromList s)
+makeString s = String s (TB.fromString s) (UVector.fromList s)
 
 makeArray :: Vector Value -> Value
 makeArray v = Array (GHC.IsList.fromList [v]) v
@@ -64,19 +64,19 @@ makeArrayFromList a = makeArray $ Vector.fromList a
 
 stdCmp :: Value -> Value -> Ordering
 stdCmp (Number n1) (Number n2) = compare n1 n2
-stdCmp (String s1 _) (String s2 _) = compare s1 s2
+stdCmp (String s1 _ _) (String s2 _ _) = compare s1 s2
 stdCmp (Array _ a1) (Array _ a2) = Vector.cmpBy stdCmp a1 a2
 stdCmp _ _ = error "stdCmp: invalid arguments"
 
-valueToLazyText :: Value -> TL.Text
-valueToLazyText Null = TL.pack "null"
-valueToLazyText (Bool True) = TL.pack "true"
-valueToLazyText (Bool False) = TL.pack "false"
-valueToLazyText (Number n) = TL.fromStrict $ Data.Double.Conversion.Text.toShortest n
-valueToLazyText x =
+valueToTextBuilder :: Value -> TB.Builder
+valueToTextBuilder Null = TB.fromString "null"
+valueToTextBuilder (Bool True) = TB.fromString "true"
+valueToTextBuilder (Bool False) = TB.fromString "false"
+valueToTextBuilder (Number n) = TB.fromText $ Data.Double.Conversion.Text.toShortest n
+valueToTextBuilder x =
   case x of
-    Array _ _ -> manifestation False x
-    Object _ _ -> manifestation False x
+    Array _ _ -> TB.fromLazyText $ manifestation False x
+    Object _ _ -> TB.fromLazyText $ manifestation False x
     _ -> error "valueToLazyText: not expected type"
 
 binaryAdd :: Value -> Value -> Value
@@ -84,13 +84,17 @@ binaryAdd (Number n1) (Number n2) = Number (n1 + n2)
 binaryAdd (Array a1 _) (Array a2 _) =
   let a = a1 <> a2
    in Array a $ Vector.concat $ GHC.IsList.toList a
-binaryAdd (String s1 v1) (String s2 v2) = String (TL.append s1 s2) (v1 UVector.++ v2)
-binaryAdd (String s1 v1) rhs =
-  let t = TL.append s1 (valueToLazyText rhs)
-   in String t (UVector.fromList $ TL.unpack t)
-binaryAdd lhs (String s2 v2) =
-  let t = TL.append (valueToLazyText lhs) s2
-   in String t (UVector.fromList $ TL.unpack t)
+binaryAdd (String s1 b1 v1) (String s2 b2 v2) =
+  let b = b1 <> b2
+   in String (TL.unpack $ TB.toLazyText b) b (UVector.fromList $ TL.unpack $ TB.toLazyText b)
+binaryAdd (String s1 b1 v1) rhs =
+  let b = b1 <> valueToTextBuilder rhs
+      s = TL.unpack $ TB.toLazyText b
+   in String s b (UVector.fromList s)
+binaryAdd lhs (String s2 b2 v2) =
+  let b = valueToTextBuilder lhs <> b2
+      s = TL.unpack $ TB.toLazyText b
+   in String s b (UVector.fromList s)
 binaryAdd (Object asserts1 fields1@(GeneralFields m1)) (Object asserts2 (GeneralFields m2)) =
   Object (asserts1 ++ map (\v self _ -> v self fields1) asserts2) $
     fillObjectCache $
@@ -175,8 +179,8 @@ getBool :: Value -> Bool
 getBool (Bool b) = b
 getBool _ = error "not bool"
 
-getString :: Value -> TL.Text
-getString (String s _) = s
+getString :: Value -> String
+getString (String s _ _) = s
 getString _ = error "not string"
 
 getNumber :: Value -> Double
@@ -205,30 +209,30 @@ functionParam (positional, named) i id v =
 
 inSuper :: Fields -> Value -> Value
 inSuper (GeneralFields super) key =
-  Bool $ HashMap.member (TL.unpack $ getString key) super
+  Bool $ HashMap.member (getString key) super
 
 superIndex :: Fields -> Value -> Value
 superIndex super@(GeneralFields superFields) key =
-  let key' = TL.unpack $ getString key
+  let key' = getString key
    in case HashMap.lookup key' superFields of
         Nothing -> error ("field does not exist: " ++ key')
         Just (_, v, _) -> v
 
 arrayIndex :: Value -> Value -> Value
 arrayIndex (Array _ a) v2 = a Vector.! truncate (getNumber v2)
-arrayIndex (String _ s) v2 =
+arrayIndex (String _ _ s) v2 =
   let c = s UVector.! truncate (getNumber v2)
-   in String (TL.singleton c) (UVector.singleton c)
+   in String [c] (TB.fromString [c]) (UVector.singleton c)
 arrayIndex (Object _ self@(GeneralFields fields)) v2 =
-  case HashMap.lookup (TL.unpack $ getString v2) fields of
-    Nothing -> error ("object field not found: " ++ TL.unpack (getString v2))
+  case HashMap.lookup (getString v2) fields of
+    Nothing -> error ("object field not found: " ++ getString v2)
     Just (_, v, _) -> v
 
 objectField :: Int -> Value -> (Fields -> Fields -> Value) -> Fields -> Fields
 objectField h k v fields@(GeneralFields m) =
   case k of
     Null -> fields
-    String k _ -> GeneralFields $ HashMap.insert (TL.unpack k) (h, Null, v) m
+    String k _ _ -> GeneralFields $ HashMap.insert k (h, Null, v) m
 
 fillObjectCache :: Fields -> Fields
 fillObjectCache (GeneralFields m) =
@@ -282,7 +286,7 @@ manifestation' hasInitInd ind multiLine v =
         Null -> initInd <> TB.fromString "null"
         (Bool True) -> initInd <> TB.fromString "true"
         (Bool False) -> initInd <> TB.fromString "false"
-        (String s _) -> initInd <> quoteString (TL.unpack s)
+        (String s _ _) -> initInd <> quoteString s
         (Number n) -> initInd <> TB.fromText (Data.Double.Conversion.Text.toShortest n)
         (Array _ xs) ->
           initInd
@@ -325,7 +329,7 @@ mainNormal :: Value -> IO ()
 mainNormal v = TLIO.putStrLn $ manifestation True v
 
 mainString :: Value -> IO ()
-mainString v@(String s _) = TLIO.putStr s
+mainString v@(String s _ _) = putStr s
 mainString _ = error "stringManifestation: not string"
 
 mainMulti :: String -> Bool -> Value -> IO ()
@@ -333,9 +337,9 @@ mainMulti targetDir string v@(Object _ fields) =
   forM_ (extractVisibleFields fields) $ \(k, v) ->
     let filePath = joinPath [targetDir, k]
      in case (v, string) of
-          (String s _, True) -> do
+          (String s _ _, True) -> do
             createDirectoryIfMissing True $ dropFileName filePath
-            TLIO.writeFile filePath s
+            writeFile filePath s
           (_, True) -> error "multiManifestation: expect string values in objects"
           (_, False) -> do
             createDirectoryIfMissing True $ dropFileName filePath
@@ -355,7 +359,7 @@ stdPrimitiveEquals args =
   case ((functionParam args 0 "x" Nothing), (functionParam args 1 "y" Nothing)) of
     (Null, Null) -> Bool True
     (Bool lhs, Bool rhs) -> Bool (lhs == rhs)
-    (String lhs _, String rhs _) -> Bool (lhs == rhs)
+    (String lhs _ _, String rhs _ _) -> Bool (lhs == rhs)
     (Number lhs, Number rhs) -> Bool (lhs == rhs)
     _ -> Bool False
 
@@ -365,7 +369,7 @@ stdLength args =
     fromIntegral $
       case functionParam args 0 "x" Nothing of
         Array _ xs -> Vector.length xs
-        String _ xs -> UVector.length xs
+        String _ _ xs -> UVector.length xs
         Object _ (GeneralFields fields) -> HashMap.size $ HashMap.filter (\(h, _, _) -> h /= 2) fields
         Function n _ -> n
         _ -> error "std.length: invalid type argument"
@@ -377,7 +381,7 @@ stdType args =
       Null -> "null"
       Bool True -> "boolean"
       Bool False -> "boolean"
-      String _ _ -> "string"
+      String _ _ _ -> "string"
       Function _ _ -> "function"
       Number _ -> "number"
       Array _ _ -> "array"
@@ -394,7 +398,7 @@ stdObjectHasEx args =
   let (_, (GeneralFields fields)) = getObject $ functionParam args 0 "obj" Nothing
       f = getString $ functionParam args 1 "f" Nothing
       b' = getBool $ functionParam args 2 "b'" Nothing
-   in case HashMap.lookup (TL.unpack f) fields of
+   in case HashMap.lookup f fields of
         Nothing -> Bool False
         Just (h, _, _) -> Bool (h /= 2 || b')
 
@@ -418,12 +422,12 @@ stdModulo args =
 stdCodepoint :: Arguments -> Value
 stdCodepoint args =
   let str = getString $ functionParam args 0 "str" Nothing
-   in Number $ fromIntegral $ ord $ TL.index str 0
+   in Number $ fromIntegral $ ord $ head str
 
 stdChar :: Arguments -> Value
 stdChar args =
   let c = chr $ truncate $ getNumber $ functionParam args 0 "n" Nothing
-   in String (TL.singleton c) (UVector.singleton c)
+   in String [c] (TB.fromString [c]) (UVector.singleton c)
 
 stdFloor :: Arguments -> Value
 stdFloor args =
