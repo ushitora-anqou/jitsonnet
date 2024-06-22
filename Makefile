@@ -8,7 +8,7 @@ update-stdjsonnet:
 
 .PHONY: test
 test: build
-	dune runtest test
+	OUNIT_CI=true dune runtest test
 
 .PHONY: env
 env:

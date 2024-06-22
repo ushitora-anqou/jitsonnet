@@ -2,4 +2,4 @@
  (names test_jitsonnet test_haskell_backend test_ocaml_backend)
  (preprocess
   (pps ppxlib.metaquot))
- (libraries alcotest jitsonnet logs logs.fmt ppxlib str))
+ (libraries alcotest jitsonnet logs logs.fmt ppxlib str ounit2))
