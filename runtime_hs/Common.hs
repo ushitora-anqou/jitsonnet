@@ -2,25 +2,25 @@ module Common where
 
 import Control.Monad (forM_)
 import Data.Bits (complement, shiftL, shiftR, xor, (.&.), (.|.))
-import qualified Data.ByteString as Bytestring
+import Data.ByteString qualified as Bytestring
 import Data.Char (chr, ord)
-import qualified Data.Double.Conversion.Text
-import qualified Data.Fixed
-import qualified Data.Foldable
+import Data.Double.Conversion.Text qualified
+import Data.Fixed qualified
+import Data.Foldable qualified
 import Data.HashMap.Lazy (HashMap)
-import qualified Data.HashMap.Lazy as HashMap
+import Data.HashMap.Lazy qualified as HashMap
 import Data.List (lookup, sort, sortBy)
 import Data.Text (Text)
-import qualified Data.Text as Text
-import qualified Data.Text.Lazy as TL
-import qualified Data.Text.Lazy.Builder as TB
-import qualified Data.Text.Lazy.IO as TLIO
+import Data.Text qualified as Text
+import Data.Text.Lazy qualified as TL
+import Data.Text.Lazy.Builder qualified as TB
+import Data.Text.Lazy.IO qualified as TLIO
 import Data.Vector (Vector)
-import qualified Data.Vector as Vector
-import qualified Data.Vector.Unboxed as UVector
+import Data.Vector qualified as Vector
+import Data.Vector.Unboxed qualified as UVector
 import Deque.Lazy (Deque)
-import qualified Deque.Lazy as Deque
-import qualified GHC.IsList
+import Deque.Lazy qualified as Deque
+import GHC.IsList qualified
 import System.Directory (createDirectoryIfMissing)
 import System.Exit
 import System.FilePath (dropFileName, joinPath)
