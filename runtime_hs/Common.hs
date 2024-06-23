@@ -70,7 +70,7 @@ instance Monad Result where
   (Error e) >>= _ = Error e
 
 throwError :: String -> Result a
-throwError msg = Error msg
+throwError = Error
 
 makeString :: String -> Result Value
 makeString s = return $ String s (TB.fromString s) (UVector.fromList s)
@@ -426,7 +426,7 @@ quoteString xs =
 
 manifestation' :: Bool -> Int -> Bool -> Result Value -> Result TB.Builder
 manifestation' hasInitInd ind multiLine v = do
-  let indent = TB.fromString $ if multiLine then take ind (repeat ' ') else ""
+  let indent = TB.fromString $ if multiLine then replicate ind ' ' else ""
   let newline = TB.fromString $ if multiLine then "\n" else ""
   let initInd = if hasInitInd then indent else TB.fromString ""
   v' <- v
@@ -471,7 +471,7 @@ manifestation' hasInitInd ind multiLine v = do
               )
               xs
           let encode (k, b) =
-                TB.fromString (if multiLine then take (ind + 3) (repeat ' ') else "")
+                TB.fromString (if multiLine then replicate (ind + 3) ' ' else "")
                   <> quoteString k
                   <> TB.fromString ": "
                   <> b
@@ -494,7 +494,7 @@ manifestation' hasInitInd ind multiLine v = do
 
 manifestation :: Bool -> Result Value -> Result TL.Text
 manifestation multi x =
-  fmap TB.toLazyText $ manifestation' True 0 multi x
+  TB.toLazyText <$> manifestation' True 0 multi x
 
 handleError :: String -> IO ()
 handleError msg = do
@@ -567,7 +567,7 @@ stdType args = do
       Null -> "null"
       Bool True -> "boolean"
       Bool False -> "boolean"
-      String _ _ _ -> "string"
+      String{} -> "string"
       Function _ _ -> "function"
       Number _ -> "number"
       Array _ _ -> "array"
@@ -582,7 +582,7 @@ stdFilter args = do
 
 stdObjectHasEx :: Arguments -> Result Value
 stdObjectHasEx args = do
-  (_, (GeneralFields fields)) <- getObject $ functionParam args 0 "obj" Nothing
+  (_, GeneralFields fields) <- getObject $ functionParam args 0 "obj" Nothing
   f <- getString $ functionParam args 1 "f" Nothing
   b' <- getBool $ functionParam args 2 "b'" Nothing
   return $
@@ -592,12 +592,12 @@ stdObjectHasEx args = do
 
 stdObjectFieldsEx :: Arguments -> Result Value
 stdObjectFieldsEx args = do
-  (_, (GeneralFields fields)) <- getObject $ functionParam args 0 "obj" Nothing
+  (_, GeneralFields fields) <- getObject $ functionParam args 0 "obj" Nothing
   b' <- getBool $ functionParam args 1 "b'" Nothing
   makeArrayFromList $
     map makeString $
       sort $
-        map (\(k, _) -> k) $
+        map fst $
           filter (\(_, (h, _, _)) -> h /= 2 || b') $
             HashMap.toList fields
 
@@ -661,7 +661,7 @@ readBin path = do
   pure $
     makeArrayFromList $
       reverse $
-        Bytestring.foldl (\acc x -> (return $ Number $ fromIntegral x) : acc) [] body
+        Bytestring.foldl (\acc x -> return (Number $ fromIntegral x) : acc) [] body
 
 readStr :: String -> IO (Result Value)
 readStr path = do
