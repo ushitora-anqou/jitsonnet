@@ -406,11 +406,14 @@ and compile_call_args env positional named =
   Tuple
     [
       List (List.map (compile_expr env) positional);
-      List
-        (List.map
-           (fun (id, v) ->
-             Haskell.Tuple [ StringLiteral id; compile_expr env v ])
-           named);
+      make_call (Symbol "HashMap.fromList")
+        [
+          List
+            (List.map
+               (fun (id, v) ->
+                 Haskell.Tuple [ StringLiteral id; compile_expr env v ])
+               named);
+        ];
     ]
 
 let get_ext_code_id key = "extCode/" ^ key
@@ -509,6 +512,7 @@ let compile ?multi ?(string = false) ?(target = `Main) root_prog_path progs bins
 import Common
 import qualified Stdjsonnet
 import qualified Data.Text.Lazy.IO as TLIO
+import qualified Data.HashMap.Lazy as HashMap
 
 data ImportedData = MkImportedData { %s }
 
@@ -530,6 +534,7 @@ main = %s
         {|module Stdjsonnet where
 
 import Common
+import qualified Data.HashMap.Lazy as HashMap
 
 %s = Object [] $ fillObjectCache $ insertStd emptyObjectFields
 

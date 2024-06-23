@@ -30,7 +30,7 @@ type UVector = UVector.Vector
 
 type Positional = [Result Value]
 
-type Named = [(String, Result Value)]
+type Named = HashMap String (Result Value)
 
 type Arguments = (Positional, Named)
 
@@ -321,7 +321,7 @@ functionParam :: Arguments -> Int -> String -> Maybe (Result Value) -> Result Va
 functionParam (positional, named) i id v =
   if i < length positional
     then positional !! i
-    else case lookup id named of
+    else case HashMap.lookup id named of
       Just x -> x
       Nothing -> case v of Just v -> v; Nothing -> throwError "parameter not bound"
 
@@ -535,7 +535,7 @@ stdMakeArray args = do
   makeArray $
     Vector.generate
       (truncate sz)
-      (\i -> func ([return $ Number (fromIntegral i)], []))
+      (\i -> func ([return $ Number (fromIntegral i)], HashMap.empty))
 
 stdPrimitiveEquals :: Arguments -> Result Value
 stdPrimitiveEquals args = do
@@ -577,7 +577,7 @@ stdFilter :: Arguments -> Result Value
 stdFilter args = do
   func <- getFunction $ functionParam args 0 "func" Nothing
   arr <- getArray $ functionParam args 1 "arr" Nothing
-  x <- Vector.filterM (\x -> getBool $ func ([x], [])) arr
+  x <- Vector.filterM (\x -> getBool $ func ([x], HashMap.empty)) arr
   makeArray x
 
 stdObjectHasEx :: Arguments -> Result Value
