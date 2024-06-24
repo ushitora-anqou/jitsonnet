@@ -28,7 +28,11 @@ let () =
                   value & opt string ""
                   & info
                       ~env:(Env.info "JITSONNET_LIB_RUNTIME")
-                      [ "lib-runtime" ]));
+                      [ "lib-runtime" ])
+              $ Arg.(value & flag & info [ "haskell" ])
+              $ Arg.(
+                  value & opt string ""
+                  & info ~env:(Env.info "JITSONNET_RUNTIME_HS") [ "runtime-hs" ]));
           v (info "compile")
             Term.(
               const compile
@@ -36,7 +40,8 @@ let () =
               $ Arg.(
                   value
                   & opt (some string) None
-                  & info ~docv:"TARGET" [ "target" ]));
+                  & info ~docv:"TARGET" [ "target" ])
+              $ Arg.(value & flag & info [ "haskell" ]));
         ]
       |> eval))
   |> exit

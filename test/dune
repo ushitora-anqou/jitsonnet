@@ -1,5 +1,9 @@
-(test
- (name test_jitsonnet)
+(tests
+ (names
+  test_jitsonnet
+  test_ocaml_backend
+  test_haskell_backend
+  test_haskell_backend_go_jsonnet_testcases)
  (preprocess
   (pps ppxlib.metaquot))
- (libraries alcotest jitsonnet logs logs.fmt ppxlib str))
+ (libraries alcotest jitsonnet logs logs.fmt ppxlib str ounit2))

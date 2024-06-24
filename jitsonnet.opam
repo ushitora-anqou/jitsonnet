@@ -12,15 +12,17 @@ depends: [
   "alcotest" {with-test}
   "cmdliner"
   "digestif"
+  "dtoa"
   "dune" {>= "3.15"}
   "fmt"
   "logs"
   "menhir"
   "ocaml"
-  "dtoa"
   "odoc" {with-doc}
+  "ounit2" {with-test}
   "ppx_deriving"
   "rope"
+  "uucp"
   "uutf"
   "yaml"
   "yojson"
