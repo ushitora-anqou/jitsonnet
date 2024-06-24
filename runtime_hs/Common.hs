@@ -1,5 +1,6 @@
 module Common where
 
+import Control.Exception (evaluate)
 import Control.Monad (forM_)
 import Data.Bits (complement, shiftL, shiftR, xor, (.&.), (.|.))
 import Data.ByteString qualified as Bytestring
@@ -25,22 +26,23 @@ import System.Directory (createDirectoryIfMissing)
 import System.Exit
 import System.FilePath (dropFileName, joinPath)
 import System.IO
+import System.IO.Unsafe (unsafePerformIO)
 
 type UVector = UVector.Vector
 
-type Positional = [Result Value]
+type Positional = [Value]
 
-type Named = HashMap String (Result Value)
+type Named = HashMap String Value
 
 type Arguments = (Positional, Named)
 
-type Asserts = [Fields {- self -} -> Fields {- super -} -> Result Value]
+type Asserts = [Fields {- self -} -> Fields {- super -} -> Value]
 
 data Fields
   = GeneralFields
       ( HashMap
           String
-          (Int, Result Value, Fields {- self -} -> Fields {- super -} -> Result Value)
+          (Int, Value, Fields {- self -} -> Fields {- super -} -> Value)
       )
 
 emptyObjectFields :: Fields
@@ -51,273 +53,180 @@ data Value
   | Bool Bool
   | String String TB.Builder (UVector Char)
   | Number Double
-  | Array (Deque (Vector (Result Value))) (Vector (Result Value))
-  | Function Int (Arguments -> Result Value)
+  | Array (Deque (Vector Value)) (Vector Value)
+  | Function Int (Arguments -> Value)
   | Object Asserts Fields
 
-data Result a = Error String | Ok a
+throwError :: String -> a
+throwError = error
 
-instance Functor Result where
-  fmap f (Ok x) = Ok (f x)
-  fmap f (Error e) = Error e
+makeString :: String -> Value
+makeString s = String s (TB.fromString s) (UVector.fromList s)
 
-instance Applicative Result where
-  pure = Ok
-  Ok f <*> Ok x = Ok (f x)
+makeArray :: Vector Value -> Value
+makeArray v = Array (GHC.IsList.fromList [v]) v
 
-instance Monad Result where
-  (Ok x) >>= f = f x
-  (Error e) >>= _ = Error e
-
-throwError :: String -> Result a
-throwError = Error
-
-makeString :: String -> Result Value
-makeString s = return $ String s (TB.fromString s) (UVector.fromList s)
-
-makeArray :: Vector (Result Value) -> Result Value
-makeArray v = return $ Array (GHC.IsList.fromList [v]) v
-
-makeArrayFromList :: [Result Value] -> Result Value
+makeArrayFromList :: [Value] -> Value
 makeArrayFromList a = makeArray $ Vector.fromList a
 
-getBool :: Result Value -> Result Bool
-getBool x = do
-  x' <- x
-  case x' of
-    Bool b -> return b
-    _ -> throwError "not bool"
+getBool :: Value -> Bool
+getBool (Bool b) = b
+getBool _ = throwError "not bool"
 
-getString :: Result Value -> Result String
-getString x = do
-  x' <- x
-  case x' of
-    String s _ _ -> return s
-    _ -> throwError "not string"
+getString :: Value -> String
+getString (String s _ _) = s
+getString _ = throwError "not string"
 
-getNumber :: Result Value -> Result Double
-getNumber x = do
-  x' <- x
-  case x' of
-    Number n -> return n
-    _ -> throwError "not number"
+getNumber :: Value -> Double
+getNumber (Number n) = n
+getNumber _ = throwError "not number"
 
-getArray :: Result Value -> Result (Vector (Result Value))
-getArray x = do
-  x' <- x
-  case x' of
-    Array _ v -> return v
-    _ -> throwError "not array"
+getArray :: Value -> Vector Value
+getArray (Array _ v) = v
+getArray _ = throwError "not array"
 
-getFunction :: Result Value -> Result (Arguments -> Result Value)
-getFunction x = do
-  x' <- x
-  case x' of
-    Function _ f -> return f
-    _ -> throwError "not function"
+getFunction :: Value -> (Arguments -> Value)
+getFunction (Function _ f) = f
+getFunction _ = throwError "not function"
 
-getObject :: Result Value -> Result (Asserts, Fields)
-getObject x = do
-  x' <- x
-  case x' of
-    Object asserts fields -> return (asserts, fields)
-    _ -> throwError "not object"
+getObject :: Value -> (Asserts, Fields)
+getObject (Object asserts fields) = (asserts, fields)
+getObject _ = throwError "not object"
 
-evalAsserts :: Asserts -> Fields -> Result ()
+evalAsserts :: Asserts -> Fields -> ()
 evalAsserts asserts fields =
-  forM_ asserts (\f -> f fields emptyObjectFields)
+  unsafePerformIO $
+    forM_ asserts $ \f ->
+      evaluate $ f fields emptyObjectFields
 
-stdCmp :: Result Value -> Result Value -> Result Ordering
-stdCmp lhs rhs = do
-  lhs' <- lhs
-  rhs' <- rhs
-  aux lhs' rhs'
- where
-  aux (Number n1) (Number n2) = return $ compare n1 n2
-  aux (String s1 _ _) (String s2 _ _) = return $ compare s1 s2
-  aux (Array _ a1) (Array _ a2) = do
-    x <-
-      Vector.foldM
-        ( \a (x, y) ->
-            case a of
-              EQ -> stdCmp x y
-              a -> return a
-        )
-        EQ
-        $ Vector.zip a1 a2
-    case x of
-      LT -> return LT
-      GT -> return GT
-      EQ -> return $ compare (Vector.length a1) (Vector.length a2)
-  aux _ _ = throwError "stdCmp: invalid arguments"
+stdCmp :: Value -> Value -> Ordering
+stdCmp (Number n1) (Number n2) = compare n1 n2
+stdCmp (String s1 _ _) (String s2 _ _) = compare s1 s2
+stdCmp (Array _ a1) (Array _ a2) = Vector.cmpBy stdCmp a1 a2
+stdCmp _ _ = throwError "stdCmp: invalid arguments"
 
-valueToTextBuilder :: Value -> Result TB.Builder
-valueToTextBuilder Null = return $ TB.fromString "null"
-valueToTextBuilder (Bool True) = return $ TB.fromString "true"
-valueToTextBuilder (Bool False) = return $ TB.fromString "false"
-valueToTextBuilder (Number n) = return $ TB.fromText $ Data.Double.Conversion.Text.toShortest n
-valueToTextBuilder x@(Array _ _) = do
-  x' <- manifestation False (return x)
-  return $ TB.fromLazyText x'
-valueToTextBuilder x@(Object _ _) = do
-  x' <- manifestation False (return x)
-  return $ TB.fromLazyText x'
+valueToTextBuilder :: Value -> TB.Builder
+valueToTextBuilder Null = TB.fromString "null"
+valueToTextBuilder (Bool True) = TB.fromString "true"
+valueToTextBuilder (Bool False) = TB.fromString "false"
+valueToTextBuilder (Number n) = TB.fromText $ Data.Double.Conversion.Text.toShortest n
+valueToTextBuilder x@(Array _ _) = TB.fromLazyText $ manifestation False x
+valueToTextBuilder x@(Object _ _) = TB.fromLazyText $ manifestation False x
 valueToTextBuilder _ = throwError "valueToLazyText: not expected type"
 
-binaryAdd :: Result Value -> Result Value -> Result Value
-binaryAdd lhs rhs = do
-  lhs' <- lhs
-  rhs' <- rhs
-  aux lhs' rhs'
- where
-  aux (Number n1) (Number n2) = return $ Number (n1 + n2)
-  aux (Array a1 _) (Array a2 _) =
-    let a = a1 <> a2
-     in return $ Array a $ Vector.concat $ GHC.IsList.toList a
-  aux (String s1 b1 v1) (String s2 b2 v2) =
-    let b = b1 <> b2
-     in return $
-          String (TL.unpack $ TB.toLazyText b) b (UVector.fromList $ TL.unpack $ TB.toLazyText b)
-  aux (String s1 b1 v1) rhs = do
-    rhs' <- valueToTextBuilder rhs
-    let b = b1 <> rhs'
-        s = TL.unpack $ TB.toLazyText b
-    return $ String s b (UVector.fromList s)
-  aux lhs (String s2 b2 v2) = do
-    lhs' <- valueToTextBuilder lhs
-    let b = lhs' <> b2
-        s = TL.unpack $ TB.toLazyText b
-     in return $ String s b (UVector.fromList s)
-  aux (Object asserts1 fields1@(GeneralFields m1)) (Object asserts2 (GeneralFields m2)) =
-    return $
-      Object (asserts1 ++ map (\v self _ -> v self fields1) asserts2) $
-        fillObjectCache $
-          GeneralFields
-            ( HashMap.unionWith
-                (\(h1, _, _) (h2, _, v2) -> (if h2 == 1 then h1 else h2, Ok Null, v2))
-                m1
-                (HashMap.map (\(h, _, v) -> (h, Ok Null, \self _ -> v self fields1)) m2)
-            )
-  aux _ _ = throwError "binaryAdd: invalid values"
+binaryAdd :: Value -> Value -> Value
+binaryAdd (Number n1) (Number n2) = Number (n1 + n2)
+binaryAdd (Array a1 _) (Array a2 _) =
+  let a = a1 <> a2
+   in Array a $ Vector.concat $ GHC.IsList.toList a
+binaryAdd (String s1 b1 v1) (String s2 b2 v2) =
+  let b = b1 <> b2
+   in String (TL.unpack $ TB.toLazyText b) b (UVector.fromList $ TL.unpack $ TB.toLazyText b)
+binaryAdd (String s1 b1 v1) rhs =
+  let b = b1 <> valueToTextBuilder rhs
+      s = TL.unpack $ TB.toLazyText b
+   in String s b (UVector.fromList s)
+binaryAdd lhs (String s2 b2 v2) = do
+  let b = valueToTextBuilder lhs <> b2
+      s = TL.unpack $ TB.toLazyText b
+   in String s b (UVector.fromList s)
+binaryAdd (Object asserts1 fields1@(GeneralFields m1)) (Object asserts2 (GeneralFields m2)) =
+  Object (asserts1 ++ map (\v self _ -> v self fields1) asserts2) $
+    fillObjectCache $
+      GeneralFields
+        ( HashMap.unionWith
+            (\(h1, _, _) (h2, _, v2) -> (if h2 == 1 then h1 else h2, Null, v2))
+            m1
+            (HashMap.map (\(h, _, v) -> (h, Null, \self _ -> v self fields1)) m2)
+        )
+binaryAdd _ _ = throwError "binaryAdd: invalid values"
 
-binarySub :: Result Value -> Result Value -> Result Value
-binarySub v1 v2 = do
-  l <- getNumber v1
-  r <- getNumber v2
-  return $ Number $ l - r
+binarySub :: Value -> Value -> Value
+binarySub v1 v2 =
+  Number $ getNumber v1 - getNumber v2
 
-binaryMult :: Result Value -> Result Value -> Result Value
-binaryMult v1 v2 = do
-  l <- getNumber v1
-  r <- getNumber v2
-  return $ Number $ l * r
+binaryMult :: Value -> Value -> Value
+binaryMult v1 v2 =
+  Number $ getNumber v1 * getNumber v2
 
-binaryDiv :: Result Value -> Result Value -> Result Value
+binaryDiv :: Value -> Value -> Value
 binaryDiv v1 v2 = do
-  l <- getNumber v1
-  r <- getNumber v2
-  return $ Number $ l / r
+  Number $ getNumber v1 / getNumber v2
 
-binaryAnd :: Result Value -> Result Value -> Result Value
-binaryAnd v1 v2 = do
-  l <- getBool v1
-  if not l
-    then return $ Bool False -- short
-    else do
-      r <- getBool v2
-      return $ Bool $ l && r
+binaryAnd :: Value -> Value -> Value
+binaryAnd (Bool False) _ = Bool False
+binaryAnd _ (Bool b) = Bool b
+binaryAnd _ _ = error "binaryAnd: not bool"
 
-binaryOr :: Result Value -> Result Value -> Result Value
-binaryOr v1 v2 = do
-  l <- getBool v1
-  if l
-    then return $ Bool True
-    else do
-      r <- getBool v2
-      return $ Bool $ l || r
+binaryOr :: Value -> Value -> Value
+binaryOr (Bool True) _ = Bool True
+binaryOr _ (Bool b) = Bool b
+binaryOr _ _ = error "binaryOr: not bool"
 
-binaryLand :: Result Value -> Result Value -> Result Value
-binaryLand v1 v2 = do
-  l <- getNumber v1
-  r <- getNumber v2
-  let v = truncate l .&. truncate r :: Int
-  return $ Number $ fromIntegral v
+binaryLand :: Value -> Value -> Value
+binaryLand v1 v2 =
+  let l = truncate $ getNumber v1
+      r = truncate $ getNumber v2
+   in Number $ fromIntegral (l .&. r :: Int)
 
-binaryLor :: Result Value -> Result Value -> Result Value
-binaryLor v1 v2 = do
-  l <- getNumber v1
-  r <- getNumber v2
-  let v = truncate l .|. truncate r :: Int
-   in return $ Number $ fromIntegral v
+binaryLor :: Value -> Value -> Value
+binaryLor v1 v2 =
+  let l = truncate $ getNumber v1
+      r = truncate $ getNumber v2
+   in Number $ fromIntegral (l .|. r :: Int)
 
-binaryXor :: Result Value -> Result Value -> Result Value
-binaryXor v1 v2 = do
-  l <- getNumber v1
-  r <- getNumber v2
-  let v = truncate l `xor` truncate r :: Int
-   in return $ Number $ fromIntegral v
+binaryXor :: Value -> Value -> Value
+binaryXor v1 v2 =
+  let l = truncate $ getNumber v1
+      r = truncate $ getNumber v2
+   in Number $ fromIntegral (l `xor` r :: Int)
 
-binaryLsl :: Result Value -> Result Value -> Result Value
-binaryLsl v1 v2 = do
-  l <- getNumber v1
-  r <- getNumber v2
-  let v = truncate l `shiftL` truncate r :: Int
-   in return $ Number $ fromIntegral v
+binaryLsl :: Value -> Value -> Value
+binaryLsl v1 v2 =
+  let l = truncate $ getNumber v1
+      r = truncate $ getNumber v2
+   in Number $ fromIntegral (l `shiftL` r :: Int)
 
-binaryLsr :: Result Value -> Result Value -> Result Value
-binaryLsr v1 v2 = do
-  l <- getNumber v1
-  r <- getNumber v2
-  let v = truncate l `shiftR` truncate r :: Int
-   in return $ Number $ fromIntegral v
+binaryLsr :: Value -> Value -> Value
+binaryLsr v1 v2 =
+  let l = truncate $ getNumber v1
+      r = truncate $ getNumber v2
+   in Number $ fromIntegral (l `shiftR` r :: Int)
 
-binaryLt :: Result Value -> Result Value -> Result Value
-binaryLt v1 v2 = do
-  x <- stdCmp v1 v2
-  return $ Bool (x == LT)
+binaryLt :: Value -> Value -> Value
+binaryLt v1 v2 = Bool $ stdCmp v1 v2 == LT
 
-binaryLe :: Result Value -> Result Value -> Result Value
-binaryLe v1 v2 = do
-  x <- stdCmp v1 v2
-  return $ Bool $ x == LT || x == EQ
+binaryLe :: Value -> Value -> Value
+binaryLe v1 v2 =
+  let x = stdCmp v1 v2
+   in Bool $ x == LT || x == EQ
 
-binaryGt :: Result Value -> Result Value -> Result Value
-binaryGt v1 v2 = do
-  x <- stdCmp v1 v2
-  return $ Bool $ x == GT
+binaryGt :: Value -> Value -> Value
+binaryGt v1 v2 = Bool $ stdCmp v1 v2 == GT
 
-binaryGe :: Result Value -> Result Value -> Result Value
-binaryGe v1 v2 = do
-  x <- stdCmp v1 v2
-  return $ Bool $ x == GT || x == EQ
+binaryGe :: Value -> Value -> Value
+binaryGe v1 v2 =
+  let x = stdCmp v1 v2
+   in Bool $ x == GT || x == EQ
 
-unaryNot :: Result Value -> Result Value
-unaryNot v = do
-  x <- getBool v
-  return $ Bool $ not x
+unaryNot :: Value -> Value
+unaryNot v =
+  Bool $ not $ getBool v
 
-unaryLnot :: Result Value -> Result Value
-unaryLnot v = do
-  x <- getNumber v
-  let v' = complement $ truncate x :: Int
-  return $ Number $ fromIntegral v'
+unaryLnot :: Value -> Value
+unaryLnot v =
+  Number $ fromIntegral $ complement (truncate $ getNumber v :: Int)
 
-unaryNeg :: Result Value -> Result Value
-unaryNeg v = do
-  x <- getNumber v
-  return $ Number $ -x
+unaryNeg :: Value -> Value
+unaryNeg v = Number $ -(getNumber v)
 
-unaryPos :: Result Value -> Result Value
-unaryPos v = do
-  x <- getNumber v
-  return $ Number x
+unaryPos :: Value -> Value
+unaryPos v = Number $ getNumber v
 
-if_ :: Result Value -> Result Value -> Result Value -> Result Value
-if_ v1 v2 v3 = do
-  x <- getBool v1
-  if x then v2 else v3
+if_ :: Value -> Value -> Value -> Value
+if_ v1 v2 v3 = if getBool v1 then v2 else v3
 
-functionParam :: Arguments -> Int -> String -> Maybe (Result Value) -> Result Value
+functionParam :: Arguments -> Int -> String -> Maybe Value -> Value
 functionParam (positional, named) i id v =
   if i < length positional
     then positional !! i
@@ -325,81 +234,61 @@ functionParam (positional, named) i id v =
       Just x -> x
       Nothing -> case v of Just v -> v; Nothing -> throwError "parameter not bound"
 
-inSuper :: Fields -> Result Value -> Result Value
-inSuper (GeneralFields super) key = do
-  x <- getString key
-  return $ Bool $ HashMap.member x super
+inSuper :: Fields -> Value -> Value
+inSuper (GeneralFields super) key =
+  Bool $ HashMap.member (getString key) super
 
-superIndex :: Fields -> Result Value -> Result Value
-superIndex super@(GeneralFields superFields) key = do
-  key' <- getString key
-  case HashMap.lookup key' superFields of
-    Nothing -> throwError ("field does not exist: " ++ key')
-    Just (_, v, _) -> v
+superIndex :: Fields -> Value -> Value
+superIndex super@(GeneralFields superFields) key =
+  let key' = getString key
+   in case HashMap.lookup key' superFields of
+        Nothing -> throwError ("field does not exist: " ++ key')
+        Just (_, v, _) -> v
 
-arrayIndex :: Result Value -> Result Value -> Result Value
-arrayIndex lhs rhs = do
-  lhs' <- lhs
-  aux lhs' rhs
- where
-  aux (Array _ a) v2 = do
-    x <- getNumber v2
-    a Vector.! truncate x
-  aux (String _ _ s) v2 = do
-    x <- getNumber v2
-    let c = s UVector.! truncate x
-    return $ String [c] (TB.fromString [c]) (UVector.singleton c)
-  aux (Object asserts self@(GeneralFields fields)) v2 = do
-    evalAsserts asserts self
-    x <- getString v2
-    case HashMap.lookup x fields of
-      Just (_, v, _) -> v
-      Nothing -> do
-        x <- getString v2
-        throwError ("object field not found: " ++ x)
-  aux _ _ = throwError "arrayIndex: invalid value"
+arrayIndex :: Value -> Value -> Value
+arrayIndex (Array _ a) v2 = a Vector.! truncate (getNumber v2)
+arrayIndex (String _ _ s) v2 =
+  let c = s UVector.! truncate (getNumber v2)
+   in String [c] (TB.fromString [c]) (UVector.singleton c)
+arrayIndex (Object asserts self@(GeneralFields fields)) v2 =
+  evalAsserts asserts self `seq`
+    let x = getString v2
+     in case HashMap.lookup x fields of
+          Just (_, v, _) -> v
+          Nothing ->
+            let x = getString v2
+             in throwError ("object field not found: " ++ x)
+arrayIndex _ _ = throwError "arrayIndex: invalid value"
 
-objectField ::
-  Int ->
-  Result Value ->
-  (Fields -> Fields -> Result Value) ->
-  Result Fields ->
-  Result Fields
-objectField h k v fields = do
-  k' <- k
-  fields' <- fields
-  return $
-    case k' of
-      Null -> fields'
-      String k _ _ ->
-        case fields' of
-          GeneralFields m ->
-            GeneralFields $ HashMap.insert k (h, Ok Null, v) m
+objectField :: Int -> Value -> (Fields -> Fields -> Value) -> Fields -> Fields
+objectField h k v fields =
+  case k of
+    Null -> fields
+    String k _ _ ->
+      case fields of
+        GeneralFields m ->
+          GeneralFields $ HashMap.insert k (h, Null, v) m
+    _ -> throwError "objectField: not valid key type"
 
 fillObjectCache :: Fields -> Fields
 fillObjectCache (GeneralFields m) =
   let self = GeneralFields $ HashMap.map (\(h, _, f) -> (h, f self emptyObjectFields, f)) m
    in self
 
-objectFor :: (Fields -> Result Value -> Result Fields) -> Result Value -> Result Fields
-objectFor f e3 = do
-  x <- getArray e3
-  y <- Vector.foldM f emptyObjectFields x
-  return $ fillObjectCache y
+objectFor :: (Fields -> Value -> Fields) -> Value -> Fields
+objectFor f e3 =
+  fillObjectCache $ Vector.foldl f emptyObjectFields $ getArray e3
 
-error' :: Result Value -> Result a
-error' v = do
-  v' <- manifestation True v
-  throwError $ TL.unpack v'
+error' :: Value -> a
+error' v = throwError $ TL.unpack $ manifestation True v
 
-objectFieldPlusValue :: Fields -> Result Value -> Result Value -> Result Value
-objectFieldPlusValue super e1 e2 = do
-  x <- getBool $ inSuper super e1
-  if x
+objectFieldPlusValue :: Fields -> Value -> Value -> Value
+objectFieldPlusValue super e1 e2 =
+  if getBool $ inSuper super e1
     then binaryAdd (superIndex super e1) e2
     else e2
 
-extractVisibleFields :: Fields -> [(String, Result Value)]
+extractVisibleFields :: Fields -> [(String, Value)]
 extractVisibleFields fields@(GeneralFields m) =
   map (\(k, (_, v, _)) -> (k, v)) $
     sortBy (\(k1, _) (k2, _) -> compare k1 k2) $
@@ -424,215 +313,197 @@ quoteString xs =
           (TB.singleton '"')
           xs
 
-manifestation' :: Bool -> Int -> Bool -> Result Value -> Result TB.Builder
-manifestation' hasInitInd ind multiLine v = do
+manifestation' :: Bool -> Int -> Bool -> Value -> TB.Builder
+manifestation' hasInitInd ind multiLine v =
   let indent = TB.fromString $ if multiLine then replicate ind ' ' else ""
-  let newline = TB.fromString $ if multiLine then "\n" else ""
-  let initInd = if hasInitInd then indent else TB.fromString ""
-  v' <- v
-  case v' of
-    Null -> return $ initInd <> TB.fromString "null"
-    (Bool True) -> return $ initInd <> TB.fromString "true"
-    (Bool False) -> return $ initInd <> TB.fromString "false"
-    (String s _ _) -> return $ initInd <> quoteString s
-    (Number n) -> return $ initInd <> TB.fromText (Data.Double.Conversion.Text.toShortest n)
-    (Array _ xs) ->
-      if Vector.null xs
-        then return $ initInd <> TB.fromString "[ ]"
-        else do
-          bs <- Vector.mapM (manifestation' True (ind + 3) multiLine) xs
-          return $
-            initInd
-              <> TB.fromString "["
-              <> newline
-              <> Vector.ifoldr
-                ( \i b acc ->
-                    b
-                      <> TB.fromString
-                        ( if i == Vector.length xs - 1
-                            then ""
-                            else (if multiLine then "," else ", ")
+      newline = TB.fromString $ if multiLine then "\n" else ""
+      initInd = if hasInitInd then indent else TB.fromString ""
+   in case v of
+        Null -> initInd <> TB.fromString "null"
+        (Bool True) -> initInd <> TB.fromString "true"
+        (Bool False) -> initInd <> TB.fromString "false"
+        (String s _ _) -> initInd <> quoteString s
+        (Number n) -> initInd <> TB.fromText (Data.Double.Conversion.Text.toShortest n)
+        (Array _ xs) ->
+          if Vector.null xs
+            then initInd <> TB.fromString "[ ]"
+            else
+              let bs = Vector.map (manifestation' True (ind + 3) multiLine) xs
+               in initInd
+                    <> TB.fromString "["
+                    <> newline
+                    <> Vector.ifoldr
+                      ( \i b acc ->
+                          b
+                            <> TB.fromString
+                              ( if i == Vector.length xs - 1
+                                  then ""
+                                  else (if multiLine then "," else ", ")
+                              )
+                            <> newline
+                            <> acc
+                      )
+                      (indent <> TB.fromString "]")
+                      bs
+        (Object asserts fields) ->
+          evalAsserts asserts fields `seq`
+            case reverse $ extractVisibleFields fields of
+              [] -> initInd <> TB.fromString "{ }"
+              xs ->
+                let bs =
+                      map
+                        ( \(k, v) ->
+                            let v' = manifestation' False (ind + 3) multiLine v
+                             in (k, v')
                         )
-                      <> newline
-                      <> acc
-                )
-                (indent <> TB.fromString "]")
-                bs
-    (Object asserts fields) -> do
-      evalAsserts asserts fields
-      case reverse $ extractVisibleFields fields of
-        [] -> return $ initInd <> TB.fromString "{ }"
-        xs -> do
-          bs <-
-            mapM
-              ( \(k, v) -> do
-                  v' <- manifestation' False (ind + 3) multiLine v
-                  return (k, v')
-              )
-              xs
-          let encode (k, b) =
-                TB.fromString (if multiLine then replicate (ind + 3) ' ' else "")
-                  <> quoteString k
-                  <> TB.fromString ": "
-                  <> b
-          case bs of
-            [] -> error "unreachable"
-            hd : tl ->
-              return $
-                initInd
-                  <> TB.fromString "{"
-                  <> newline
-                  <> foldl
-                    ( \b x ->
-                        encode x
-                          <> TB.fromString (if multiLine then "," else ", ")
+                        xs
+                    encode (k, b) =
+                      TB.fromString (if multiLine then replicate (ind + 3) ' ' else "")
+                        <> quoteString k
+                        <> TB.fromString ": "
+                        <> b
+                 in case bs of
+                      [] -> error "unreachable"
+                      hd : tl ->
+                        initInd
+                          <> TB.fromString "{"
                           <> newline
-                          <> b
-                    )
-                    (encode hd <> newline <> indent <> TB.fromString "}")
-                    tl
+                          <> foldl
+                            ( \b x ->
+                                encode x
+                                  <> TB.fromString (if multiLine then "," else ", ")
+                                  <> newline
+                                  <> b
+                            )
+                            (encode hd <> newline <> indent <> TB.fromString "}")
+                            tl
 
-manifestation :: Bool -> Result Value -> Result TL.Text
-manifestation multi x =
-  TB.toLazyText <$> manifestation' True 0 multi x
+manifestation :: Bool -> Value -> TL.Text
+manifestation multi x = TB.toLazyText $ manifestation' True 0 multi x
 
-handleError :: String -> IO ()
-handleError msg = do
-  hPutStrLn stderr $ "ERROR: " ++ msg
-  exitWith $ ExitFailure 1
+mainNormal :: Value -> IO ()
+mainNormal v = TLIO.putStrLn $ manifestation True v
 
-mainNormal :: Result Value -> IO ()
-mainNormal v =
-  case manifestation True v of
-    Ok s -> TLIO.putStrLn s
-    Error msg -> handleError msg
-
-mainString :: Result Value -> IO ()
-mainString (Ok (String s _ _)) = putStr s
-mainString (Error msg) = handleError msg
+mainString :: Value -> IO ()
+mainString (String s _ _) = putStr s
 mainString _ = error "stringManifestation: not string"
 
-mainMulti :: String -> Bool -> Result Value -> IO ()
-mainMulti _ _ (Error msg) = handleError msg
-mainMulti targetDir string (Ok (Object _ fields)) =
+mainMulti :: String -> Bool -> Value -> IO ()
+mainMulti targetDir string (Object _ fields) =
   forM_ (extractVisibleFields fields) $ \(k, v) ->
     let filePath = joinPath [targetDir, k]
      in case (v, string) of
-          (Ok (String s _ _), True) -> do
+          (String s _ _, True) -> do
             createDirectoryIfMissing True $ dropFileName filePath
             writeFile filePath s
           (_, True) -> error "multiManifestation: expect string values in objects"
           (_, False) -> do
             createDirectoryIfMissing True $ dropFileName filePath
-            case manifestation True v of
-              Error msg -> handleError msg
-              Ok v -> TLIO.writeFile filePath v
+            TLIO.writeFile filePath $ manifestation True v
 
-stdMakeArray :: Arguments -> Result Value
-stdMakeArray args = do
-  sz <- getNumber $ functionParam args 0 "sz" Nothing
-  func <- getFunction $ functionParam args 1 "func" Nothing
-  makeArray $
-    Vector.generate
-      (truncate sz)
-      (\i -> func ([return $ Number (fromIntegral i)], HashMap.empty))
+stdMakeArray :: Arguments -> Value
+stdMakeArray args =
+  let sz = getNumber $ functionParam args 0 "sz" Nothing
+      func = getFunction $ functionParam args 1 "func" Nothing
+   in makeArray $
+        Vector.generate
+          (truncate sz)
+          (\i -> func ([Number (fromIntegral i)], HashMap.empty))
 
-stdPrimitiveEquals :: Arguments -> Result Value
-stdPrimitiveEquals args = do
-  x <- functionParam args 0 "x" Nothing
-  y <- functionParam args 1 "y" Nothing
-  case (x, y) of
-    (Null, Null) -> return $ Bool True
-    (Bool lhs, Bool rhs) -> return $ Bool $ lhs == rhs
-    (String lhs _ _, String rhs _ _) -> return $ Bool $ lhs == rhs
-    (Number lhs, Number rhs) -> return $ Bool $ lhs == rhs
-    _ -> return $ Bool False
+stdPrimitiveEquals :: Arguments -> Value
+stdPrimitiveEquals args =
+  let x = functionParam args 0 "x" Nothing
+      y = functionParam args 1 "y" Nothing
+   in case (x, y) of
+        (Null, Null) -> Bool True
+        (Bool lhs, Bool rhs) -> Bool $ lhs == rhs
+        (String lhs _ _, String rhs _ _) -> Bool $ lhs == rhs
+        (Number lhs, Number rhs) -> Bool $ lhs == rhs
+        _ -> Bool False
 
-stdLength :: Arguments -> Result Value
-stdLength args = do
-  x <- functionParam args 0 "x" Nothing
-  fmap (Number . fromIntegral) $
-    case x of
-      Array _ xs -> return $ Vector.length xs
-      String _ _ xs -> return $ UVector.length xs
-      Object _ (GeneralFields fields) -> return $ HashMap.size $ HashMap.filter (\(h, _, _) -> h /= 2) fields
-      Function n _ -> return n
-      _ -> throwError "std.length: invalid type argument"
+stdLength :: Arguments -> Value
+stdLength args =
+  let x = functionParam args 0 "x" Nothing
+   in (Number . fromIntegral) $
+        case x of
+          Array _ xs -> Vector.length xs
+          String _ _ xs -> UVector.length xs
+          Object _ (GeneralFields fields) -> HashMap.size $ HashMap.filter (\(h, _, _) -> h /= 2) fields
+          Function n _ -> n
+          _ -> throwError "std.length: invalid type argument"
 
-stdType :: Arguments -> Result Value
-stdType args = do
-  x <- functionParam args 0 "x" Nothing
-  makeString $
-    case x of
-      Null -> "null"
-      Bool True -> "boolean"
-      Bool False -> "boolean"
-      String{} -> "string"
-      Function _ _ -> "function"
-      Number _ -> "number"
-      Array _ _ -> "array"
-      Object _ _ -> "object"
+stdType :: Arguments -> Value
+stdType args =
+  let x = functionParam args 0 "x" Nothing
+   in makeString $
+        case x of
+          Null -> "null"
+          Bool True -> "boolean"
+          Bool False -> "boolean"
+          String{} -> "string"
+          Function _ _ -> "function"
+          Number _ -> "number"
+          Array _ _ -> "array"
+          Object _ _ -> "object"
 
-stdFilter :: Arguments -> Result Value
-stdFilter args = do
-  func <- getFunction $ functionParam args 0 "func" Nothing
-  arr <- getArray $ functionParam args 1 "arr" Nothing
-  x <- Vector.filterM (\x -> getBool $ func ([x], HashMap.empty)) arr
-  makeArray x
+stdFilter :: Arguments -> Value
+stdFilter args =
+  let func = getFunction $ functionParam args 0 "func" Nothing
+      arr = getArray $ functionParam args 1 "arr" Nothing
+   in makeArray $ Vector.filter (\x -> getBool $ func ([x], HashMap.empty)) arr
 
-stdObjectHasEx :: Arguments -> Result Value
-stdObjectHasEx args = do
-  (_, GeneralFields fields) <- getObject $ functionParam args 0 "obj" Nothing
-  f <- getString $ functionParam args 1 "f" Nothing
-  b' <- getBool $ functionParam args 2 "b'" Nothing
-  return $
-    case HashMap.lookup f fields of
-      Nothing -> Bool False
-      Just (h, _, _) -> Bool (h /= 2 || b')
+stdObjectHasEx :: Arguments -> Value
+stdObjectHasEx args =
+  let (_, GeneralFields fields) = getObject $ functionParam args 0 "obj" Nothing
+      f = getString $ functionParam args 1 "f" Nothing
+      b' = getBool $ functionParam args 2 "b'" Nothing
+   in case HashMap.lookup f fields of
+        Nothing -> Bool False
+        Just (h, _, _) -> Bool (h /= 2 || b')
 
-stdObjectFieldsEx :: Arguments -> Result Value
-stdObjectFieldsEx args = do
-  (_, GeneralFields fields) <- getObject $ functionParam args 0 "obj" Nothing
-  b' <- getBool $ functionParam args 1 "b'" Nothing
-  makeArrayFromList $
-    map makeString $
-      sort $
-        map fst $
-          filter (\(_, (h, _, _)) -> h /= 2 || b') $
-            HashMap.toList fields
+stdObjectFieldsEx :: Arguments -> Value
+stdObjectFieldsEx args =
+  let (_, GeneralFields fields) = getObject $ functionParam args 0 "obj" Nothing
+      b' = getBool $ functionParam args 1 "b'" Nothing
+   in makeArrayFromList $
+        map makeString $
+          sort $
+            map fst $
+              filter (\(_, (h, _, _)) -> h /= 2 || b') $
+                HashMap.toList fields
 
-stdModulo :: Arguments -> Result Value
-stdModulo args = do
-  a <- getNumber $ functionParam args 0 "a" Nothing
-  b <- getNumber $ functionParam args 1 "b" Nothing
-  return $ Number $ Data.Fixed.mod' a b
+stdModulo :: Arguments -> Value
+stdModulo args =
+  let a = getNumber $ functionParam args 0 "a" Nothing
+      b = getNumber $ functionParam args 1 "b" Nothing
+   in Number $ Data.Fixed.mod' a b
 
-stdCodepoint :: Arguments -> Result Value
-stdCodepoint args = do
-  str <- getString $ functionParam args 0 "str" Nothing
-  return $ Number $ fromIntegral $ ord $ head str
+stdCodepoint :: Arguments -> Value
+stdCodepoint args =
+  let str = getString $ functionParam args 0 "str" Nothing
+   in Number $ fromIntegral $ ord $ head str
 
-stdChar :: Arguments -> Result Value
-stdChar args = do
-  x <- getNumber $ functionParam args 0 "n" Nothing
-  let c = chr $ truncate x
-  return $ String [c] (TB.fromString [c]) (UVector.singleton c)
+stdChar :: Arguments -> Value
+stdChar args =
+  let x = getNumber $ functionParam args 0 "n" Nothing
+      c = chr $ truncate x
+   in String [c] (TB.fromString [c]) (UVector.singleton c)
 
-stdFloor :: Arguments -> Result Value
-stdFloor args = do
-  x <- getNumber $ functionParam args 0 "x" Nothing
-  return $ Number $ fromInteger $ floor x
+stdFloor :: Arguments -> Value
+stdFloor args =
+  let x = getNumber $ functionParam args 0 "x" Nothing
+   in Number $ fromInteger $ floor x
 
-stdPow :: Arguments -> Result Value
-stdPow args = do
-  x <- getNumber $ functionParam args 0 "x" Nothing
-  n <- getNumber $ functionParam args 1 "n" Nothing
-  return $ Number $ x ** n
+stdPow :: Arguments -> Value
+stdPow args =
+  let x = getNumber $ functionParam args 0 "x" Nothing
+      n = getNumber $ functionParam args 1 "n" Nothing
+   in Number $ x ** n
 
-stdLog :: Arguments -> Result Value
-stdLog args = do
-  x <- getNumber $ functionParam args 0 "x" Nothing
-  return $ Number $ log x
+stdLog :: Arguments -> Value
+stdLog args =
+  let x = getNumber $ functionParam args 0 "x" Nothing
+   in Number $ log x
 
 insertStd :: Fields -> Fields
 insertStd (GeneralFields fields) =
@@ -640,30 +511,30 @@ insertStd (GeneralFields fields) =
     foldl
       (\a (k, v) -> HashMap.insert k v a)
       fields
-      [ ("primitiveEquals", (2, return Null, \_ _ -> return $ Function 2 stdPrimitiveEquals))
-      , ("length", (2, return Null, \_ _ -> return $ Function 1 stdLength))
-      , ("makeArray", (2, return Null, \_ _ -> return $ Function 2 stdMakeArray))
-      , ("type", (2, return Null, \_ _ -> return $ Function 1 stdType))
-      , ("filter", (2, return Null, \_ _ -> return $ Function 2 stdFilter))
-      , ("objectHasEx", (2, return Null, \_ _ -> return $ Function 3 stdObjectHasEx))
-      , ("objectFieldsEx", (2, return Null, \_ _ -> return $ Function 2 stdObjectFieldsEx))
-      , ("modulo", (2, return Null, \_ _ -> return $ Function 2 stdModulo))
-      , ("codepoint", (2, return Null, \_ _ -> return $ Function 1 stdCodepoint))
-      , ("char", (2, return Null, \_ _ -> return $ Function 1 stdChar))
-      , ("floor", (2, return Null, \_ _ -> return $ Function 1 stdFloor))
-      , ("log", (2, return Null, \_ _ -> return $ Function 1 stdLog))
-      , ("pow", (2, return Null, \_ _ -> return $ Function 2 stdPow))
+      [ ("primitiveEquals", (2, Null, \_ _ -> Function 2 stdPrimitiveEquals))
+      , ("length", (2, Null, \_ _ -> Function 1 stdLength))
+      , ("makeArray", (2, Null, \_ _ -> Function 2 stdMakeArray))
+      , ("type", (2, Null, \_ _ -> Function 1 stdType))
+      , ("filter", (2, Null, \_ _ -> Function 2 stdFilter))
+      , ("objectHasEx", (2, Null, \_ _ -> Function 3 stdObjectHasEx))
+      , ("objectFieldsEx", (2, Null, \_ _ -> Function 2 stdObjectFieldsEx))
+      , ("modulo", (2, Null, \_ _ -> Function 2 stdModulo))
+      , ("codepoint", (2, Null, \_ _ -> Function 1 stdCodepoint))
+      , ("char", (2, Null, \_ _ -> Function 1 stdChar))
+      , ("floor", (2, Null, \_ _ -> Function 1 stdFloor))
+      , ("log", (2, Null, \_ _ -> Function 1 stdLog))
+      , ("pow", (2, Null, \_ _ -> Function 2 stdPow))
       ]
 
-readBin :: String -> IO (Result Value)
+readBin :: String -> IO Value
 readBin path = do
   body <- Bytestring.readFile path
   pure $
     makeArrayFromList $
       reverse $
-        Bytestring.foldl (\acc x -> return (Number $ fromIntegral x) : acc) [] body
+        Bytestring.foldl (\acc x -> Number (fromIntegral x) : acc) [] body
 
-readStr :: String -> IO (Result Value)
+readStr :: String -> IO Value
 readStr path = do
   body <- readFile path
   pure $ makeString body

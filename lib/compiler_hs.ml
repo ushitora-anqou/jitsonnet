@@ -170,14 +170,11 @@ let compile_builtin_std = function
 
 let rec compile_expr ?toplevel:_ env : Syntax.Core.expr -> Haskell.expr =
   function
-  | Null -> make_call (Symbol "Ok") [ Symbol "Null" ]
-  | True ->
-      make_call (Symbol "Ok") [ make_call (Symbol "Bool") [ Symbol "True" ] ]
-  | False ->
-      make_call (Symbol "Ok") [ make_call (Symbol "Bool") [ Symbol "False" ] ]
+  | Null -> Symbol "Null"
+  | True -> make_call (Symbol "Bool") [ Symbol "True" ]
+  | False -> make_call (Symbol "Bool") [ Symbol "False" ]
   | String s -> Call (Symbol "makeString", StringLiteral s)
-  | Number n ->
-      make_call (Symbol "Ok") [ Call (Symbol "Number", FloatLiteral n) ]
+  | Number n -> Call (Symbol "Number", FloatLiteral n)
   | Array xs ->
       Call (Symbol "makeArrayFromList", List (List.map (compile_expr env) xs))
   | ArrayIndex (e1, e2) ->
@@ -235,13 +232,10 @@ let rec compile_expr ?toplevel:_ env : Syntax.Core.expr -> Haskell.expr =
                  | Some e -> make_call (Symbol "Just") [ compile_expr env e ]);
                ] )
       in
-      make_call (Symbol "Ok")
+      make_call (Symbol "Function")
         [
-          make_call (Symbol "Function")
-            [
-              IntLiteral (List.length params);
-              Function ("args", make_let binds (compile_expr env body));
-            ];
+          IntLiteral (List.length params);
+          Function ("args", make_let binds (compile_expr env body));
         ]
   | Call ((ArrayIndex (Var std, String name) as e), positional, named)
     when std = "$std" || (std = "std" && env.is_stdjsonnet) -> (
@@ -257,9 +251,7 @@ let rec compile_expr ?toplevel:_ env : Syntax.Core.expr -> Haskell.expr =
         binds |> List.map (fun (id, e) -> (varname env id, compile_expr env e))
       in
       make_let bindings (compile_expr env body)
-  | Self ->
-      make_call (Symbol "Ok")
-        [ make_call (Symbol "Object") [ List []; Symbol (varname env "self") ] ]
+  | Self -> make_call (Symbol "Object") [ List []; Symbol (varname env "self") ]
   | Var id -> (
       match Hashtbl.find env.vars id with
       | exception _ -> failwith ("var not found: " ^ id)
@@ -339,49 +331,38 @@ let rec compile_expr ?toplevel:_ env : Syntax.Core.expr -> Haskell.expr =
                            else e2 ) );
                    acc;
                  ])
-             (make_call (Symbol "Ok") [ Symbol "emptyObjectFields" ])
+             (Symbol "emptyObjectFields")
       in
-      let fields =
-        make_call (Symbol "fmap") [ Symbol "fillObjectCache"; fields ]
-      in
+      let fields = make_call (Symbol "fillObjectCache") [ fields ] in
 
       make_let bindings1
-        (make_let bindings2
-           (Do
-              [
-                Assign ("f", fields);
-                make_call (Symbol "Ok")
-                  [ make_call (Symbol "Object") [ assrts; Symbol "f" ] ];
-              ]))
+        (make_let bindings2 (make_call (Symbol "Object") [ assrts; fields ]))
   | ObjectFor (e1, e2, x, e3) ->
       let compiled_e3 (* with env *) = compile_expr env e3 in
       with_binds env [ x ] @@ fun () ->
       let compiled_e1 (* with env + x *) = compile_expr env e1 in
       with_binds env [ "self"; "super" ] @@ fun () ->
       let compiled_e2 (* with env + x, self *) = compile_expr env e2 in
-      Haskell.Do
+      make_call (Symbol "Object")
         [
-          Assign
-            ( "f",
-              make_call (Symbol "objectFor")
-                [
+          List [];
+          make_call (Symbol "objectFor")
+            [
+              Function
+                ( "acc",
                   Function
-                    ( "acc",
-                      Function
-                        ( varname env x,
-                          make_call (Symbol "objectField")
-                            [
-                              IntLiteral 1;
-                              compiled_e1;
-                              Function
-                                ( varname env "self",
-                                  Function (varname env "super", compiled_e2) );
-                              make_call (Symbol "Ok") [ Symbol "acc" ];
-                            ] ) );
-                  compiled_e3;
-                ] );
-          make_call (Symbol "Ok")
-            [ make_call (Symbol "Object") [ List []; Symbol "f" ] ];
+                    ( varname env x,
+                      make_call (Symbol "objectField")
+                        [
+                          IntLiteral 1;
+                          compiled_e1;
+                          Function
+                            ( varname env "self",
+                              Function (varname env "super", compiled_e2) );
+                          Symbol "acc";
+                        ] ) );
+              compiled_e3;
+            ];
         ]
   | (Import file_path | Importbin file_path | Importstr file_path) as node ->
       let import_id =
@@ -396,11 +377,9 @@ let rec compile_expr ?toplevel:_ env : Syntax.Core.expr -> Haskell.expr =
       make_call (Symbol (varname env import_id)) [ Symbol "importedData" ]
 
 and compile_generic_call env (e, positional, named) =
-  Haskell.Do
-    [
-      Assign ("f", make_call (Symbol "getFunction") [ compile_expr env e ]);
-      make_call (Symbol "f") [ compile_call_args env positional named ];
-    ]
+  make_call
+    (make_call (Symbol "getFunction") [ compile_expr env e ])
+    [ compile_call_args env positional named ]
 
 and compile_call_args env positional named =
   Tuple
@@ -458,16 +437,15 @@ let compile ?multi ?(string = false) ?(target = `Main) root_prog_path progs bins
 
   let importedDataFields =
     (bins_bindings |> List.map fst) @ (strs_bindings |> List.map fst)
-    |> List.map (fun name -> Printf.sprintf "%s :: Result Value" name)
+    |> List.map (fun name -> Printf.sprintf "%s :: Value" name)
     |> String.concat ", "
   in
 
   let progs_flatten =
     progs_bindings
     |> List.map (fun (id, e) ->
-           Printf.sprintf
-             "%s :: ImportedData -> Result Value\n%s importedData = %s" id id
-             (Haskell.show_expr e))
+           Printf.sprintf "%s :: ImportedData -> Value\n%s importedData = %s" id
+             id (Haskell.show_expr e))
     |> String.concat "\n"
   in
 
@@ -516,10 +494,10 @@ import qualified Data.HashMap.Lazy as HashMap
 
 data ImportedData = MkImportedData { %s }
 
-makeStd :: String -> Result Value
+makeStd :: String -> Value
 makeStd thisFile =
   case Stdjsonnet.v of
-    Ok (Object _ fields) -> Ok $ Object [] $ fillObjectCache $ insertStd fields
+    (Object _ fields) -> Object [] $ fillObjectCache $ insertStd fields
 
 %s = makeStd ""
 
@@ -538,7 +516,7 @@ import qualified Data.HashMap.Lazy as HashMap
 
 %s = Object [] $ fillObjectCache $ insertStd emptyObjectFields
 
-v :: Result Value
+v :: Value
 v = %s
 |}
         (varname env "$std")
