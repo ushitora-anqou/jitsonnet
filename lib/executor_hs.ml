@@ -84,7 +84,7 @@ let compile_to_native ~ghc ~runtime_dir ~main_hs ~main_exe ~interactive () =
                 stdout_content stderr_content))
   in
   try
-    run_ghc [ "-i" ^ runtime_dir; "-c"; "-O2"; main_hs ];
+    run_ghc [ "-i" ^ runtime_dir; "-c"; "-ffull-laziness"; main_hs ];
     run_ghc
       (List.flatten
          [
