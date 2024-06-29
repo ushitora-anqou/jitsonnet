@@ -1,0 +1,10 @@
+{ Syntax.v = (Syntax.Number 1.);
+  loc =
+  (Some { Syntax.startpos =
+          { Syntax.fname = "test/cases/parse/number.in"; line = 1; column = 0
+            };
+          endpos =
+          { Syntax.fname = "test/cases/parse/number.in"; line = 1; column = 3
+            }
+          })
+  }

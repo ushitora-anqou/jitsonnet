@@ -1,0 +1,58 @@
+{ Syntax.v =
+  (Syntax.Function
+     ([("x", None);
+        ("y",
+         (Some { Syntax.v = (Syntax.Number 1.);
+                 loc =
+                 (Some { Syntax.startpos =
+                         { Syntax.fname =
+                           "test/cases/parse/function_complex.in"; line = 1;
+                           column = 14 };
+                         endpos =
+                         { Syntax.fname =
+                           "test/cases/parse/function_complex.in"; line = 1;
+                           column = 17 }
+                         })
+                 }))
+        ],
+      { Syntax.v =
+        (Syntax.Binary
+           ({ Syntax.v = (Syntax.Var "x");
+              loc =
+              (Some { Syntax.startpos =
+                      { Syntax.fname = "test/cases/parse/function_complex.in";
+                        line = 1; column = 19 };
+                      endpos =
+                      { Syntax.fname = "test/cases/parse/function_complex.in";
+                        line = 1; column = 20 }
+                      })
+              },
+            `Add,
+            { Syntax.v = (Syntax.Var "y");
+              loc =
+              (Some { Syntax.startpos =
+                      { Syntax.fname = "test/cases/parse/function_complex.in";
+                        line = 1; column = 21 };
+                      endpos =
+                      { Syntax.fname = "test/cases/parse/function_complex.in";
+                        line = 1; column = 22 }
+                      })
+              }));
+        loc =
+        (Some { Syntax.startpos =
+                { Syntax.fname = "test/cases/parse/function_complex.in";
+                  line = 1; column = 19 };
+                endpos =
+                { Syntax.fname = "test/cases/parse/function_complex.in";
+                  line = 1; column = 22 }
+                })
+        }));
+  loc =
+  (Some { Syntax.startpos =
+          { Syntax.fname = "test/cases/parse/function_complex.in"; line = 1;
+            column = 0 };
+          endpos =
+          { Syntax.fname = "test/cases/parse/function_complex.in"; line = 1;
+            column = 22 }
+          })
+  }

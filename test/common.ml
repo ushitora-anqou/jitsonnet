@@ -6,16 +6,20 @@ let read_all file_path =
     ~finally:(fun () -> close_in ic)
     (fun () -> In_channel.input_all ic)
 
-let assert_compile' ~compiler ?(test_cases_dir = "../../../test/cases")
-    ?(expected_suffix = ".expected") ?(multi = false) ?(string = false)
-    ?(ext_codes = []) ?(ext_strs = []) src_file_path result_pat =
+let assert_compile' ~loader_optimize ~compiler
+    ?(test_cases_dir = "../../../test/cases") ?(expected_suffix = ".expected")
+    ?(multi = false) ?(string = false) ?(ext_codes = []) ?(ext_strs = [])
+    src_file_path result_pat =
   let input_file_path =
     Filename.concat test_cases_dir (src_file_path ^ ".jsonnet")
   in
   let expected_path =
     Filename.concat test_cases_dir (src_file_path ^ expected_suffix)
   in
-  match Loader.load_root ~ext_codes ~ext_strs input_file_path with
+  match
+    Loader.load_root ~optimize:loader_optimize ~ext_codes ~ext_strs
+      input_file_path
+  with
   | Error msg ->
       Logs.err (fun m ->
           m "assert_compile_expr: failed to load: %s: %s" input_file_path msg);

@@ -1,4 +1,25 @@
 %{
+let wloc ((startpos : Lexing.position), (endpos : Lexing.position)) v =
+  Syntax.
+    {
+      v;
+      loc =
+        Some
+          {
+            startpos =
+              {
+                fname = startpos.pos_fname;
+                line = startpos.pos_lnum;
+                column = startpos.pos_cnum - startpos.pos_bol;
+              };
+            endpos =
+              {
+                fname = endpos.pos_fname;
+                line = endpos.pos_lnum;
+                column = endpos.pos_cnum - endpos.pos_bol;
+              };
+          };
+    }
 %}
 
 %token AND ANDAND ASSERT BANG BANGEQ BAR COLON COMMA DOLLAR DOT ELSE EOF EQ EQEQ ERROR FALSE FOR FUNCTION GE GT GTGT HAT IF IMPORT IMPORTBIN IMPORTSTR IN LBRACE LBRACKET LE LOCAL LPAREN LT LTLT MINUS NULL BARBAR PERCENT PLUS RBRACE RBRACKET RPAREN SELF SEMICOLON SLASH STAR SUPER TAILSTRICT THEN TILDE TRUE
@@ -68,28 +89,28 @@ toplevel :
 
 Expr :
   | NULL {
-    Syntax.Null
+    wloc $sloc Syntax.Null
   }
   | TRUE {
-    Syntax.True
+    wloc $sloc Syntax.True
   }
   | FALSE {
-    Syntax.False
+    wloc $sloc Syntax.False
   }
   | SELF {
-    Syntax.Self
+    wloc $sloc Syntax.Self
   }
   | DOLLAR {
-    Syntax.Dollar
+    wloc $sloc Syntax.Dollar
   }
   | s=STRING {
-    Syntax.String s
+    wloc $sloc @@ Syntax.String s
   }
   | i=NUMBER {
-    Syntax.Number i
+    wloc $sloc @@ Syntax.Number i
   }
   | LBRACE x=Objinside RBRACE {
-    Syntax.Object x
+    wloc $sloc @@ Syntax.Object x
   }
   | LBRACKET
       xs=separated_list1(COMMA, Expr)
@@ -97,14 +118,14 @@ Expr :
     RBRACKET {
     match xs, spec with
     | [ x ], Some (forspec, compspec) ->
-      Syntax.ArrayFor (x, forspec, compspec)
+      wloc $sloc @@ Syntax.ArrayFor (x, forspec, compspec)
     | _, None ->
-      Syntax.Array xs
+      wloc $sloc @@ Syntax.Array xs
     | _ ->
       raise (Syntax.General_parse_error "invalid array")
   }
   | e=Expr DOT id=ID {
-    Syntax.Select (e, id)
+    wloc $sloc @@ Syntax.Select (e, id)
   }
   | x=Expr
     LBRACKET
@@ -121,66 +142,66 @@ Expr :
     RBRACKET { (* x[a], x[a:], x[a:b], x[a:b:], x[a:b:c] *)
     match a, bc with
     | Some a, None -> (* x[a] *)
-      Syntax.ArrayIndex (x, a)
+      wloc $sloc @@ Syntax.ArrayIndex (x, a)
     | None, None ->
       raise (Syntax.General_parse_error "ast.Index requires an expression")
     | _, Some None -> (* x[:], x[a:] *)
-      Syntax.ArraySlice (x, a, None, None)
+      wloc $sloc @@ Syntax.ArraySlice (x, a, None, None)
     | _, Some (Some (b, (None | Some None))) -> (* x[:b], x[:b], x[a:b], x[a:b:] *)
-      Syntax.ArraySlice (x, a, Some b, None)
+      wloc $sloc @@ Syntax.ArraySlice (x, a, Some b, None)
     | _, Some (Some (b, Some (Some c))) -> (* x[:b:c], x[a:b:c] *)
-      Syntax.ArraySlice (x, a, Some b, Some c)
+      wloc $sloc @@ Syntax.ArraySlice (x, a, Some b, Some c)
   }
   | x=Expr LBRACKET a=option(Expr) COLON COLON c=option(Expr) RBRACKET { (* x[::], x[::c], x[a::], x[a::c] *)
-    Syntax.ArraySlice(x, a, None, c)
+    wloc $sloc @@ Syntax.ArraySlice(x, a, None, c)
   }
   | SUPER DOT id=ID {
-    Syntax.SuperIndex (String id)
+    wloc $sloc @@ Syntax.SuperIndex (wloc $loc(id) @@ Syntax.String id)
   }
   | SUPER LBRACKET e=Expr RBRACKET {
-    Syntax.SuperIndex e
+    wloc $sloc @@ Syntax.SuperIndex e
   }
   | e=Expr LPAREN args=Args RPAREN tailstrict=option(TAILSTRICT) {
-    Syntax.Call (e, args, Option.is_some tailstrict)
+    wloc $sloc @@ Syntax.Call (e, args, Option.is_some tailstrict)
   }
   | id=ID {
-    Syntax.Var id
+    wloc $sloc @@ Syntax.Var id
   }
   | LOCAL binds=separated_nonempty_list(COMMA, Bind) SEMICOLON e=Expr {
-    Syntax.Local (binds, e)
+    wloc $sloc @@ Syntax.Local (binds, e)
   }
   | IF e1=Expr THEN e2=Expr e3=ioption(ELSE x=Expr { x }) {
-    Syntax.If (e1, e2, e3)
+    wloc $sloc @@ Syntax.If (e1, e2, e3)
   }
   | e1=Expr op=Binaryop e2=Expr {
-    Syntax.Binary (e1, op, e2)
+    wloc $sloc @@ Syntax.Binary (e1, op, e2)
   }
   | op=Unaryop e=Expr {
-    Syntax.Unary (op, e)
+    wloc $sloc @@ Syntax.Unary (op, e)
   }
   | e=Expr LBRACE o=Objinside RBRACE {
-    Syntax.ObjectSeq (e, o)
+    wloc $sloc @@ Syntax.ObjectSeq (e, o)
   }
   | FUNCTION LPAREN params=Params RPAREN e=Expr %prec FUNCTION {
-    Syntax.Function (params, e)
+    wloc $sloc @@ Syntax.Function (params, e)
   }
   | a=Assert SEMICOLON e=Expr {
-    Syntax.Assert (a, e)
+    wloc $sloc @@ Syntax.Assert (a, e)
   }
   | IMPORT s=STRING {
-    Syntax.Import s
+    wloc $sloc @@ Syntax.Import s
   }
   | IMPORTSTR s=STRING {
-    Syntax.Importstr s
+    wloc $sloc @@ Syntax.Importstr s
   }
   | IMPORTBIN s=STRING {
-    Syntax.Importbin s
+    wloc $sloc @@ Syntax.Importbin s
   }
   | ERROR e=Expr {
-    Syntax.Error e
+    wloc $sloc @@ Syntax.Error e
   }
   | e=Expr IN SUPER {
-    Syntax.InSuper e
+    wloc $sloc @@ Syntax.InSuper e
   }
   | LPAREN e=Expr RPAREN {
     e
@@ -267,7 +288,7 @@ FieldExceptBracket :
     Syntax.Field (name, Option.is_some plus, h, e)
   }
   | name=FieldnameExceptBracket LPAREN params=Params RPAREN h=H e=Expr {
-    Syntax.FieldFunc (name, params, h, e)
+    Syntax.FieldFunc (name, wloc $sloc (params, h, e))
   }
 
 Field :
@@ -275,7 +296,7 @@ Field :
     Syntax.Field (name, Option.is_some plus, h, e)
   }
   | name=Fieldname LPAREN params=Params RPAREN h=H e=Expr {
-    Syntax.FieldFunc (name, params, h, e)
+    Syntax.FieldFunc (name, wloc $sloc (params, h, e))
   }
 
 H :
@@ -311,10 +332,10 @@ Ifspec :
 
 FieldnameExceptBracket :
   | id=ID {
-    Syntax.FieldnameID id
+    Syntax.FieldnameID (wloc $sloc id)
   }
   | s=STRING {
-    Syntax.FieldnameString s
+    Syntax.FieldnameString (wloc $sloc s)
   }
 
 Fieldname :
@@ -327,7 +348,7 @@ Fieldname :
 
 Assert :
   | ASSERT e1=Expr e2=option(COLON e=Expr { e }) {
-    (e1, e2)
+    wloc $sloc @@ (e1, e2)
   }
 
 Bind :
@@ -335,7 +356,7 @@ Bind :
     Syntax.Bind (id, e)
   }
   | id=ID LPAREN params=Params RPAREN EQ e=Expr {
-    Syntax.BindFunc (id, params, e)
+    Syntax.BindFunc (id, wloc $sloc (params, e))
   }
 
 Args :

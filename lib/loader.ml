@@ -9,7 +9,8 @@ type t = {
 let list_imported_files e =
   let progs, bins, strs =
     Syntax.Core.fold
-      (fun ((progs, bins, strs) as acc) -> function
+      (fun ((progs, bins, strs) as acc) e ->
+        match e.v with
         | Syntax.Core.Import file -> (file :: progs, bins, strs)
         | Importbin file -> (progs, file :: bins, strs)
         | Importstr file -> (progs, bins, file :: strs)
@@ -31,14 +32,15 @@ let update_imported_files root desugared =
   if root = "." then desugared
   else
     Syntax.Core.map
-      (function
-        | Import file -> Import (Filename.concat root file)
-        | Importbin file -> Importbin (Filename.concat root file)
-        | Importstr file -> Importstr (Filename.concat root file)
-        | x -> x)
+      (fun n ->
+        match n.v with
+        | Import file -> { n with v = Import (Filename.concat root file) }
+        | Importbin file -> { n with v = Importbin (Filename.concat root file) }
+        | Importstr file -> { n with v = Importstr (Filename.concat root file) }
+        | _ -> n)
       desugared
 
-let rec load is_stdjsonnet src t =
+let rec load ~is_stdjsonnet ~optimize src t =
   let ( let* ) = Result.bind in
   match src with
   | `File path -> (
@@ -47,11 +49,17 @@ let rec load is_stdjsonnet src t =
       | Some _ -> Ok ()
       | None ->
           let* prog = Parser.parse_file path in
+          let desugared = Syntax.desugar ~is_stdjsonnet prog in
           let desugared =
-            Syntax.desugar ~is_stdjsonnet prog
-            |> Syntax.alpha_conv ~is_stdjsonnet
-            |> Syntax.float_let_binds
-            |> update_imported_files (Filename.dirname path)
+            match optimize with
+            | false -> Syntax.replace_std ~is_stdjsonnet desugared
+            | true ->
+                desugared
+                |> Syntax.alpha_conv ~is_stdjsonnet
+                |> Syntax.float_let_binds
+          in
+          let desugared =
+            desugared |> update_imported_files (Filename.dirname path)
           in
           let* () = Static_check.f is_stdjsonnet desugared in
           Hashtbl.add t.loaded real_path (path, desugared);
@@ -62,7 +70,7 @@ let rec load is_stdjsonnet src t =
           |> List.fold_left
                (fun res file ->
                  let* () = res in
-                 t |> load is_stdjsonnet (`File file))
+                 t |> load ~is_stdjsonnet ~optimize (`File file))
                (Ok ()))
   | `Ext_code (key, prog_src) ->
       let* prog = Parser.parse_string prog_src in
@@ -80,13 +88,14 @@ let rec load is_stdjsonnet src t =
         |> List.fold_left
              (fun res file ->
                let* () = res in
-               t |> load is_stdjsonnet (`File file))
+               t |> load ~is_stdjsonnet ~optimize (`File file))
              (Ok ())
       in
       Hashtbl.replace t.ext_codes key (Ok desugared);
       Ok ()
   | `Ext_str (key, value) ->
-      Hashtbl.replace t.ext_codes key (Ok (Syntax.Core.String value));
+      Hashtbl.replace t.ext_codes key
+        (Ok { v = Syntax.Core.String value; loc = None });
       Ok ()
 
 let compile ?multi ?string ?target t =
@@ -115,18 +124,22 @@ let load_ext ext_code =
       ( String.sub ext_code 0 i,
         String.sub ext_code (i + 1) (String.length ext_code - (i + 1)) )
 
-let load_ext_codes ext_codes t =
+let load_ext_codes ~optimize ext_codes t =
   ext_codes
   |> List.iter (fun ext_code ->
-         ignore (load false (`Ext_code (load_ext ext_code)) t))
+         ignore
+           (load ~is_stdjsonnet:false ~optimize
+              (`Ext_code (load_ext ext_code))
+              t))
 
-let load_ext_strs ext_strs t =
+let load_ext_strs ~optimize ext_strs t =
   ext_strs
   |> List.iter (fun ext_str ->
-         ignore (load false (`Ext_str (load_ext ext_str)) t))
+         ignore
+           (load ~is_stdjsonnet:false ~optimize (`Ext_str (load_ext ext_str)) t))
 
 let load_root ?(is_stdjsonnet = false) ?(ext_codes = []) ?(ext_strs = [])
-    root_prog_path =
+    ~optimize root_prog_path =
   let t =
     {
       loaded = Hashtbl.create 1;
@@ -136,6 +149,7 @@ let load_root ?(is_stdjsonnet = false) ?(ext_codes = []) ?(ext_strs = [])
       ext_codes = Hashtbl.create 0;
     }
   in
-  load_ext_codes ext_codes t;
-  load_ext_strs ext_strs t;
-  load is_stdjsonnet (`File root_prog_path) t |> Result.map (Fun.const t)
+  load_ext_codes ~optimize ext_codes t;
+  load_ext_strs ~optimize ext_strs t;
+  load ~is_stdjsonnet ~optimize (`File root_prog_path) t
+  |> Result.map (Fun.const t)

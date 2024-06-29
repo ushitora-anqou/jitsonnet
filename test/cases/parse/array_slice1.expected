@@ -1,0 +1,22 @@
+{ Syntax.v =
+  (Syntax.ArraySlice
+     ({ Syntax.v = (Syntax.Var "x");
+        loc =
+        (Some { Syntax.startpos =
+                { Syntax.fname = "test/cases/parse/array_slice1.in";
+                  line = 1; column = 0 };
+                endpos =
+                { Syntax.fname = "test/cases/parse/array_slice1.in";
+                  line = 1; column = 1 }
+                })
+        },
+      None, None, None));
+  loc =
+  (Some { Syntax.startpos =
+          { Syntax.fname = "test/cases/parse/array_slice1.in"; line = 1;
+            column = 0 };
+          endpos =
+          { Syntax.fname = "test/cases/parse/array_slice1.in"; line = 1;
+            column = 5 }
+          })
+  }

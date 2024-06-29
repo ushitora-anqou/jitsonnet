@@ -1,0 +1,32 @@
+{ Syntax.v =
+  (Syntax.Array
+     [{ Syntax.v = (Syntax.Number 1.);
+        loc =
+        (Some { Syntax.startpos =
+                { Syntax.fname = "test/cases/parse/array_double.in";
+                  line = 1; column = 1 };
+                endpos =
+                { Syntax.fname = "test/cases/parse/array_double.in";
+                  line = 1; column = 2 }
+                })
+        };
+       { Syntax.v = (Syntax.String "s");
+         loc =
+         (Some { Syntax.startpos =
+                 { Syntax.fname = "test/cases/parse/array_double.in";
+                   line = 1; column = 4 };
+                 endpos =
+                 { Syntax.fname = "test/cases/parse/array_double.in";
+                   line = 1; column = 7 }
+                 })
+         }
+       ]);
+  loc =
+  (Some { Syntax.startpos =
+          { Syntax.fname = "test/cases/parse/array_double.in"; line = 1;
+            column = 0 };
+          endpos =
+          { Syntax.fname = "test/cases/parse/array_double.in"; line = 1;
+            column = 8 }
+          })
+  }

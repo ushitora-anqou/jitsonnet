@@ -1,6 +1,7 @@
 (tests
  (names
   test_jitsonnet
+  test_parser
   test_ocaml_backend
   test_haskell_backend
   test_haskell_backend_go_jsonnet_testcases)

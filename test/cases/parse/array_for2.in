@@ -1,0 +1,6 @@
+[
+  [x, y],
+  for x in a
+  for y in a
+  if true
+]

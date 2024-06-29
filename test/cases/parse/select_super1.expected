@@ -1,0 +1,21 @@
+{ Syntax.v =
+  (Syntax.SuperIndex
+     { Syntax.v = (Syntax.String "x");
+       loc =
+       (Some { Syntax.startpos =
+               { Syntax.fname = "test/cases/parse/select_super1.in";
+                 line = 1; column = 6 };
+               endpos =
+               { Syntax.fname = "test/cases/parse/select_super1.in";
+                 line = 1; column = 7 }
+               })
+       });
+  loc =
+  (Some { Syntax.startpos =
+          { Syntax.fname = "test/cases/parse/select_super1.in"; line = 1;
+            column = 0 };
+          endpos =
+          { Syntax.fname = "test/cases/parse/select_super1.in"; line = 1;
+            column = 7 }
+          })
+  }

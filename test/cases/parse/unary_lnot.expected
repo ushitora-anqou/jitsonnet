@@ -1,0 +1,22 @@
+{ Syntax.v =
+  (Syntax.Unary
+     (Syntax.Lnot,
+      { Syntax.v = Syntax.True;
+        loc =
+        (Some { Syntax.startpos =
+                { Syntax.fname = "test/cases/parse/unary_lnot.in"; line = 1;
+                  column = 1 };
+                endpos =
+                { Syntax.fname = "test/cases/parse/unary_lnot.in"; line = 1;
+                  column = 5 }
+                })
+        }));
+  loc =
+  (Some { Syntax.startpos =
+          { Syntax.fname = "test/cases/parse/unary_lnot.in"; line = 1;
+            column = 0 };
+          endpos =
+          { Syntax.fname = "test/cases/parse/unary_lnot.in"; line = 1;
+            column = 5 }
+          })
+  }

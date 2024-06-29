@@ -1,0 +1,10 @@
+{
+  ["foo"]+: "bar",
+  x+: 1,
+  local a = "b",
+  y():: "a",
+  assert true,
+  z(v1, v2="s")::"s",
+  assert true : "s",
+  "w":::1.0,
+}

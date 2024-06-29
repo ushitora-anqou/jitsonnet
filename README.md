@@ -29,7 +29,6 @@ cat bad | sed -r 's/.golden$/.jsonnet/' | sponge bad
 ls go-jsonnet/testdata | grep -v golden | grep -v linter | grep -v bad | grep -v error | while read line; do grep --quiet "$line" bad || echo $line; done | grep -E '.jsonnet$' | sed -r 's/^(.*).jsonnet$/assert_compile "\1" `Success;/'
 ```
 
-
 ## How to generate `bundle/stdjsonnet.cma`
 
 ```
@@ -40,7 +39,7 @@ ocamlc -a -o bundle/stdjsonnet.cma bundle/stdjsonnet.ml
 ## How to update `test/std_ast.ml`
 
 ```
-let oc = open_out "test/std_ast.ml" in (Jitsonnet.Parser.parse_file "test/std.jsonnet" |> Result.get_ok).expr |> Jitsonnet.Syntax.show_expr |> Printf.fprintf oc "open Jitsonnet\n\nlet expected =\n%s\n"; close_out oc;;
+let oc = open_out "test/std_ast.ml" in (Jitsonnet.Parser.parse_file "thirdparty/jsonnet/stdlib/std.jsonnet" |> Result.get_ok).expr |> Jitsonnet.Syntax.show_expr |> Printf.fprintf oc "open Jitsonnet\n\nlet expected =\n%s\n"; close_out oc;;
 
 ocamlformat -i test/std_ast.ml
 ```

@@ -1,0 +1,43 @@
+{ Syntax.v =
+  (Syntax.Error
+     { Syntax.v =
+       (Syntax.Binary
+          ({ Syntax.v = (Syntax.String "%d");
+             loc =
+             (Some { Syntax.startpos =
+                     { Syntax.fname = "test/cases/parse/error.in"; line = 1;
+                       column = 6 };
+                     endpos =
+                     { Syntax.fname = "test/cases/parse/error.in"; line = 1;
+                       column = 10 }
+                     })
+             },
+           `Mod,
+           { Syntax.v = (Syntax.Number 3.);
+             loc =
+             (Some { Syntax.startpos =
+                     { Syntax.fname = "test/cases/parse/error.in"; line = 1;
+                       column = 13 };
+                     endpos =
+                     { Syntax.fname = "test/cases/parse/error.in"; line = 1;
+                       column = 14 }
+                     })
+             }));
+       loc =
+       (Some { Syntax.startpos =
+               { Syntax.fname = "test/cases/parse/error.in"; line = 1;
+                 column = 6 };
+               endpos =
+               { Syntax.fname = "test/cases/parse/error.in"; line = 1;
+                 column = 14 }
+               })
+       });
+  loc =
+  (Some { Syntax.startpos =
+          { Syntax.fname = "test/cases/parse/error.in"; line = 1; column = 0
+            };
+          endpos =
+          { Syntax.fname = "test/cases/parse/error.in"; line = 1; column = 14
+            }
+          })
+  }

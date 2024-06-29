@@ -98,6 +98,8 @@ let get_import_id kind file_path =
   | `Importstr -> "str/")
   ^ Unix.realpath file_path
 
+let callstack_varname = "cs"
+
 type var_desc =
   | VarUnknown
   | VarObjectLocal of
@@ -168,8 +170,43 @@ let compile_builtin_std = function
   | "md5" -> Ok "stdMd5"
   | _ -> Error "not found"
 
-let rec compile_expr ?toplevel:_ env : Syntax.Core.expr -> Haskell.expr =
-  function
+let compile_loc = function
+  | None -> Haskell.Symbol "Nothing"
+  | Some loc ->
+      make_call (Symbol "Just")
+        [
+          Tuple
+            [
+              StringLiteral loc.Syntax.startpos.fname;
+              IntLiteral loc.Syntax.startpos.line;
+              IntLiteral loc.Syntax.startpos.column;
+              IntLiteral loc.Syntax.endpos.line;
+              IntLiteral loc.Syntax.endpos.column;
+            ];
+        ]
+
+let compile_with_loc env loc e =
+  if env.is_stdjsonnet then e
+  else
+    make_call (Symbol "withLoc")
+      [
+        Symbol callstack_varname;
+        compile_loc loc;
+        Function (callstack_varname, e);
+      ]
+
+let compile_with_name env name e =
+  if env.is_stdjsonnet then e
+  else
+    make_call (Symbol "withName")
+      [
+        Symbol callstack_varname;
+        StringLiteral name;
+        Function (callstack_varname, e);
+      ]
+
+let rec compile_expr ?toplevel:_ env (e0 : Syntax.Core.expr) : Haskell.expr =
+  match e0.v with
   | Null -> Symbol "Null"
   | True -> make_call (Symbol "Bool") [ Symbol "True" ]
   | False -> make_call (Symbol "Bool") [ Symbol "False" ]
@@ -177,45 +214,34 @@ let rec compile_expr ?toplevel:_ env : Syntax.Core.expr -> Haskell.expr =
   | Number n -> Call (Symbol "Number", FloatLiteral n)
   | Array xs ->
       Call (Symbol "makeArrayFromList", List (List.map (compile_expr env) xs))
-  | ArrayIndex (e1, e2) ->
-      Call (Call (Symbol "arrayIndex", compile_expr env e1), compile_expr env e2)
-  | Binary (e1, `Add, e2) ->
-      Call (Call (Symbol "binaryAdd", compile_expr env e1), compile_expr env e2)
-  | Binary (e1, `Sub, e2) ->
-      Call (Call (Symbol "binarySub", compile_expr env e1), compile_expr env e2)
-  | Binary (e1, `Mult, e2) ->
-      Call (Call (Symbol "binaryMult", compile_expr env e1), compile_expr env e2)
-  | Binary (e1, `Div, e2) ->
-      Call (Call (Symbol "binaryDiv", compile_expr env e1), compile_expr env e2)
-  | Binary (e1, `And, e2) ->
-      Call (Call (Symbol "binaryAnd", compile_expr env e1), compile_expr env e2)
-  | Binary (e1, `Or, e2) ->
-      Call (Call (Symbol "binaryOr", compile_expr env e1), compile_expr env e2)
-  | Binary (e1, `Land, e2) ->
-      Call (Call (Symbol "binaryLand", compile_expr env e1), compile_expr env e2)
-  | Binary (e1, `Lor, e2) ->
-      Call (Call (Symbol "binaryLor", compile_expr env e1), compile_expr env e2)
-  | Binary (e1, `Xor, e2) ->
-      Call (Call (Symbol "binaryXor", compile_expr env e1), compile_expr env e2)
-  | Binary (e1, `Lsl, e2) ->
-      Call (Call (Symbol "binaryLsl", compile_expr env e1), compile_expr env e2)
-  | Binary (e1, `Lsr, e2) ->
-      Call (Call (Symbol "binaryLsr", compile_expr env e1), compile_expr env e2)
-  | Binary (e1, `Lt, e2) ->
-      Call (Call (Symbol "binaryLt", compile_expr env e1), compile_expr env e2)
-  | Binary (e1, `Le, e2) ->
-      Call (Call (Symbol "binaryLe", compile_expr env e1), compile_expr env e2)
-  | Binary (e1, `Gt, e2) ->
-      Call (Call (Symbol "binaryGt", compile_expr env e1), compile_expr env e2)
-  | Binary (e1, `Ge, e2) ->
-      Call (Call (Symbol "binaryGe", compile_expr env e1), compile_expr env e2)
-  | Unary (Not, e) -> Call (Symbol "unaryNot", compile_expr env e)
-  | Unary (Lnot, e) -> Call (Symbol "unaryLnot", compile_expr env e)
-  | Unary (Neg, e) -> Call (Symbol "unaryNeg", compile_expr env e)
-  | Unary (Pos, e) -> Call (Symbol "unaryPos", compile_expr env e)
+  | ArrayIndex (e1, e2) -> compile_binary env "arrayIndex" e1 e2
+  | Binary (e1, `Add, e2) -> compile_binary env "binaryAdd" e1 e2
+  | Binary (e1, `Sub, e2) -> compile_binary env "binarySub" e1 e2
+  | Binary (e1, `Mult, e2) -> compile_binary env "binaryMult" e1 e2
+  | Binary (e1, `Div, e2) -> compile_binary env "binaryDiv" e1 e2
+  | Binary (e1, `And, e2) -> compile_binary env "binaryAnd" e1 e2
+  | Binary (e1, `Or, e2) -> compile_binary env "binaryOr" e1 e2
+  | Binary (e1, `Land, e2) -> compile_binary env "binaryLand" e1 e2
+  | Binary (e1, `Lor, e2) -> compile_binary env "binaryLor" e1 e2
+  | Binary (e1, `Xor, e2) -> compile_binary env "binaryXor" e1 e2
+  | Binary (e1, `Lsl, e2) -> compile_binary env "binaryLsl" e1 e2
+  | Binary (e1, `Lsr, e2) -> compile_binary env "binaryLsr" e1 e2
+  | Binary (e1, `Lt, e2) -> compile_binary env "binaryLt" e1 e2
+  | Binary (e1, `Le, e2) -> compile_binary env "binaryLe" e1 e2
+  | Binary (e1, `Gt, e2) -> compile_binary env "binaryGt" e1 e2
+  | Binary (e1, `Ge, e2) -> compile_binary env "binaryGe" e1 e2
+  | Unary (Not, e) -> compile_unary env "unaryNot" e
+  | Unary (Lnot, e) -> compile_unary env "unaryLnot" e
+  | Unary (Neg, e) -> compile_unary env "unaryNeg" e
+  | Unary (Pos, e) -> compile_unary env "unaryPos" e
   | If (e1, e2, e3) ->
       make_call (Symbol "if_")
-        [ compile_expr env e1; compile_expr env e2; compile_expr env e3 ]
+        [
+          Symbol callstack_varname;
+          compile_expr env e1;
+          compile_expr env e2;
+          compile_expr env e3;
+        ]
   | Function (params, body) ->
       with_binds env (params |> List.map fst) @@ fun () ->
       let binds =
@@ -224,6 +250,7 @@ let rec compile_expr ?toplevel:_ env : Syntax.Core.expr -> Haskell.expr =
            ( varname env id,
              make_call (Symbol "functionParam")
                [
+                 Symbol callstack_varname;
                  Symbol "args";
                  IntLiteral i;
                  StringLiteral id;
@@ -235,16 +262,27 @@ let rec compile_expr ?toplevel:_ env : Syntax.Core.expr -> Haskell.expr =
       make_call (Symbol "Function")
         [
           IntLiteral (List.length params);
-          Function ("args", make_let binds (compile_expr env body));
+          Function
+            ("cs", Function ("args", make_let binds (compile_expr env body)));
         ]
-  | Call ((ArrayIndex (Var std, String name) as e), positional, named)
-    when std = "$std" || (std = "std" && env.is_stdjsonnet) -> (
-      match compile_builtin_std name with
-      | Ok func ->
-          make_call (Symbol func) [ compile_call_args env positional named ]
-      | Error _ -> compile_generic_call env (e, positional, named))
-  | Call call -> compile_generic_call env call
-  | Error e -> make_call (Symbol "error'") [ compile_expr env e ]
+  | Call
+      ( ({ v = ArrayIndex ({ v = Var std; _ }, { v = String name; _ }); _ } as e),
+        positional,
+        named )
+    when std = "$std" || (std = "std" && env.is_stdjsonnet) ->
+      compile_with_loc env e0.loc
+        (match compile_builtin_std name with
+        | Ok func ->
+            make_call (Symbol func)
+              [
+                Symbol callstack_varname; compile_call_args env positional named;
+              ]
+        | Error _ -> compile_generic_call env (e, positional, named))
+  | Call call -> compile_with_loc env e0.loc (compile_generic_call env call)
+  | Error e ->
+      compile_with_loc env e0.loc
+        (make_call (Symbol "error'")
+           [ Symbol callstack_varname; compile_expr env e ])
   | Local (binds, body) ->
       with_binds env (binds |> List.map fst) @@ fun () ->
       let bindings =
@@ -260,10 +298,18 @@ let rec compile_expr ?toplevel:_ env : Syntax.Core.expr -> Haskell.expr =
           make_call (Symbol name_in_target) [ Symbol self; Symbol super ])
   | InSuper e ->
       make_call (Symbol "inSuper")
-        [ Symbol (varname env "super"); compile_expr env e ]
+        [
+          Symbol callstack_varname;
+          Symbol (varname env "super");
+          compile_expr env e;
+        ]
   | SuperIndex e ->
       make_call (Symbol "superIndex")
-        [ Symbol (varname env "super"); compile_expr env e ]
+        [
+          Symbol callstack_varname;
+          Symbol (varname env "super");
+          compile_expr env e;
+        ]
   | Object { binds; assrts; fields } ->
       let fields (* compile keys with outer env *) =
         fields
@@ -315,6 +361,7 @@ let rec compile_expr ?toplevel:_ env : Syntax.Core.expr -> Haskell.expr =
                let e2 = compile_expr env e2 in
                make_call (Symbol "objectField")
                  [
+                   Symbol callstack_varname;
                    IntLiteral h;
                    Symbol (varname env e1_key);
                    Haskell.Function
@@ -324,6 +371,7 @@ let rec compile_expr ?toplevel:_ env : Syntax.Core.expr -> Haskell.expr =
                            if plus then
                              make_call (Symbol "objectFieldPlusValue")
                                [
+                                 Symbol callstack_varname;
                                  Symbol (varname env "super");
                                  Symbol (varname env e1_key);
                                  e2;
@@ -348,12 +396,14 @@ let rec compile_expr ?toplevel:_ env : Syntax.Core.expr -> Haskell.expr =
           List [];
           make_call (Symbol "objectFor")
             [
+              Symbol callstack_varname;
               Function
                 ( "acc",
                   Function
                     ( varname env x,
                       make_call (Symbol "objectField")
                         [
+                          Symbol callstack_varname;
                           IntLiteral 1;
                           compiled_e1;
                           Function
@@ -364,7 +414,12 @@ let rec compile_expr ?toplevel:_ env : Syntax.Core.expr -> Haskell.expr =
               compiled_e3;
             ];
         ]
-  | (Import file_path | Importbin file_path | Importstr file_path) as node ->
+  | Import file_path ->
+      let import_id = get_import_id `Import file_path in
+      make_call
+        (Symbol (varname env import_id))
+        [ Symbol "importedData"; Symbol callstack_varname ]
+  | (Importbin file_path | Importstr file_path) as node ->
       let import_id =
         get_import_id
           (match node with
@@ -376,10 +431,20 @@ let rec compile_expr ?toplevel:_ env : Syntax.Core.expr -> Haskell.expr =
       in
       make_call (Symbol (varname env import_id)) [ Symbol "importedData" ]
 
+and compile_unary env sym e =
+  make_call (Symbol sym) [ Symbol callstack_varname; compile_expr env e ]
+
+and compile_binary env sym e1 e2 =
+  make_call (Symbol sym)
+    [ Symbol callstack_varname; compile_expr env e1; compile_expr env e2 ]
+
 and compile_generic_call env (e, positional, named) =
-  make_call
-    (make_call (Symbol "getFunction") [ compile_expr env e ])
-    [ compile_call_args env positional named ]
+  let funcname = match e.v with Syntax.Core.Var s -> s | _ -> "anonymous" in
+  compile_with_name env funcname
+    (make_call
+       (make_call (Symbol "getFunction")
+          [ Symbol callstack_varname; compile_expr env e ])
+       [ Symbol callstack_varname; compile_call_args env positional named ])
 
 and compile_call_args env positional named =
   Tuple
@@ -444,8 +509,9 @@ let compile ?multi ?(string = false) ?(target = `Main) root_prog_path progs bins
   let progs_flatten =
     progs_bindings
     |> List.map (fun (id, e) ->
-           Printf.sprintf "%s :: ImportedData -> Value\n%s importedData = %s" id
-             id (Haskell.show_expr e))
+           Printf.sprintf
+             "%s :: ImportedData -> CallStack -> Value\n%s importedData %s = %s"
+             id id callstack_varname (Haskell.show_expr e))
     |> String.concat "\n"
   in
 
@@ -496,7 +562,7 @@ data ImportedData = MkImportedData { %s }
 
 makeStd :: String -> Value
 makeStd thisFile =
-  case Stdjsonnet.v of
+  case Stdjsonnet.v [] of
     (Object _ fields) -> Object [] $ fillObjectCache $ insertStd fields
 
 %s = makeStd ""
@@ -516,10 +582,10 @@ import qualified Data.HashMap.Lazy as HashMap
 
 %s = Object [] $ fillObjectCache $ insertStd emptyObjectFields
 
-v :: Value
-v = %s
+v :: CallStack -> Value
+v = \%s -> %s
 |}
-        (varname env "$std")
+        (varname env "$std") callstack_varname
         (progs |> List.hd
         |> (fun (_, _, s) -> s)
         |> compile_expr env |> Haskell.show_expr)

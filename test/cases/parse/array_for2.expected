@@ -1,0 +1,78 @@
+{ Syntax.v =
+  (Syntax.ArrayFor
+     ({ Syntax.v =
+        (Syntax.Array
+           [{ Syntax.v = (Syntax.Var "x");
+              loc =
+              (Some { Syntax.startpos =
+                      { Syntax.fname = "test/cases/parse/array_for2.in";
+                        line = 2; column = 3 };
+                      endpos =
+                      { Syntax.fname = "test/cases/parse/array_for2.in";
+                        line = 2; column = 4 }
+                      })
+              };
+             { Syntax.v = (Syntax.Var "y");
+               loc =
+               (Some { Syntax.startpos =
+                       { Syntax.fname = "test/cases/parse/array_for2.in";
+                         line = 2; column = 6 };
+                       endpos =
+                       { Syntax.fname = "test/cases/parse/array_for2.in";
+                         line = 2; column = 7 }
+                       })
+               }
+             ]);
+        loc =
+        (Some { Syntax.startpos =
+                { Syntax.fname = "test/cases/parse/array_for2.in"; line = 2;
+                  column = 2 };
+                endpos =
+                { Syntax.fname = "test/cases/parse/array_for2.in"; line = 2;
+                  column = 8 }
+                })
+        },
+      ("x",
+       { Syntax.v = (Syntax.Var "a");
+         loc =
+         (Some { Syntax.startpos =
+                 { Syntax.fname = "test/cases/parse/array_for2.in"; line = 3;
+                   column = 11 };
+                 endpos =
+                 { Syntax.fname = "test/cases/parse/array_for2.in"; line = 3;
+                   column = 12 }
+                 })
+         }),
+      [(Syntax.Forspec
+          ("y",
+           { Syntax.v = (Syntax.Var "a");
+             loc =
+             (Some { Syntax.startpos =
+                     { Syntax.fname = "test/cases/parse/array_for2.in";
+                       line = 4; column = 11 };
+                     endpos =
+                     { Syntax.fname = "test/cases/parse/array_for2.in";
+                       line = 4; column = 12 }
+                     })
+             }));
+        (Syntax.Ifspec
+           { Syntax.v = Syntax.True;
+             loc =
+             (Some { Syntax.startpos =
+                     { Syntax.fname = "test/cases/parse/array_for2.in";
+                       line = 5; column = 5 };
+                     endpos =
+                     { Syntax.fname = "test/cases/parse/array_for2.in";
+                       line = 5; column = 9 }
+                     })
+             })
+        ]));
+  loc =
+  (Some { Syntax.startpos =
+          { Syntax.fname = "test/cases/parse/array_for2.in"; line = 1;
+            column = 0 };
+          endpos =
+          { Syntax.fname = "test/cases/parse/array_for2.in"; line = 6;
+            column = 1 }
+          })
+  }

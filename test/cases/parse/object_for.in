@@ -1,0 +1,8 @@
+{
+  local v1 = "s",
+  [x]: "y",
+  local v2 = "s",
+  for x in a
+  for y in a
+  if true
+}

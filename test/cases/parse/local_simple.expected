@@ -1,0 +1,34 @@
+{ Syntax.v =
+  (Syntax.Local
+     ([(Syntax.Bind
+          ("a",
+           { Syntax.v = (Syntax.Number 0.);
+             loc =
+             (Some { Syntax.startpos =
+                     { Syntax.fname = "test/cases/parse/local_simple.in";
+                       line = 1; column = 10 };
+                     endpos =
+                     { Syntax.fname = "test/cases/parse/local_simple.in";
+                       line = 1; column = 11 }
+                     })
+             }))
+        ],
+      { Syntax.v = (Syntax.Var "a");
+        loc =
+        (Some { Syntax.startpos =
+                { Syntax.fname = "test/cases/parse/local_simple.in";
+                  line = 1; column = 13 };
+                endpos =
+                { Syntax.fname = "test/cases/parse/local_simple.in";
+                  line = 1; column = 14 }
+                })
+        }));
+  loc =
+  (Some { Syntax.startpos =
+          { Syntax.fname = "test/cases/parse/local_simple.in"; line = 1;
+            column = 0 };
+          endpos =
+          { Syntax.fname = "test/cases/parse/local_simple.in"; line = 1;
+            column = 14 }
+          })
+  }

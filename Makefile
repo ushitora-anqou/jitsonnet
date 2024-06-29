@@ -27,3 +27,8 @@ runtime_hs/Common.o: runtime_hs/Common.hs
 .PHONY: fmt-hs
 fmt-hs:
 	fourmolu -o '-XGHC2021' --column-limit=90 --indentation=2 -i runtime_hs/Common.hs
+
+.PHONY: generate-test-parse-expected
+generate-test-parse-expected:
+	ls test/cases/parse/*.in | \
+		while read line; do dune exec bin/main.exe -- compile --parse-only $$line > $${line%.in}.expected; done

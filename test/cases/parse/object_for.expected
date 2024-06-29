@@ -1,0 +1,93 @@
+{ Syntax.v =
+  (Syntax.Object
+     (Syntax.ObjectFor
+        ([(Syntax.Bind
+             ("v1",
+              { Syntax.v = (Syntax.String "s");
+                loc =
+                (Some { Syntax.startpos =
+                        { Syntax.fname = "test/cases/parse/object_for.in";
+                          line = 2; column = 13 };
+                        endpos =
+                        { Syntax.fname = "test/cases/parse/object_for.in";
+                          line = 2; column = 16 }
+                        })
+                }))
+           ],
+         { Syntax.v = (Syntax.Var "x");
+           loc =
+           (Some { Syntax.startpos =
+                   { Syntax.fname = "test/cases/parse/object_for.in";
+                     line = 3; column = 3 };
+                   endpos =
+                   { Syntax.fname = "test/cases/parse/object_for.in";
+                     line = 3; column = 4 }
+                   })
+           },
+         { Syntax.v = (Syntax.String "y");
+           loc =
+           (Some { Syntax.startpos =
+                   { Syntax.fname = "test/cases/parse/object_for.in";
+                     line = 3; column = 7 };
+                   endpos =
+                   { Syntax.fname = "test/cases/parse/object_for.in";
+                     line = 3; column = 10 }
+                   })
+           },
+         [(Syntax.Bind
+             ("v2",
+              { Syntax.v = (Syntax.String "s");
+                loc =
+                (Some { Syntax.startpos =
+                        { Syntax.fname = "test/cases/parse/object_for.in";
+                          line = 4; column = 13 };
+                        endpos =
+                        { Syntax.fname = "test/cases/parse/object_for.in";
+                          line = 4; column = 16 }
+                        })
+                }))
+           ],
+         ("x",
+          { Syntax.v = (Syntax.Var "a");
+            loc =
+            (Some { Syntax.startpos =
+                    { Syntax.fname = "test/cases/parse/object_for.in";
+                      line = 5; column = 11 };
+                    endpos =
+                    { Syntax.fname = "test/cases/parse/object_for.in";
+                      line = 5; column = 12 }
+                    })
+            }),
+         [(Syntax.Forspec
+             ("y",
+              { Syntax.v = (Syntax.Var "a");
+                loc =
+                (Some { Syntax.startpos =
+                        { Syntax.fname = "test/cases/parse/object_for.in";
+                          line = 6; column = 11 };
+                        endpos =
+                        { Syntax.fname = "test/cases/parse/object_for.in";
+                          line = 6; column = 12 }
+                        })
+                }));
+           (Syntax.Ifspec
+              { Syntax.v = Syntax.True;
+                loc =
+                (Some { Syntax.startpos =
+                        { Syntax.fname = "test/cases/parse/object_for.in";
+                          line = 7; column = 5 };
+                        endpos =
+                        { Syntax.fname = "test/cases/parse/object_for.in";
+                          line = 7; column = 9 }
+                        })
+                })
+           ])));
+  loc =
+  (Some { Syntax.startpos =
+          { Syntax.fname = "test/cases/parse/object_for.in"; line = 1;
+            column = 0 };
+          endpos =
+          { Syntax.fname = "test/cases/parse/object_for.in"; line = 8;
+            column = 1 }
+          })
+  }
