@@ -1,0 +1,144 @@
+{ Syntax.v =
+  (Syntax.If
+     ({ Syntax.v =
+        (Syntax.If
+           ({ Syntax.v = Syntax.True;
+              loc =
+              (Some { Syntax.startpos =
+                      { Syntax.fname = "test/cases/parse/if_then_else2.in";
+                        line = 2; column = 5 };
+                      endpos =
+                      { Syntax.fname = "test/cases/parse/if_then_else2.in";
+                        line = 2; column = 9 }
+                      })
+              },
+            { Syntax.v = Syntax.True;
+              loc =
+              (Some { Syntax.startpos =
+                      { Syntax.fname = "test/cases/parse/if_then_else2.in";
+                        line = 2; column = 15 };
+                      endpos =
+                      { Syntax.fname = "test/cases/parse/if_then_else2.in";
+                        line = 2; column = 19 }
+                      })
+              },
+            (Some { Syntax.v = Syntax.False;
+                    loc =
+                    (Some { Syntax.startpos =
+                            { Syntax.fname =
+                              "test/cases/parse/if_then_else2.in"; line = 3;
+                              column = 7 };
+                            endpos =
+                            { Syntax.fname =
+                              "test/cases/parse/if_then_else2.in"; line = 3;
+                              column = 12 }
+                            })
+                    })));
+        loc =
+        (Some { Syntax.startpos =
+                { Syntax.fname = "test/cases/parse/if_then_else2.in";
+                  line = 2; column = 2 };
+                endpos =
+                { Syntax.fname = "test/cases/parse/if_then_else2.in";
+                  line = 3; column = 12 }
+                })
+        },
+      { Syntax.v =
+        (Syntax.If
+           ({ Syntax.v = Syntax.True;
+              loc =
+              (Some { Syntax.startpos =
+                      { Syntax.fname = "test/cases/parse/if_then_else2.in";
+                        line = 5; column = 5 };
+                      endpos =
+                      { Syntax.fname = "test/cases/parse/if_then_else2.in";
+                        line = 5; column = 9 }
+                      })
+              },
+            { Syntax.v = (Syntax.Number 1.);
+              loc =
+              (Some { Syntax.startpos =
+                      { Syntax.fname = "test/cases/parse/if_then_else2.in";
+                        line = 5; column = 15 };
+                      endpos =
+                      { Syntax.fname = "test/cases/parse/if_then_else2.in";
+                        line = 5; column = 18 }
+                      })
+              },
+            (Some { Syntax.v = (Syntax.Number 1.);
+                    loc =
+                    (Some { Syntax.startpos =
+                            { Syntax.fname =
+                              "test/cases/parse/if_then_else2.in"; line = 6;
+                              column = 7 };
+                            endpos =
+                            { Syntax.fname =
+                              "test/cases/parse/if_then_else2.in"; line = 6;
+                              column = 10 }
+                            })
+                    })));
+        loc =
+        (Some { Syntax.startpos =
+                { Syntax.fname = "test/cases/parse/if_then_else2.in";
+                  line = 5; column = 2 };
+                endpos =
+                { Syntax.fname = "test/cases/parse/if_then_else2.in";
+                  line = 6; column = 10 }
+                })
+        },
+      (Some { Syntax.v =
+              (Syntax.If
+                 ({ Syntax.v = Syntax.True;
+                    loc =
+                    (Some { Syntax.startpos =
+                            { Syntax.fname =
+                              "test/cases/parse/if_then_else2.in"; line = 8;
+                              column = 5 };
+                            endpos =
+                            { Syntax.fname =
+                              "test/cases/parse/if_then_else2.in"; line = 8;
+                              column = 9 }
+                            })
+                    },
+                  { Syntax.v = (Syntax.Number 1.);
+                    loc =
+                    (Some { Syntax.startpos =
+                            { Syntax.fname =
+                              "test/cases/parse/if_then_else2.in"; line = 8;
+                              column = 15 };
+                            endpos =
+                            { Syntax.fname =
+                              "test/cases/parse/if_then_else2.in"; line = 8;
+                              column = 18 }
+                            })
+                    },
+                  (Some { Syntax.v = (Syntax.Number 1.);
+                          loc =
+                          (Some { Syntax.startpos =
+                                  { Syntax.fname =
+                                    "test/cases/parse/if_then_else2.in";
+                                    line = 9; column = 7 };
+                                  endpos =
+                                  { Syntax.fname =
+                                    "test/cases/parse/if_then_else2.in";
+                                    line = 9; column = 10 }
+                                  })
+                          })));
+              loc =
+              (Some { Syntax.startpos =
+                      { Syntax.fname = "test/cases/parse/if_then_else2.in";
+                        line = 8; column = 2 };
+                      endpos =
+                      { Syntax.fname = "test/cases/parse/if_then_else2.in";
+                        line = 9; column = 10 }
+                      })
+              })));
+  loc =
+  (Some { Syntax.startpos =
+          { Syntax.fname = "test/cases/parse/if_then_else2.in"; line = 1;
+            column = 0 };
+          endpos =
+          { Syntax.fname = "test/cases/parse/if_then_else2.in"; line = 9;
+            column = 10 }
+          })
+  }

@@ -1,0 +1,10 @@
+{ Syntax.v = (Syntax.Array []);
+  loc =
+  (Some { Syntax.startpos =
+          { Syntax.fname = "test/cases/parse/array_empty.in"; line = 1;
+            column = 0 };
+          endpos =
+          { Syntax.fname = "test/cases/parse/array_empty.in"; line = 1;
+            column = 2 }
+          })
+  }

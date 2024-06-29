@@ -1,0 +1,41 @@
+{ Syntax.v =
+  (Syntax.Object
+     (Syntax.ObjectMemberList
+        [(Syntax.MemberField
+            (Syntax.Field
+               ((Syntax.FieldnameID
+                   { Syntax.v = "x";
+                     loc =
+                     (Some { Syntax.startpos =
+                             { Syntax.fname =
+                               "test/cases/parse/object_single.in"; line = 1;
+                               column = 1 };
+                             endpos =
+                             { Syntax.fname =
+                               "test/cases/parse/object_single.in"; line = 1;
+                               column = 2 }
+                             })
+                     }),
+                false, (Syntax.H 1),
+                { Syntax.v = (Syntax.Number 1.);
+                  loc =
+                  (Some { Syntax.startpos =
+                          { Syntax.fname =
+                            "test/cases/parse/object_single.in"; line = 1;
+                            column = 4 };
+                          endpos =
+                          { Syntax.fname =
+                            "test/cases/parse/object_single.in"; line = 1;
+                            column = 5 }
+                          })
+                  })))
+          ]));
+  loc =
+  (Some { Syntax.startpos =
+          { Syntax.fname = "test/cases/parse/object_single.in"; line = 1;
+            column = 0 };
+          endpos =
+          { Syntax.fname = "test/cases/parse/object_single.in"; line = 1;
+            column = 6 }
+          })
+  }

@@ -90,8 +90,9 @@ let compile_builtin_std loc = function
   | "equals" -> Ok [%expr std_equals]
   | _ -> Error "not found"
 
-let rec compile_expr ?toplevel:_ ({ loc; is_stdjsonnet; _ } as env) :
-    Syntax.Core.expr -> Parsetree.expression = function
+let rec compile_expr ?toplevel:_ ({ loc; is_stdjsonnet; _ } as env)
+    (e : Syntax.Core.expr) : Parsetree.expression =
+  match e.v with
   | Null -> [%expr Null]
   | True -> [%expr True]
   | False -> [%expr False]
@@ -103,7 +104,8 @@ let rec compile_expr ?toplevel:_ ({ loc; is_stdjsonnet; _ } as env) :
   | ArrayIndex es ->
       let rec aux times es =
         match es with
-        | Syntax.Core.Var v, Syntax.Core.String key when times < 1 -> (
+        | Syntax.Core.{ v = Var v; _ }, Syntax.Core.{ v = String key; _ }
+          when times < 1 -> (
             match (Hashtbl.find env.vars v).desc with
             | VarUnknown -> aux 1 es
             | VarObject { key_to_value_ary_index } -> (
@@ -115,7 +117,7 @@ let rec compile_expr ?toplevel:_ ({ loc; is_stdjsonnet; _ } as env) :
                         Lazy.force [%e env_evar ~loc env v]
                       in
                       Lazy.force value_ary.([%e eint ~loc value_ary_index])]))
-        | e1, String s ->
+        | e1, { v = String s; _ } ->
             [%expr
               array_index_s [%e compile_expr_lazy env e1] [%e estring ~loc s]]
         | e1, e2 ->
@@ -252,7 +254,10 @@ let rec compile_expr ?toplevel:_ ({ loc; is_stdjsonnet; _ } as env) :
                 pexp_let ~loc
                   (if use_rec_value then Recursive else Nonrecursive)
                   binds (compile_expr env body)] )]
-  | Call ((ArrayIndex (Var std, String name) as e), positional, named)
+  | Call
+      ( ({ v = ArrayIndex ({ v = Var std; _ }, { v = String name; _ }); _ } as e),
+        positional,
+        named )
     when std = "$std" || (std = "std" && is_stdjsonnet) -> (
       match compile_builtin_std loc name with
       | Ok func -> [%expr [%e func] [%e compile_call_args env positional named]]
@@ -265,15 +270,16 @@ let rec compile_expr ?toplevel:_ ({ loc; is_stdjsonnet; _ } as env) :
         binds
         |> List.map @@ fun (id, e) ->
            (match e with
-           | Syntax.Core.Var id' -> set_same_var_desc env id ~same_as:id'
-           | Syntax.Core.Object { fields; _ } ->
+           | Syntax.Core.{ v = Var id'; _ } ->
+               set_same_var_desc env id ~same_as:id'
+           | Syntax.Core.{ v = Object { fields; _ }; _ } ->
                set_var_object env id
                  ~key_to_value_ary_index:
                    (fields
                    |> List.mapi (fun i v -> (i, v))
                    |> List.filter_map (fun (i, (e1, _, _, _)) ->
                           match e1 with
-                          | Syntax.Core.String key -> Some (key, i)
+                          | Syntax.Core.{ v = String key; _ } -> Some (key, i)
                           | _ -> None)
                    |> List.to_seq |> Hashtbl.of_seq)
                  ()
@@ -383,8 +389,8 @@ let rec compile_expr ?toplevel:_ ({ loc; is_stdjsonnet; _ } as env) :
       [%expr super_index [%e env_evar ~loc env "super"] [%e compile_expr env e]]
 
 and compile_expr_lazy ?(toplevel = false) ?(in_bind = false) ({ loc; _ } as env)
-    e =
-  match e with
+    (e : Syntax.Core.expr) =
+  match e.v with
   | Null | True | False | String _ | Number _ | Array _ | Function _ | Self
   | Object _ | ObjectFor _
     when not in_bind ->

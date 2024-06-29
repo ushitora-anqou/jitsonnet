@@ -1,0 +1,54 @@
+{ Syntax.v =
+  (Syntax.Binary
+     ({ Syntax.v = (Syntax.Number 1.);
+        loc =
+        (Some { Syntax.startpos =
+                { Syntax.fname = "test/cases/parse/binary_simple1.in";
+                  line = 1; column = 0 };
+                endpos =
+                { Syntax.fname = "test/cases/parse/binary_simple1.in";
+                  line = 1; column = 1 }
+                })
+        },
+      `Add,
+      { Syntax.v =
+        (Syntax.Binary
+           ({ Syntax.v = (Syntax.Number 1.);
+              loc =
+              (Some { Syntax.startpos =
+                      { Syntax.fname = "test/cases/parse/binary_simple1.in";
+                        line = 1; column = 2 };
+                      endpos =
+                      { Syntax.fname = "test/cases/parse/binary_simple1.in";
+                        line = 1; column = 3 }
+                      })
+              },
+            `Mult,
+            { Syntax.v = (Syntax.Number 1.);
+              loc =
+              (Some { Syntax.startpos =
+                      { Syntax.fname = "test/cases/parse/binary_simple1.in";
+                        line = 1; column = 4 };
+                      endpos =
+                      { Syntax.fname = "test/cases/parse/binary_simple1.in";
+                        line = 1; column = 5 }
+                      })
+              }));
+        loc =
+        (Some { Syntax.startpos =
+                { Syntax.fname = "test/cases/parse/binary_simple1.in";
+                  line = 1; column = 2 };
+                endpos =
+                { Syntax.fname = "test/cases/parse/binary_simple1.in";
+                  line = 1; column = 5 }
+                })
+        }));
+  loc =
+  (Some { Syntax.startpos =
+          { Syntax.fname = "test/cases/parse/binary_simple1.in"; line = 1;
+            column = 0 };
+          endpos =
+          { Syntax.fname = "test/cases/parse/binary_simple1.in"; line = 1;
+            column = 5 }
+          })
+  }

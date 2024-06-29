@@ -7,7 +7,7 @@ let assert_compile ?(mode = `Bytecode) ?remove_work_dir
     ?expected_suffix ?multi ?string ?ext_codes ?ext_strs src_file_path
     result_pat =
   assert_compile' ?test_cases_dir ?expected_suffix ?multi ?ext_codes ?ext_strs
-    ?string src_file_path result_pat
+    ?string ~loader_optimize:true src_file_path result_pat
     ~compiler:(fun ~multi_output_dir ~t ~string ->
       let compiled = Loader.compile ?multi:multi_output_dir ~string t in
       Executor.(

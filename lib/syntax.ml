@@ -22,7 +22,11 @@ type binop =
   | `Xor ]
 [@@deriving show]
 
-type expr =
+type position = { fname : string; line : int; column : int } [@@deriving show]
+type location = { startpos : position; endpos : position } [@@deriving show]
+type 'a with_location = { v : 'a; loc : location option } [@@deriving show]
+
+type expr' =
   | Array of expr list
   | ArrayFor of (expr * forspec * compspec)
   | ArrayIndex of (expr * expr)
@@ -52,6 +56,7 @@ type expr =
   | Unary of (unaryop * expr)
   | Var of id
 
+and expr = expr' with_location
 and id = string
 
 and objinside =
@@ -66,7 +71,7 @@ and member =
 
 and field =
   | Field of (fieldname * bool (* +? *) * h * expr)
-  | FieldFunc of (fieldname * params * h * expr)
+  | FieldFunc of (fieldname * (params * h * expr) with_location)
 
 and h = H of int
 and objlocal = bind
@@ -77,11 +82,15 @@ and ifspec = expr
 
 and fieldname =
   | FieldnameExpr of expr
-  | FieldnameID of id
-  | FieldnameString of string
+  | FieldnameID of id with_location
+  | FieldnameString of string with_location
 
-and assert_ = expr * expr option
-and bind = Bind of (id * expr) | BindFunc of (id * params * expr)
+and assert_ = (expr * expr option) with_location
+
+and bind =
+  | Bind of (id * expr)
+  | BindFunc of (id * (params * expr) with_location)
+
 and args = expr list * (id * expr) list
 and params = param list
 and param = id * expr option [@@deriving show]
@@ -91,6 +100,11 @@ type program = { expr : expr } [@@deriving show]
 exception General_parse_error of string
 
 module Core = struct
+  type nonrec 'a with_location = 'a with_location = {
+    v : 'a;
+    loc : location option;
+  }
+
   type binop =
     [ `Add (* + *)
     | `And (* && *)
@@ -109,7 +123,7 @@ module Core = struct
     | `Xor (* ^ *) ]
   [@@deriving show]
 
-  type expr =
+  type expr' =
     | Array of expr list
     | ArrayIndex of (expr * expr)
     | Binary of (expr * binop * expr)
@@ -138,49 +152,57 @@ module Core = struct
     | Unary of (unaryop * expr)
     | Var of id
 
+  and expr = expr' with_location
   and id = string [@@deriving show]
 
   let map f root =
     let rec aux node =
-      match node with
+      let with_ v = { node with v } in
+      match node.v with
       | False | Import _ | Importbin _ | Importstr _ | Null | Number _ | Self
       | String _ | True | Var _ ->
           f node
-      | Array xs -> f (Array (List.map aux xs))
-      | ArrayIndex (e1, e2) -> f (ArrayIndex (aux e1, aux e2))
-      | Binary (e1, op, e2) -> f (Binary (aux e1, op, aux e2))
+      | Array xs -> f (with_ @@ Array (List.map aux xs))
+      | ArrayIndex (e1, e2) -> f (with_ @@ ArrayIndex (aux e1, aux e2))
+      | Binary (e1, op, e2) -> f (with_ @@ Binary (aux e1, op, aux e2))
       | Call (e1, xs, ys) ->
           f
-            (Call
-               (aux e1, List.map aux xs, List.map (fun (x, y) -> (x, aux y)) ys))
-      | Error e -> f (Error (aux e))
-      | Unary (op, e) -> f (Unary (op, aux e))
+            (with_
+            @@ Call
+                 ( aux e1,
+                   List.map aux xs,
+                   List.map (fun (x, y) -> (x, aux y)) ys ))
+      | Error e -> f (with_ @@ Error (aux e))
+      | Unary (op, e) -> f (with_ @@ Unary (op, aux e))
       | Function (xs, e) ->
           f
-            (Function
-               (List.map (fun (x, y) -> (x, y |> Option.map aux)) xs, aux e))
+            (with_
+            @@ Function
+                 (List.map (fun (x, y) -> (x, y |> Option.map aux)) xs, aux e))
       | Local (xs, e) ->
-          f (Local (List.map (fun (x, y) -> (x, aux y)) xs, aux e))
-      | If (e1, e2, e3) -> f (If (aux e1, aux e2, aux e3))
-      | InSuper e -> f (InSuper (aux e))
-      | ObjectFor (e1, e2, x, e3) -> f (ObjectFor (aux e1, aux e2, x, aux e3))
+          f (with_ @@ Local (List.map (fun (x, y) -> (x, aux y)) xs, aux e))
+      | If (e1, e2, e3) -> f (with_ @@ If (aux e1, aux e2, aux e3))
+      | InSuper e -> f (with_ @@ InSuper (aux e))
+      | ObjectFor (e1, e2, x, e3) ->
+          f (with_ @@ ObjectFor (aux e1, aux e2, x, aux e3))
       | Object { binds; assrts; fields } ->
           f
-            (Object
-               {
-                 binds = binds |> List.map (fun (id, x) -> (id, aux x));
-                 assrts = assrts |> List.map aux;
-                 fields =
-                   fields
-                   |> List.map (fun (e1, b, h, e2) -> (aux e1, b, h, aux e2));
-               })
-      | SuperIndex e -> f (SuperIndex (aux e))
+            (with_
+            @@ Object
+                 {
+                   binds = binds |> List.map (fun (id, x) -> (id, aux x));
+                   assrts = assrts |> List.map aux;
+                   fields =
+                     fields
+                     |> List.map (fun (e1, b, h, e2) -> (aux e1, b, h, aux e2));
+                 })
+      | SuperIndex e -> f (with_ @@ SuperIndex (aux e))
     in
     aux root
 
   let fold f a root =
     let rec aux acc node =
-      match node with
+      match node.v with
       | False | Import _ | Importbin _ | Importstr _ | Null | Number _ | Self
       | String _ | True | Var _ ->
           f acc node
@@ -239,68 +261,91 @@ let gensym ?(suffix = "") () =
   gensym_i := !gensym_i + 1;
   "$v" ^ string_of_int !gensym_i ^ suffix
 
-let rec desugar_expr std b = function
-  | Array xs -> Core.Array (xs |> List.map (desugar_expr std b))
+let rec desugar_expr std b e0 =
+  let with_ v = { e0 with v } in
+  match e0.v with
+  | Array xs -> with_ (Core.Array (xs |> List.map (desugar_expr std b)))
   | ArrayFor (e, forspec, compspec) ->
       desugar_arrcomp std e b (Forspec forspec :: compspec)
   | ArrayIndex (e1, e2) ->
-      Core.ArrayIndex (desugar_expr std b e1, desugar_expr std b e2)
+      with_ (Core.ArrayIndex (desugar_expr std b e1, desugar_expr std b e2))
   | ArraySlice (e, e', e'', e''') ->
-      let e' = e' |> Option.value ~default:Null in
-      let e'' = e'' |> Option.value ~default:Null in
-      let e''' = e''' |> Option.value ~default:Null in
+      let e' = e' |> Option.value ~default:(with_ Null) in
+      let e'' = e'' |> Option.value ~default:(with_ Null) in
+      let e''' = e''' |> Option.value ~default:(with_ Null) in
       desugar_expr std b
-        (Call (Select (Var std, "slice"), ([ e; e'; e''; e''' ], []), false))
-  | Assert ((e, None), e') ->
-      desugar_expr std b (Assert ((e, Some (String "Assertion failed")), e'))
-  | Assert ((e, Some e'), e'') ->
-      desugar_expr std b (If (e, e'', Some (Error e')))
+        (with_
+           (Call
+              ( with_ (Select (with_ (Var std), "slice")),
+                ([ e; e'; e''; e''' ], []),
+                false )))
+  | Assert ({ v = e, None; _ }, e') ->
+      desugar_expr std b
+        (with_
+           (Assert
+              ({ e with v = (e, Some (with_ (String "Assertion failed"))) }, e')))
+  | Assert (({ v = e, Some e'; _ } as e1), e'') ->
+      desugar_expr std b (with_ (If (e, e'', Some { e1 with v = Error e' })))
   | Binary (e, `NotEqual, e') ->
-      desugar_expr std b (Unary (Not, Binary (e, `Equal, e')))
+      desugar_expr std b (with_ (Unary (Not, with_ (Binary (e, `Equal, e')))))
   | Binary (e, `Equal, e') ->
       desugar_expr std b
-        (Call (Select (Var std, "equals"), ([ e; e' ], []), false))
+        (with_
+           (Call
+              ( with_ (Select (with_ (Var std), "equals")),
+                ([ e; e' ], []),
+                false )))
   | Binary (e, `Mod, e') ->
       desugar_expr std b
-        (Call (Select (Var std, "mod"), ([ e; e' ], []), false))
+        (with_
+           (Call
+              (with_ (Select (with_ (Var std), "mod")), ([ e; e' ], []), false)))
   | Binary (e, `In, e') ->
       desugar_expr std b
-        (Call (Select (Var std, "objectHasEx"), ([ e'; e; True ], []), false))
+        (with_
+           (Call
+              ( with_ (Select (with_ (Var std), "objectHasEx")),
+                ([ e'; e; with_ True ], []),
+                false )))
   | Binary (e1, (#Core.binop as op), e2) ->
-      Core.Binary (desugar_expr std b e1, op, desugar_expr std b e2)
+      with_ (Core.Binary (desugar_expr std b e1, op, desugar_expr std b e2))
   | Call (e, (xs, ys), _) ->
-      Core.Call
-        ( desugar_expr std b e,
-          xs |> List.map (desugar_expr std b),
-          ys |> List.map (fun (id, y) -> (id, desugar_expr std b y)) )
-  | Dollar -> Var "$"
-  | Error e -> Core.Error (desugar_expr std b e)
-  | False -> Core.False
+      with_
+        (Core.Call
+           ( desugar_expr std b e,
+             xs |> List.map (desugar_expr std b),
+             ys |> List.map (fun (id, y) -> (id, desugar_expr std b y)) ))
+  | Dollar -> with_ (Core.Var "$")
+  | Error e -> with_ (Core.Error (desugar_expr std b e))
+  | False -> with_ Core.False
   | Function (params, e) ->
-      Core.Function
-        (params |> List.map (desugar_param std b), desugar_expr std b e)
+      with_
+        (Core.Function
+           (params |> List.map (desugar_param std b), desugar_expr std b e))
   | If (e, e', None) ->
-      Core.If (desugar_expr std b e, desugar_expr std b e', Null)
+      with_
+        (Core.If (desugar_expr std b e, desugar_expr std b e', with_ Core.Null))
   | If (e, e', Some e'') ->
-      Core.If
-        (desugar_expr std b e, desugar_expr std b e', desugar_expr std b e'')
-  | Import s -> Core.Import s
-  | Importbin s -> Core.Importbin s
-  | Importstr s -> Core.Importstr s
-  | InSuper e -> Core.InSuper (desugar_expr std b e)
+      with_
+        (Core.If
+           (desugar_expr std b e, desugar_expr std b e', desugar_expr std b e''))
+  | Import s -> with_ (Core.Import s)
+  | Importbin s -> with_ (Core.Importbin s)
+  | Importstr s -> with_ (Core.Importstr s)
+  | InSuper e -> with_ (Core.InSuper (desugar_expr std b e))
   | Local (binds, e) ->
       let binds = binds |> List.map (desugar_bind std b) in
       let e = desugar_expr std b e in
-      Core.Local (binds, e)
-  | Null -> Core.Null
-  | Number v -> Core.Number v
+      with_ (Core.Local (binds, e))
+  | Null -> with_ Core.Null
+  | Number v -> with_ (Core.Number v)
   | Object (ObjectMemberList members) ->
       let binds =
         members
         |> List.filter_map (function MemberObjlocal l -> Some l | _ -> None)
       in
       let binds =
-        (if b then binds else Bind ("$", Self) :: binds)
+        (if b then binds else Bind ("$", with_ Self) :: binds)
         |> List.map (desugar_bind std b)
       in
       let assrts =
@@ -315,16 +360,18 @@ let rec desugar_expr std b = function
              | MemberField field -> Some (desugar_field std [] b field)
              | _ -> None)
       in
-      let obj = Core.Object { binds; assrts; fields } in
-      if b then obj else obj
-  | Object (ObjectFor ([], Var x1, e1, [], (x2, e2), [])) when x1 = x2 ->
+      with_ (Core.Object { binds; assrts; fields })
+  | Object (ObjectFor ([], { v = Var x1; _ }, e1, [], (x2, e2), []))
+    when x1 = x2 ->
       (* Optimized desugaring *)
-      Core.ObjectFor
-        ( Var x1,
-          (let e1 = desugar_expr std true e1 in
-           if b then e1 else Local ([ ("$", Self) ], e1)),
-          x2,
-          desugar_expr std b e2 )
+      with_
+        (Core.ObjectFor
+           ( with_ (Core.Var x1),
+             (let e1 = desugar_expr std true e1 in
+              if b then e1
+              else with_ (Core.Local ([ ("$", with_ Core.Self) ], e1))),
+             x2,
+             desugar_expr std b e2 ))
   | Object (ObjectFor (binds, ef, ebody, binds', forspec, compspec)) ->
       let arr = gensym () in
       let xs =
@@ -337,93 +384,121 @@ let rec desugar_expr std b = function
       let binds_xs =
         xs
         |> List.mapi (fun i x ->
-               Bind (x, ArrayIndex (Var arr, Number (float_of_int i))))
+               Bind
+                 ( x,
+                   with_
+                     (ArrayIndex
+                        (with_ (Var arr), with_ (Number (float_of_int i)))) ))
       in
-      let vars_xs = xs |> List.map (fun x -> Var x) in
-      Core.ObjectFor
-        ( desugar_expr std b (Local (binds_xs, ef)),
-          (let e2 =
-             desugar_expr std true (Local (binds_xs @ binds @ binds', ebody))
-           in
-           if b then e2 else Local ([ ("$", Self) ], e2)),
-          arr,
-          desugar_expr std b (ArrayFor (Array vars_xs, forspec, compspec)) )
+      let vars_xs = xs |> List.map (fun x -> with_ (Var x)) in
+      with_
+        (Core.ObjectFor
+           ( desugar_expr std b (with_ (Local (binds_xs, ef))),
+             (let e2 =
+                desugar_expr std true
+                  (with_ (Local (binds_xs @ binds @ binds', ebody)))
+              in
+              if b then e2
+              else with_ (Core.Local ([ ("$", with_ Core.Self) ], e2))),
+             arr,
+             desugar_expr std b
+               (with_ (ArrayFor (with_ (Array vars_xs), forspec, compspec))) ))
   | ObjectSeq (e, objinside) ->
-      desugar_expr std b (Binary (e, `Add, Object objinside))
-  | Select (e, id) -> Core.ArrayIndex (desugar_expr std b e, String id)
-  | Self -> Core.Self
-  | String s -> Core.String s
-  | SuperIndex e -> Core.SuperIndex (desugar_expr std b e)
-  | True -> Core.True
-  | Unary (op, e) -> Core.Unary (op, desugar_expr std b e)
-  | Var s -> Core.Var s
+      desugar_expr std b (with_ (Binary (e, `Add, with_ (Object objinside))))
+  | Select (e, id) ->
+      with_ (Core.ArrayIndex (desugar_expr std b e, with_ (Core.String id)))
+  | Self -> with_ Core.Self
+  | String s -> with_ (Core.String s)
+  | SuperIndex e -> with_ (Core.SuperIndex (desugar_expr std b e))
+  | True -> with_ Core.True
+  | Unary (op, e) -> with_ (Core.Unary (op, desugar_expr std b e))
+  | Var s -> with_ (Core.Var s)
 
 and desugar_arrcomp std e b compspec =
-  let rec aux e = function
-    | [] -> Array [ e ]
-    | Ifspec e' :: compspec -> If (e', aux e compspec, Some (Array []))
+  let rec aux e v =
+    match v with
+    | [] -> { e with v = Array [ e ] }
+    | Ifspec e' :: compspec ->
+        let with_ v = { e' with v } in
+        with_ (If (e', aux e compspec, Some (with_ (Array []))))
     | Forspec (x, e') :: compspec ->
+        let with_ v = { e' with v } in
         let arr = gensym () in
         let i = gensym () in
-        Local
-          ( [ Bind (arr, e') ],
-            Call
-              ( Select (Var std, "join"),
-                ( [
-                    Array [];
-                    Call
-                      ( Select (Var std, "makeArray"),
-                        ( [
-                            Call
-                              ( Select (Var std, "length"),
-                                ([ Var arr ], []),
-                                false );
-                            Function
-                              ( [ (i, None) ],
-                                Local
-                                  ( [ Bind (x, ArrayIndex (Var arr, Var i)) ],
-                                    aux e compspec ) );
-                          ],
-                          [] ),
-                        false );
-                  ],
-                  [] ),
-                false ) )
+        with_
+          (Local
+             ( [ Bind (arr, e') ],
+               with_
+                 (Call
+                    ( with_ (Select (with_ (Var std), "join")),
+                      ( [
+                          with_ (Array []);
+                          with_
+                            (Call
+                               ( with_ (Select (with_ (Var std), "makeArray")),
+                                 ( [
+                                     with_
+                                       (Call
+                                          ( with_
+                                              (Select (with_ (Var std), "length")),
+                                            ([ with_ (Var arr) ], []),
+                                            false ));
+                                     with_
+                                       (Function
+                                          ( [ (i, None) ],
+                                            with_
+                                              (Local
+                                                 ( [
+                                                     Bind
+                                                       ( x,
+                                                         with_
+                                                           (ArrayIndex
+                                                              ( with_ (Var arr),
+                                                                with_ (Var i) ))
+                                                       );
+                                                   ],
+                                                   aux e compspec )) ));
+                                   ],
+                                   [] ),
+                                 false ));
+                        ],
+                        [] ),
+                      false )) ))
   in
   desugar_expr std b (aux e compspec)
 
-and desugar_assert std binds = function
-  | e, None -> desugar_assert std binds (e, Some (String "Assertion failed"))
+and desugar_assert std binds a =
+  match a.v with
+  | e, None ->
+      desugar_assert std binds
+        { a with v = (e, Some { a with v = String "Assertion failed" }) }
   | e, Some e' ->
       assert (binds = []);
-      desugar_expr std true (If (e, Null, Some (Error e')))
+      desugar_expr std true
+        { a with v = If (e, { a with v = Null }, Some { a with v = Error e' }) }
 
 and desugar_field std binds b = function
   | Field ((FieldnameID id | FieldnameString id), plus, h, e) ->
-      desugar_field std binds b (Field (FieldnameExpr (String id), plus, h, e))
-  | FieldFunc ((FieldnameID id | FieldnameString id), params, h, e) ->
       desugar_field std binds b
-        (FieldFunc (FieldnameExpr (String id), params, h, e))
+        (Field (FieldnameExpr { id with v = String id.v }, plus, h, e))
+  | FieldFunc ((FieldnameID id | FieldnameString id), paramsbody) ->
+      desugar_field std binds b
+        (FieldFunc (FieldnameExpr { id with v = String id.v }, paramsbody))
   | Field (FieldnameExpr e, b, h, e') ->
       assert (binds = []);
       (desugar_expr std b e, b, h, desugar_expr std true e')
-  | FieldFunc (FieldnameExpr e, params, h, e') ->
+  | FieldFunc (FieldnameExpr e, ({ v = params, h, e'; _ } as paramsbody)) ->
       desugar_field std binds b
-        (Field (FieldnameExpr e, false, h, Function (params, e')))
-(*
-  | Field (FieldnameExpr e, true, h, e') ->
-      (* FIXME
-         let e'' =
-           substitute [ (Var "$outerself", Self); (Var "$outersuper", Super) ] e
-         in *)
-      let e'' = e in
-      let e''' = If (InSuper e'', Binary (SuperIndex e'', `Add, e'), Some e') in
-      desugar_field std binds b (Field (FieldnameExpr e, false, h, e'''))
-*)
+        (Field
+           ( FieldnameExpr e,
+             false,
+             h,
+             { paramsbody with v = Function (params, e') } ))
 
 and desugar_bind std b = function
   | Bind (id, e) -> (id, desugar_expr std b e)
-  | BindFunc (id, params, e) -> (id, desugar_expr std b (Function (params, e)))
+  | BindFunc (id, paramsbody) ->
+      (id, desugar_expr std b { paramsbody with v = Function paramsbody.v })
 
 and desugar_param std b = function
   | id, None -> (id, None)
@@ -442,35 +517,48 @@ let with_binds ?(as_is = false) env ids f =
     ~finally:(fun () -> ids |> List.iter (fun id -> Hashtbl.remove env id))
     f
 
+let replace_std ~is_stdjsonnet =
+  let open Core in
+  map (fun n ->
+      match n.v with
+      | Var ("std" | "$std") ->
+          { n with v = Var (if is_stdjsonnet then "std" else "$std") }
+      | _ -> n)
+
 let alpha_conv ?(is_stdjsonnet = false) (e : Core.expr) =
   let open Core in
-  let rec aux env = function
+  let rec aux env e0 =
+    let with_ v = { e0 with v } in
+    match e0.v with
     | ( False | Import _ | Importbin _ | Importstr _ | Null | Number _ | Self
       | String _ | True ) as x ->
-        x
-    | Var "std" when is_stdjsonnet -> Var "std"
-    | Var name -> Var (Hashtbl.find env name)
-    | Array xs -> Array (List.map (aux env) xs)
-    | ArrayIndex (e1, e2) -> ArrayIndex (aux env e1, aux env e2)
-    | Binary (e1, op, e2) -> Binary (aux env e1, op, aux env e2)
+        with_ x
+    | Var "std" when is_stdjsonnet -> with_ (Var "std")
+    | Var name -> with_ (Var (Hashtbl.find env name))
+    | Array xs -> with_ (Array (List.map (aux env) xs))
+    | ArrayIndex (e1, e2) -> with_ (ArrayIndex (aux env e1, aux env e2))
+    | Binary (e1, op, e2) -> with_ (Binary (aux env e1, op, aux env e2))
     | Call (e1, xs, ys) ->
-        Call
-          ( aux env e1,
-            List.map (aux env) xs,
-            List.map (fun (x, y) -> (x, aux env y)) ys )
-    | Error e -> Error (aux env e)
-    | Unary (op, e) -> Unary (op, aux env e)
+        with_
+          (Call
+             ( aux env e1,
+               List.map (aux env) xs,
+               List.map (fun (x, y) -> (x, aux env y)) ys ))
+    | Error e -> with_ (Error (aux env e))
+    | Unary (op, e) -> with_ (Unary (op, aux env e))
     | Function (xs, e) ->
         with_binds ~as_is:true env (List.map fst xs) @@ fun () ->
-        Function
-          (List.map (fun (x, y) -> (x, Option.map (aux env) y)) xs, aux env e)
+        with_
+          (Function
+             (List.map (fun (x, y) -> (x, Option.map (aux env) y)) xs, aux env e))
     | Local (xs, e) ->
         with_binds env (List.map fst xs) @@ fun () ->
-        Local
-          ( List.map (fun (x, y) -> (Hashtbl.find env x, aux env y)) xs,
-            aux env e )
-    | If (e1, e2, e3) -> If (aux env e1, aux env e2, aux env e3)
-    | InSuper e -> InSuper (aux env e)
+        with_
+          (Local
+             ( List.map (fun (x, y) -> (Hashtbl.find env x, aux env y)) xs,
+               aux env e ))
+    | If (e1, e2, e3) -> with_ (If (aux env e1, aux env e2, aux env e3))
+    | InSuper e -> with_ (InSuper (aux env e))
     | ObjectFor (e1, e2, x, e3) ->
         let e3 = aux env e3 in
         with_binds env [ x ] @@ fun () ->
@@ -478,7 +566,7 @@ let alpha_conv ?(is_stdjsonnet = false) (e : Core.expr) =
         let ids = [ "self"; "super" ] in
         with_binds env ids @@ fun () ->
         let e2 = aux env e2 in
-        ObjectFor (e1, e2, Hashtbl.find env x, e3)
+        with_ (ObjectFor (e1, e2, Hashtbl.find env x, e3))
     | Object { binds; assrts; fields } ->
         let fields =
           List.map (fun (e1, b, h, e2) -> (aux env e1, b, h, e2)) fields
@@ -490,19 +578,20 @@ let alpha_conv ?(is_stdjsonnet = false) (e : Core.expr) =
                  | "std", _ when is_stdjsonnet -> None | id, _ -> Some id)
                binds)
         @@ fun () ->
-        Object
-          {
-            binds =
-              List.map
-                (function
-                  | "std", x when is_stdjsonnet -> ("std", aux env x)
-                  | id, x -> (Hashtbl.find env id, aux env x))
-                binds;
-            assrts = List.map (aux env) assrts;
-            fields =
-              List.map (fun (e1, b, h, e2) -> (e1, b, h, aux env e2)) fields;
-          }
-    | SuperIndex e -> SuperIndex (aux env e)
+        with_
+          (Object
+             {
+               binds =
+                 List.map
+                   (function
+                     | "std", x when is_stdjsonnet -> ("std", aux env x)
+                     | id, x -> (Hashtbl.find env id, aux env x))
+                   binds;
+               assrts = List.map (aux env) assrts;
+               fields =
+                 List.map (fun (e1, b, h, e2) -> (e1, b, h, aux env e2)) fields;
+             })
+    | SuperIndex e -> with_ (SuperIndex (aux env e))
   in
   aux
     ((if is_stdjsonnet then [] else [ ("std", "$std"); ("$std", "$std") ])
@@ -511,7 +600,8 @@ let alpha_conv ?(is_stdjsonnet = false) (e : Core.expr) =
 
 (* freevars don't include self and super, but may include $. *)
 let freevars e =
-  let rec aux = function
+  let rec aux e =
+    match e.v with
     | Core.False | Import _ | Importbin _ | Importstr _ | Null | Number _
     | String _ | True ->
         StringSet.empty
@@ -617,23 +707,25 @@ let separate_floating_binds defvars floating_binds =
 (* float_let_binds requires e is alpha-converted *)
 let float_let_binds (e : Core.expr) =
   let local (binds, body) =
-    match binds with [] -> body | _ -> Core.Local (binds, body)
+    match binds with [] -> body.v | _ -> Core.Local (binds, body)
   in
-  let rec aux = function
+  let rec aux e =
+    let with_ v = { e with v } in
+    match e.v with
     | ( Core.False | Import _ | Importbin _ | Importstr _ | Null | Number _
       | Self | String _ | True | Var _ ) as x ->
-        ([], x)
+        ([], with_ x)
     | Array xs ->
         let floating_binds, xs = xs |> List.map aux |> List.split in
-        (List.flatten floating_binds, Array xs)
+        (List.flatten floating_binds, with_ (Core.Array xs))
     | ArrayIndex (e1, e2) ->
         let floating_binds1, e1 = aux e1 in
         let floating_binds2, e2 = aux e2 in
-        (floating_binds1 @ floating_binds2, ArrayIndex (e1, e2))
+        (floating_binds1 @ floating_binds2, with_ (Core.ArrayIndex (e1, e2)))
     | Binary (e1, op, e2) ->
         let floating_binds1, e1 = aux e1 in
         let floating_binds2, e2 = aux e2 in
-        (floating_binds1 @ floating_binds2, Binary (e1, op, e2))
+        (floating_binds1 @ floating_binds2, with_ (Core.Binary (e1, op, e2)))
     | Call (e1, xs, ys) ->
         let floating_binds1, e1 = aux e1 in
         let floating_binds2, xs = xs |> List.map aux |> List.split in
@@ -645,25 +737,28 @@ let float_let_binds (e : Core.expr) =
           |> List.split
         in
         ( List.flatten (floating_binds1 :: (floating_binds2 @ floating_binds3)),
-          Call (e1, xs, ys) )
+          with_ (Core.Call (e1, xs, ys)) )
     | Error e ->
         let floating_binds, e = aux e in
-        (floating_binds, Error e)
+        (floating_binds, with_ (Core.Error e))
     | Function (xs, body) ->
         (* FIXME: optimize default arguments *)
         let floating_binds, body = aux body in
         let floating_binds, fixed_binds =
           separate_floating_binds (List.map fst xs) floating_binds
         in
-        (floating_binds, Function (xs, local (fixed_binds, body)))
+        ( floating_binds,
+          with_
+            (Core.Function (xs, { body with v = local (fixed_binds, body) })) )
     | If (e1, e2, e3) ->
         let floating_binds1, e1 = aux e1 in
         let floating_binds2, e2 = aux e2 in
         let floating_binds3, e3 = aux e3 in
-        (floating_binds1 @ floating_binds2 @ floating_binds3, If (e1, e2, e3))
+        ( floating_binds1 @ floating_binds2 @ floating_binds3,
+          with_ (Core.If (e1, e2, e3)) )
     | InSuper e ->
         let floating_binds, e = aux e in
-        (floating_binds, InSuper e)
+        (floating_binds, with_ (Core.InSuper e))
     | Local (binds, body) ->
         let floating_binds, body = aux body in
         let floating_binds =
@@ -707,18 +802,18 @@ let float_let_binds (e : Core.expr) =
         in
 
         ( floating_binds @ floating_binds31,
-          Object { binds = fixed_binds @ binds; assrts; fields } )
+          with_ (Core.Object { binds = fixed_binds @ binds; assrts; fields }) )
     | ObjectFor (e1, e2, x, e3) ->
         (* FIXME: move binds outside of e1, e2, e3 *)
-        let e1 = local (aux e1) in
-        let e2 = local (aux e2) in
-        let e3 = local (aux e3) in
-        ([], ObjectFor (e1, e2, x, e3))
+        let e1 = { e1 with v = local (aux e1) } in
+        let e2 = { e2 with v = local (aux e2) } in
+        let e3 = { e3 with v = local (aux e3) } in
+        ([], with_ (Core.ObjectFor (e1, e2, x, e3)))
     | SuperIndex e ->
         let floating_binds, e = aux e in
-        (floating_binds, SuperIndex e)
+        (floating_binds, with_ (Core.SuperIndex e))
     | Unary (op, e) ->
         let floating_binds, e = aux e in
-        (floating_binds, Unary (op, e))
+        (floating_binds, with_ (Core.Unary (op, e)))
   in
-  local (aux e)
+  { e with v = local (aux e) }

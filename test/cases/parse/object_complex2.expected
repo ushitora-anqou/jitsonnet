@@ -1,0 +1,56 @@
+{ Syntax.v =
+  (Syntax.Object
+     (Syntax.ObjectMemberList
+        [(Syntax.MemberObjlocal
+            (Syntax.Bind
+               ("a",
+                { Syntax.v = (Syntax.String "b");
+                  loc =
+                  (Some { Syntax.startpos =
+                          { Syntax.fname =
+                            "test/cases/parse/object_complex2.in"; line = 2;
+                            column = 12 };
+                          endpos =
+                          { Syntax.fname =
+                            "test/cases/parse/object_complex2.in"; line = 2;
+                            column = 15 }
+                          })
+                  })));
+          (Syntax.MemberField
+             (Syntax.Field
+                ((Syntax.FieldnameExpr
+                    { Syntax.v = (Syntax.String "foo");
+                      loc =
+                      (Some { Syntax.startpos =
+                              { Syntax.fname =
+                                "test/cases/parse/object_complex2.in";
+                                line = 3; column = 3 };
+                              endpos =
+                              { Syntax.fname =
+                                "test/cases/parse/object_complex2.in";
+                                line = 3; column = 8 }
+                              })
+                      }),
+                 true, (Syntax.H 1),
+                 { Syntax.v = (Syntax.String "bar");
+                   loc =
+                   (Some { Syntax.startpos =
+                           { Syntax.fname =
+                             "test/cases/parse/object_complex2.in"; line = 3;
+                             column = 12 };
+                           endpos =
+                           { Syntax.fname =
+                             "test/cases/parse/object_complex2.in"; line = 3;
+                             column = 17 }
+                           })
+                   })))
+          ]));
+  loc =
+  (Some { Syntax.startpos =
+          { Syntax.fname = "test/cases/parse/object_complex2.in"; line = 1;
+            column = 0 };
+          endpos =
+          { Syntax.fname = "test/cases/parse/object_complex2.in"; line = 4;
+            column = 1 }
+          })
+  }

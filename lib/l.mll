@@ -104,13 +104,16 @@ rule main = parse
   P.NUMBER (Lexing.lexeme lexbuf |> float_of_string)
 }
 | "|||" whitespace* newline {
+  let original_lex_start_p = lexbuf.lex_start_p in
   Lexing.new_line lexbuf;
   Buffer.clear string_literal_buffer;
   text_block_w := None;
   text_block lexbuf;
+  lexbuf.lex_start_p <- original_lex_start_p;
   P.STRING (Buffer.contents string_literal_buffer)
 }
 | ('@'? as c1) (('\'' | '"') as c2) {
+  let original_lex_start_p = lexbuf.lex_start_p in
   Buffer.clear string_literal_buffer;
   let () =
     match c1, c2 with
@@ -120,6 +123,7 @@ rule main = parse
     | _, '\'' -> single_quoted_verbatim_string lexbuf
     | _ -> assert false (* unreachable *)
   in
+  lexbuf.lex_start_p <- original_lex_start_p;
   P.STRING (Buffer.contents string_literal_buffer)
 }
 | ['_' 'a'-'z' 'A'-'Z'] ['_' 'a'-'z' 'A'-'Z' '0'-'9']* {

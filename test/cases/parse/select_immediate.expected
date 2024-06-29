@@ -1,0 +1,100 @@
+{ Syntax.v =
+  (Syntax.Select
+     ({ Syntax.v =
+        (Syntax.Select
+           ({ Syntax.v =
+              (Syntax.Object
+                 (Syntax.ObjectMemberList
+                    [(Syntax.MemberField
+                        (Syntax.Field
+                           ((Syntax.FieldnameID
+                               { Syntax.v = "y";
+                                 loc =
+                                 (Some { Syntax.startpos =
+                                         { Syntax.fname =
+                                           "test/cases/parse/select_immediate.in";
+                                           line = 1; column = 1 };
+                                         endpos =
+                                         { Syntax.fname =
+                                           "test/cases/parse/select_immediate.in";
+                                           line = 1; column = 2 }
+                                         })
+                                 }),
+                            false, (Syntax.H 1),
+                            { Syntax.v =
+                              (Syntax.Object
+                                 (Syntax.ObjectMemberList
+                                    [(Syntax.MemberField
+                                        (Syntax.Field
+                                           ((Syntax.FieldnameID
+                                               { Syntax.v = "z";
+                                                 loc =
+                                                 (Some { Syntax.startpos =
+                                                         { Syntax.fname =
+                                                           "test/cases/parse/select_immediate.in";
+                                                           line = 1;
+                                                           column = 5 };
+                                                         endpos =
+                                                         { Syntax.fname =
+                                                           "test/cases/parse/select_immediate.in";
+                                                           line = 1;
+                                                           column = 6 }
+                                                         })
+                                                 }),
+                                            false, (Syntax.H 1),
+                                            { Syntax.v = (Syntax.String "a");
+                                              loc =
+                                              (Some { Syntax.startpos =
+                                                      { Syntax.fname =
+                                                        "test/cases/parse/select_immediate.in";
+                                                        line = 1; column = 8
+                                                        };
+                                                      endpos =
+                                                      { Syntax.fname =
+                                                        "test/cases/parse/select_immediate.in";
+                                                        line = 1; column = 11
+                                                        }
+                                                      })
+                                              })))
+                                      ]));
+                              loc =
+                              (Some { Syntax.startpos =
+                                      { Syntax.fname =
+                                        "test/cases/parse/select_immediate.in";
+                                        line = 1; column = 4 };
+                                      endpos =
+                                      { Syntax.fname =
+                                        "test/cases/parse/select_immediate.in";
+                                        line = 1; column = 12 }
+                                      })
+                              })))
+                      ]));
+              loc =
+              (Some { Syntax.startpos =
+                      { Syntax.fname = "test/cases/parse/select_immediate.in";
+                        line = 1; column = 0 };
+                      endpos =
+                      { Syntax.fname = "test/cases/parse/select_immediate.in";
+                        line = 1; column = 13 }
+                      })
+              },
+            "y"));
+        loc =
+        (Some { Syntax.startpos =
+                { Syntax.fname = "test/cases/parse/select_immediate.in";
+                  line = 1; column = 0 };
+                endpos =
+                { Syntax.fname = "test/cases/parse/select_immediate.in";
+                  line = 1; column = 15 }
+                })
+        },
+      "z"));
+  loc =
+  (Some { Syntax.startpos =
+          { Syntax.fname = "test/cases/parse/select_immediate.in"; line = 1;
+            column = 0 };
+          endpos =
+          { Syntax.fname = "test/cases/parse/select_immediate.in"; line = 1;
+            column = 17 }
+          })
+  }

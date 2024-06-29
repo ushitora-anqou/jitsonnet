@@ -41,7 +41,8 @@ let () =
                   value
                   & opt (some string) None
                   & info ~docv:"TARGET" [ "target" ])
-              $ Arg.(value & flag & info [ "haskell" ]));
+              $ Arg.(value & flag & info [ "haskell" ])
+              $ Arg.(value & flag & info [ "parse-only" ]));
         ]
       |> eval))
   |> exit

@@ -27,10 +27,10 @@ open struct
     else Error "duplicated"
 end
 
-let rec f g =
+let rec f g (n : Syntax.Core.expr) =
   let open Syntax.Core in
   let ( let* ) = Result.bind in
-  function
+  match n.v with
   | Null | True | False | String _ | Number _ | Import _ | Importstr _
   | Importbin _ ->
       Ok ()
@@ -64,7 +64,9 @@ let rec f g =
       in
       let* _ =
         fields
-        |> List.filter_map (function String s, _, _, _ -> Some s | _ -> None)
+        |> List.filter_map (function
+             | { v = String s; _ }, _, _, _ -> Some s
+             | _ -> None)
         |> should_be_unique
       in
       Ok ()

@@ -1,0 +1,57 @@
+{ Syntax.v =
+  (Syntax.Call
+     ({ Syntax.v =
+        (Syntax.Select
+           ({ Syntax.v = (Syntax.Var "std");
+              loc =
+              (Some { Syntax.startpos =
+                      { Syntax.fname = "test/cases/parse/call_named_arg6.in";
+                        line = 1; column = 0 };
+                      endpos =
+                      { Syntax.fname = "test/cases/parse/call_named_arg6.in";
+                        line = 1; column = 3 }
+                      })
+              },
+            "x"));
+        loc =
+        (Some { Syntax.startpos =
+                { Syntax.fname = "test/cases/parse/call_named_arg6.in";
+                  line = 1; column = 0 };
+                endpos =
+                { Syntax.fname = "test/cases/parse/call_named_arg6.in";
+                  line = 1; column = 5 }
+                })
+        },
+      ([{ Syntax.v = (Syntax.Var "a");
+          loc =
+          (Some { Syntax.startpos =
+                  { Syntax.fname = "test/cases/parse/call_named_arg6.in";
+                    line = 1; column = 6 };
+                  endpos =
+                  { Syntax.fname = "test/cases/parse/call_named_arg6.in";
+                    line = 1; column = 7 }
+                  })
+          }
+         ],
+       [("b",
+         { Syntax.v = (Syntax.Var "c");
+           loc =
+           (Some { Syntax.startpos =
+                   { Syntax.fname = "test/cases/parse/call_named_arg6.in";
+                     line = 1; column = 11 };
+                   endpos =
+                   { Syntax.fname = "test/cases/parse/call_named_arg6.in";
+                     line = 1; column = 12 }
+                   })
+           })
+         ]),
+      false));
+  loc =
+  (Some { Syntax.startpos =
+          { Syntax.fname = "test/cases/parse/call_named_arg6.in"; line = 1;
+            column = 0 };
+          endpos =
+          { Syntax.fname = "test/cases/parse/call_named_arg6.in"; line = 1;
+            column = 13 }
+          })
+  }

@@ -1,0 +1,8 @@
+{ Syntax.v = Syntax.True;
+  loc =
+  (Some { Syntax.startpos =
+          { Syntax.fname = "test/cases/parse/true.in"; line = 1; column = 0 };
+          endpos =
+          { Syntax.fname = "test/cases/parse/true.in"; line = 1; column = 4 }
+          })
+  }
