@@ -29,5 +29,3 @@ RUN ghc -iruntime_hs -O2 -c runtime_hs/Stdjsonnet.hs
 
 ENV JITSONNET_RUNTIME_HS=/jitsonnet/runtime_hs
 ENTRYPOINT ["/jitsonnet/jitsonnet"]
-
-#du -hs /root/.cache/cabal/packages/hackage.haskell.org/* | sort -h
