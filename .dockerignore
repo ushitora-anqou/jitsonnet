@@ -1,0 +1,12 @@
+.dockerignore
+.git
+.github
+.gitignore
+.gitmodules
+.ocamlformat
+.opam
+LICENSE
+README.md
+_build/
+test/
+misc/
