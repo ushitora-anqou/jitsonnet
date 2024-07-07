@@ -2,6 +2,15 @@
 
 A JIT compiler for Jsonnet programming language.
 
+## Usage
+
+```
+git clone https://github.com/ushitora-anqou/jitsonnet.git
+cd jitsonnet
+docker build . -t jitsonnet:dev
+docker run -v $PWD:/pwd jitsonnet:dev run --haskell /pwd/path/to/file.jsonnet
+```
+
 ## How to install necessary Haskell's libraries
 
 ```
