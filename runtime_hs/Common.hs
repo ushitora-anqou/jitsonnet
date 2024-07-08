@@ -199,7 +199,23 @@ binaryAdd _ (Object asserts1 fields1@(GeneralFields m1)) (Object asserts2 (Gener
         ( HashMap.unionWith
             (\(h1, _, _) (h2, _, v2) -> (if h2 == 1 then h1 else h2, Null, v2))
             m1
-            (HashMap.map (\(h, _, v) -> (h, Null, \self _ -> v self fields1)) m2)
+            ( HashMap.map
+                ( \(h, _, v) ->
+                    ( h
+                    , Null
+                    , \self _ ->
+                        v
+                          self
+                          ( GeneralFields $ HashMap.map (\(h, _, f) -> (h, f self emptyObjectFields, f)) m1
+                          {- We can't use fields1 directly here and need to
+                           - craft 'super' this way. Consider the following
+                           - example:
+                           -   { y: self.z, z: 0, a: super.xxx } { x: super.y, z: 1 } -}
+                          )
+                    )
+                )
+                m2
+            )
         )
 binaryAdd cs _ _ = throwError cs "binaryAdd: invalid values"
 

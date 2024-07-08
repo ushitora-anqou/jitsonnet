@@ -286,7 +286,7 @@ let suite =
     testcase0 "object_local_from_parent" `Success;
     testcase0 "object_local_from_parent_through_local" `Success;
     testcase0 "object_local_recursive" `Success;
-    (*testcase0 "object_local_self_super" `Success;*)
+    testcase0 "object_local_self_super" `Success;
     testcase0 "object_local_uses_local_from_outside" `Success;
     testcase0 "object_sum" `Success;
     testcase0 "object_sum2" `Success;
