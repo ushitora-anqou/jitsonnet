@@ -137,7 +137,7 @@ let suite =
     testcase0 "builtin_asin" `Success;
     testcase0 "builtin_atan" `Success;
     testcase0 "builtin_ceil" `Success;
-    (*testcase0 "builtin_cos" `Success;*)
+    testcase0 "builtin_cos" `Success;
     testcase0 "builtin_exp" `Success;
     testcase0 "builtin_exp2" `Success;
     testcase0 "builtin_exp4" `Success;
@@ -147,7 +147,7 @@ let suite =
     testcase0 "builtin_floor" `Success;
     testcase0 "builtin_log" `Success;
     testcase0 "builtin_log2" `Success;
-    (*testcase0 "builtin_log3" `Success;*)
+    testcase0 "builtin_log3" `Success;
     testcase0 "builtin_log4" `Success;
     testcase0 "builtin_log6" `Success;
     *)
@@ -213,7 +213,7 @@ let suite =
     testcase0 "foldr_various" `Success;
     testcase0 "function_capturing" `Success;
     testcase0 "function_in_object" `Success;
-    (*testcase0 "function_no_params" `Success;*)
+    testcase0 "function_no_params" `Success;
     testcase0 "function_with_argument" `Success;
     testcase0 "greater" `Success;
     testcase0 "greaterEq" `Success;

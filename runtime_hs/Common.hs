@@ -409,6 +409,8 @@ manifestation' hasInitInd ind multiLine v =
         (Bool False) -> initInd <> TB.fromString "false"
         (String s _ _) -> initInd <> quoteString s
         (Number n) -> initInd <> TB.fromText (Data.Double.Conversion.Text.toShortest n)
+        Function 0 f -> manifestation' hasInitInd ind multiLine $ f [] ([], HashMap.empty)
+        Function _ _ -> throwError [] "manifestation: missing argument"
         (Array _ xs) ->
           if Vector.null xs
             then initInd <> TB.fromString "[ ]"
