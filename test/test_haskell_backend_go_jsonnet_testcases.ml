@@ -403,7 +403,7 @@ let suite =
     (*
     testcase0 "std.mantissa" `Success;
     testcase0 "std.mantissa2" `Success;
-    (*testcase0 "std.mantissa3" `Success;*)
+    testcase0 "std.mantissa3" `Success;
     testcase0 "std.mantissa4" `Success;
     testcase0 "std.mantissa5" `Success;
     testcase0 "std.mantissa6" `Success;
@@ -444,8 +444,8 @@ let suite =
     testcase0 "std.sort2" `Success;
     (*
     testcase0 "std.thisFile" `Success;
-    testcase0 "std.thisFile2" `Success;
     *)
+    testcase0 "std.thisFile2" `Success;
     testcase0 "std.toString" `Success;
     testcase0 "std.toString2" `Success;
     testcase0 "std.toString3" `Success;

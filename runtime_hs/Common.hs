@@ -597,8 +597,8 @@ stdLog cs args =
   let x = getNumber cs $ functionParam cs args 0 "x" Nothing
    in Number $ log x
 
-insertStd :: Fields -> Fields
-insertStd (GeneralFields fields) =
+insertStd :: String -> Fields -> Fields
+insertStd thisFile (GeneralFields fields) =
   GeneralFields $
     foldl
       (\a (k, v) -> HashMap.insert k v a)
@@ -616,6 +616,7 @@ insertStd (GeneralFields fields) =
       , ("floor", (2, Null, \_ _ -> Function 1 stdFloor))
       , ("log", (2, Null, \_ _ -> Function 1 stdLog))
       , ("pow", (2, Null, \_ _ -> Function 2 stdPow))
+      , ("thisFile", (2, Null, \_ _ -> makeString thisFile))
       ]
 
 readBin :: String -> IO Value

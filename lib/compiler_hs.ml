@@ -563,7 +563,7 @@ data ImportedData = MkImportedData { %s }
 makeStd :: String -> Value
 makeStd thisFile =
   case Stdjsonnet.v [] of
-    (Object _ fields) -> Object [] $ fillObjectCache $ insertStd fields
+    (Object _ fields) -> Object [] $ fillObjectCache $ insertStd thisFile fields
 
 %s = makeStd ""
 
