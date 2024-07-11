@@ -711,7 +711,8 @@ let rec desugar_expr std b e0 =
            ( desugar_expr std b (with_ (Local (binds_xs, ef))),
              (let e2 =
                 desugar_expr std true
-                  (with_ (Local (binds_xs @ binds @ binds', ebody)))
+                  (with_
+                     (Local (binds_xs, with_ (Local (binds @ binds', ebody)))))
               in
               if b then e2
               else with_ (Core.Local ([ ("$", with_ Core.Self) ], e2))),
