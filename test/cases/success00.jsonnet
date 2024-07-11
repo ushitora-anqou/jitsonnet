@@ -116,4 +116,5 @@
   { x:: assert false; "foo" },
   { x(y):: assert false; "foo" },
   local x = { assert x.v, v: true }; x.v,
+  { ["f"](x, y, z):: x, "y"(x): self.f(x, 2, 3), z: self.y(4) }.z,
 ]

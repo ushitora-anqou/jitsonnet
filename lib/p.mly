@@ -237,6 +237,11 @@ Objinside1 :
   | x=FieldExceptBracket xs=separated_list2(COMMA, Member) {
     Syntax.ObjectMemberList (MemberField x :: xs)
   }
+  | LBRACKET e1=Expr RBRACKET LPAREN params=Params RPAREN h=H e2=Expr xs=separated_list2(COMMA, Member) {
+    Syntax.ObjectMemberList
+      (MemberField (FieldFunc (FieldnameExpr e1, wloc $sloc (params, h, e2)))
+      :: xs)
+  }
   | LBRACKET e1=Expr RBRACKET plus=option(PLUS) h=H e2=Expr post=Objinside2 {
     match plus, h, post with
     | None, Syntax.H 1, (ys, `For (forspec, compspec)) ->
