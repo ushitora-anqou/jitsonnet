@@ -12,6 +12,8 @@ import Data.Fixed qualified
 import Data.Foldable qualified
 import Data.HashMap.Lazy (HashMap)
 import Data.HashMap.Lazy qualified as HashMap
+import Data.HashSet (HashSet)
+import Data.HashSet qualified as HashSet
 import Data.List (intercalate, lookup, sort, sortBy)
 import Data.Text (Text)
 import Data.Text qualified as Text
@@ -39,7 +41,13 @@ type Named = HashMap String Value
 
 type Arguments = (Positional, Named)
 
-type Asserts = [Fields {- self -} -> Fields {- super -} -> Value]
+type VisitedAssertIDs = HashSet Int
+
+type Asserts =
+  [ ( Int -- id
+    , Fields {- self -} -> Fields {- super -} -> VisitedAssertIDs {- visited ids -} -> Value
+    )
+  ]
 
 data Fields
   = GeneralFields
@@ -155,11 +163,27 @@ getObject :: CallStack -> Value -> (Asserts, Fields)
 getObject _ (Object asserts fields) = (asserts, fields)
 getObject cs _ = throwError cs "not object"
 
-evalAsserts :: Asserts -> Fields -> ()
-evalAsserts asserts fields =
-  unsafePerformIO $
-    forM_ asserts $ \f ->
-      evaluate $ f fields emptyObjectFields
+{-# OPAQUE evalAsserts #-}
+evalAsserts :: Asserts -> Fields -> VisitedAssertIDs -> ()
+evalAsserts asserts fields visited =
+  let visited' =
+        foldl
+          ( \visited (x, _) ->
+              case visited of
+                Nothing -> Nothing
+                Just visited ->
+                  if HashSet.member x visited
+                    then Nothing
+                    else Just $ HashSet.insert x visited
+          )
+          (Just visited)
+          asserts
+   in case visited' of
+        Nothing -> ()
+        Just visited ->
+          unsafePerformIO $
+            forM_ asserts $ \(_, f) ->
+              evaluate $ f fields emptyObjectFields visited
 
 stdCmp :: CallStack -> Value -> Value -> Ordering
 stdCmp _ (Number n1) (Number n2) = compare n1 n2
@@ -193,7 +217,7 @@ binaryAdd cs lhs (String s2 b2 v2) = do
       s = TL.unpack $ TB.toLazyText b
    in String s b (UVector.fromList s)
 binaryAdd _ (Object asserts1 fields1@(GeneralFields m1)) (Object asserts2 (GeneralFields m2)) =
-  Object (asserts1 ++ map (\v self _ -> v self fields1) asserts2) $
+  Object (asserts1 ++ map (\(i, v) -> (i, \self _ -> v self fields1)) asserts2) $
     fillObjectCache $
       GeneralFields
         ( HashMap.unionWith
@@ -326,20 +350,20 @@ superIndex cs super@(GeneralFields superFields) key =
         Nothing -> throwError cs ("field does not exist: " ++ key')
         Just (_, v, _) -> v
 
-arrayIndex :: CallStack -> Value -> Value -> Value
-arrayIndex cs (Array _ a) v2 = a Vector.! truncate (getNumber cs v2)
-arrayIndex cs (String _ _ s) v2 =
+arrayIndex :: CallStack -> VisitedAssertIDs -> Value -> Value -> Value
+arrayIndex cs _ (Array _ a) v2 = a Vector.! truncate (getNumber cs v2)
+arrayIndex cs _ (String _ _ s) v2 =
   let c = s UVector.! truncate (getNumber cs v2)
    in String [c] (TB.fromString [c]) (UVector.singleton c)
-arrayIndex cs (Object asserts self@(GeneralFields fields)) v2 =
-  evalAsserts asserts self `seq`
+arrayIndex cs visited (Object asserts self@(GeneralFields fields)) v2 =
+  evalAsserts asserts self visited `seq`
     let x = getString cs v2
      in case HashMap.lookup x fields of
           Just (_, v, _) -> v
           Nothing ->
             let x = getString cs v2
              in throwError cs ("object field not found: " ++ x)
-arrayIndex cs _ _ = throwError cs "arrayIndex: invalid value"
+arrayIndex cs _ _ _ = throwError cs "arrayIndex: invalid value"
 
 objectField ::
   CallStack -> Int -> Value -> (Fields -> Fields -> Value) -> Fields -> Fields
@@ -433,7 +457,7 @@ manifestation' hasInitInd ind multiLine v =
                       (indent <> TB.fromString "]")
                       bs
         (Object asserts fields) ->
-          evalAsserts asserts fields `seq`
+          evalAsserts asserts fields HashSet.empty `seq`
             case reverse $ extractVisibleFields fields of
               [] -> initInd <> TB.fromString "{ }"
               xs ->
@@ -468,18 +492,18 @@ manifestation' hasInitInd ind multiLine v =
 manifestation :: Bool -> Value -> TL.Text
 manifestation multi x = TB.toLazyText $ manifestation' True 0 multi x
 
-mainNormal :: (CallStack -> Value) -> IO ()
-mainNormal f = TLIO.putStrLn $ manifestation True $ f []
+mainNormal :: (CallStack -> VisitedAssertIDs -> Value) -> IO ()
+mainNormal f = TLIO.putStrLn $ manifestation True $ f [] HashSet.empty
 
-mainString :: (CallStack -> Value) -> IO ()
+mainString :: (CallStack -> VisitedAssertIDs -> Value) -> IO ()
 mainString f =
-  case f [] of
+  case f [] HashSet.empty of
     String s _ _ -> putStr s
     _ -> error "stringManifestation: not string"
 
-mainMulti :: String -> Bool -> (CallStack -> Value) -> IO ()
+mainMulti :: String -> Bool -> (CallStack -> VisitedAssertIDs -> Value) -> IO ()
 mainMulti targetDir string f =
-  case f [] of
+  case f [] HashSet.empty of
     (Object _ fields) ->
       forM_ (extractVisibleFields fields) $ \(k, v) ->
         let filePath = joinPath [targetDir, k]

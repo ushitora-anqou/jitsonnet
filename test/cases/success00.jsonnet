@@ -115,4 +115,5 @@
   ({ foo(): self.bar(), bar(): 10, } + { bar(): 11 }).foo(),
   { x:: assert false; "foo" },
   { x(y):: assert false; "foo" },
+  local x = { assert x.v, v: true }; x.v,
 ]

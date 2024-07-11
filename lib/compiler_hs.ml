@@ -99,6 +99,7 @@ let get_import_id kind file_path =
   ^ Unix.realpath file_path
 
 let callstack_varname = "cs"
+let visited_assert_ids = "vaids"
 
 type var_desc =
   | VarUnknown
@@ -127,6 +128,12 @@ let gensym =
     in
     let suffix = suffix |> Str.(global_replace (regexp {|[^a-zA-Z0-9]|}) "_") in
     suffix
+
+let gen_assrt_id =
+  let i = ref 0 in
+  fun () ->
+    i := !i + 1;
+    !i
 
 let with_binds env ids f =
   ids
@@ -214,7 +221,14 @@ let rec compile_expr ?toplevel:_ env (e0 : Syntax.Core.expr) : Haskell.expr =
   | Number n -> Call (Symbol "Number", FloatLiteral n)
   | Array xs ->
       Call (Symbol "makeArrayFromList", List (List.map (compile_expr env) xs))
-  | ArrayIndex (e1, e2) -> compile_binary env "arrayIndex" e1 e2
+  | ArrayIndex (e1, e2) ->
+      make_call (Symbol "arrayIndex")
+        [
+          Symbol callstack_varname;
+          Symbol visited_assert_ids;
+          compile_expr env e1;
+          compile_expr env e2;
+        ]
   | Binary (e1, `Add, e2) -> compile_binary env "binaryAdd" e1 e2
   | Binary (e1, `Sub, e2) -> compile_binary env "binarySub" e1 e2
   | Binary (e1, `Mult, e2) -> compile_binary env "binaryMult" e1 e2
@@ -349,9 +363,16 @@ let rec compile_expr ?toplevel:_ env (e0 : Syntax.Core.expr) : Haskell.expr =
         Haskell.List
           (assrts
           |> List.map (fun e ->
-                 Haskell.Function
-                   ( varname env "self",
-                     Function (varname env "super", compile_expr env e) )))
+                 Haskell.Tuple
+                   [
+                     IntLiteral (gen_assrt_id ());
+                     Function
+                       ( varname env "self",
+                         Function
+                           ( varname env "super",
+                             Function (visited_assert_ids, compile_expr env e)
+                           ) );
+                   ]))
       in
 
       let fields =
@@ -418,7 +439,11 @@ let rec compile_expr ?toplevel:_ env (e0 : Syntax.Core.expr) : Haskell.expr =
       let import_id = get_import_id `Import file_path in
       make_call
         (Symbol (varname env import_id))
-        [ Symbol "importedData"; Symbol callstack_varname ]
+        [
+          Symbol "importedData";
+          Symbol callstack_varname;
+          Symbol visited_assert_ids;
+        ]
   | (Importbin file_path | Importstr file_path) as node ->
       let import_id =
         get_import_id
@@ -510,8 +535,9 @@ let compile ?multi ?(string = false) ?(target = `Main) root_prog_path progs bins
     progs_bindings
     |> List.map (fun (id, e) ->
            Printf.sprintf
-             "%s :: ImportedData -> CallStack -> Value\n%s importedData %s = %s"
-             id id callstack_varname (Haskell.show_expr e))
+             "%s :: ImportedData -> CallStack -> VisitedAssertIDs -> Value\n\
+              %s importedData %s %s = %s" id id callstack_varname
+             visited_assert_ids (Haskell.show_expr e))
     |> String.concat "\n"
   in
 
@@ -557,12 +583,13 @@ import Common
 import qualified Stdjsonnet
 import qualified Data.Text.Lazy.IO as TLIO
 import qualified Data.HashMap.Lazy as HashMap
+import qualified Data.HashSet as HashSet
 
 data ImportedData = MkImportedData { %s }
 
 makeStd :: String -> Value
 makeStd thisFile =
-  case Stdjsonnet.v [] of
+  case Stdjsonnet.v [] HashSet.empty of
     (Object _ fields) -> Object [] $ fillObjectCache $ insertStd thisFile fields
 
 %s = makeStd ""
@@ -580,12 +607,12 @@ main = %s
 import Common
 import qualified Data.HashMap.Lazy as HashMap
 
-%s = Object [] $ fillObjectCache $ insertStd emptyObjectFields
+%s = Object [] $ fillObjectCache $ insertStd "" emptyObjectFields
 
-v :: CallStack -> Value
-v = \%s -> %s
+v :: CallStack -> VisitedAssertIDs -> Value
+v = \%s %s -> %s
 |}
-        (varname env "$std") callstack_varname
+        (varname env "$std") callstack_varname visited_assert_ids
         (progs |> List.hd
         |> (fun (_, _, s) -> s)
         |> compile_expr env |> Haskell.show_expr)
