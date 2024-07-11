@@ -52,11 +52,11 @@ let rec load ~is_stdjsonnet ~optimize src t =
           let desugared = Syntax.desugar ~is_stdjsonnet prog in
           let desugared =
             match optimize with
-            | false -> Syntax.replace_std ~is_stdjsonnet desugared
+            | false -> Syntax.Core.replace_std ~is_stdjsonnet desugared
             | true ->
                 desugared
-                |> Syntax.alpha_conv ~is_stdjsonnet
-                |> Syntax.float_let_binds
+                |> Syntax.Core.alpha_conv ~is_stdjsonnet
+                |> Syntax.Core.float_let_binds
           in
           let desugared =
             desugared |> update_imported_files (Filename.dirname path)
@@ -76,8 +76,8 @@ let rec load ~is_stdjsonnet ~optimize src t =
       let* prog = Parser.parse_string prog_src in
       let desugared =
         Syntax.desugar ~is_stdjsonnet prog
-        |> Syntax.alpha_conv ~is_stdjsonnet
-        |> Syntax.float_let_binds
+        |> Syntax.Core.alpha_conv ~is_stdjsonnet
+        |> Syntax.Core.float_let_binds
       in
       let* () = Static_check.f is_stdjsonnet desugared in
       let progs, bins, strs = list_imported_files desugared in

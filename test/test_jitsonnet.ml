@@ -326,7 +326,7 @@ let assert_freevars expected got =
       Logs.err (fun m -> m "failed to parse: %s" msg);
       assert false
   | Ok p ->
-      let got = Syntax.desugar p |> Syntax.freevars in
+      let got = Syntax.desugar p |> Syntax.Core.freevars in
       Logs.info (fun m ->
           m "got [%s], expected [%s] %s"
             (got |> Syntax.StringSet.to_list |> String.concat ", ")
@@ -387,7 +387,7 @@ let test_static_check_basics () =
 let test_alpha_conversion_basics () =
   let got =
     Parser.parse_string {|std.foo()|}
-    |> Result.get_ok |> Syntax.desugar |> Syntax.alpha_conv
+    |> Result.get_ok |> Syntax.desugar |> Syntax.Core.alpha_conv
   in
   let expected =
     (* FIXME *)
