@@ -22,9 +22,9 @@ open struct
 
   let add x g = Ok { g = G.add x g.g }
 
-  let should_be_unique xs =
+  let should_be_unique where xs =
     if List.length (List.sort_uniq compare xs) = List.length xs then Ok ()
-    else Error "duplicated"
+    else Error ("Statich_check: duplicated: " ^ where)
 end
 
 let rec f g (n : Syntax.Core.expr) =
@@ -67,7 +67,7 @@ let rec f g (n : Syntax.Core.expr) =
         |> List.filter_map (function
              | { v = String s; _ }, _, _, _ -> Some s
              | _ -> None)
-        |> should_be_unique
+        |> should_be_unique "object"
       in
       Ok ()
   | ObjectFor (e1, e2, x, e3) ->
@@ -92,7 +92,7 @@ let rec f g (n : Syntax.Core.expr) =
       let* _ = f g e in
       let* _ = xs |> for_all (f g) in
       let* _ = ys |> List.map snd |> for_all (f g) in
-      let* _ = ys |> List.map fst |> should_be_unique in
+      let* _ = ys |> List.map fst |> should_be_unique "call" in
       Ok ()
   | Var x -> is_in g (Var x)
   | Local (xs, e) ->
@@ -104,7 +104,7 @@ let rec f g (n : Syntax.Core.expr) =
       in
       let* _ = xs |> List.map snd |> for_all (f g') in
       let* _ = f g' e in
-      let* _ = xs |> List.map fst |> should_be_unique in
+      let* _ = xs |> List.map fst |> should_be_unique "local" in
       Ok ()
   | If (e1, e2, e3) ->
       let* _ = f g e1 in
@@ -127,7 +127,7 @@ let rec f g (n : Syntax.Core.expr) =
       in
       let* _ = xs |> List.filter_map snd |> for_all (f g') in
       let* _ = f g' e' in
-      let* _ = xs |> List.map fst |> should_be_unique in
+      let* _ = xs |> List.map fst |> should_be_unique "function" in
       Ok ()
   | Error e -> f g e
 
