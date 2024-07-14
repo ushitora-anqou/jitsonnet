@@ -243,9 +243,9 @@ addObjectFields fields1@(GeneralFields m1) fields2@(GeneralFields m2) =
                   ( \(h, _, f) -> (h, f self emptyObjectFields, f)
                   )
                 {- We can't use (super+fields1) directly here and need to
-                 - craft 'super' this way. Consider the following
-                 - example:
-                 -   { y: self.z, z: 0, a: super.xxx } { x: super.y, z: 1 } -}
+                   craft 'super' this way. Consider the following
+                   example:
+                     { y: self.z, z: 0, a: super.xxx } { x: super.y, z: 1 } -}
                 $ addObjectFields super fields1
           )
       )

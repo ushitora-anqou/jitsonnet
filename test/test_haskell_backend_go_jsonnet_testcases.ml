@@ -504,6 +504,6 @@ let suite =
 let () =
   Fmt.set_style_renderer Fmt.stderr `Ansi_tty;
   Logs.set_reporter (Logs_fmt.reporter ());
-  Logs.set_level (Some Logs.Debug);
+  Logs.set_level (Some Logs.Info);
   let open OUnit2 in
   run_test_tt_main ("haskell backend w go jsonnet testcases" >::: suite)

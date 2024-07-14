@@ -29,7 +29,7 @@ let test_custom_error _test_ctxt =
 let () =
   Fmt.set_style_renderer Fmt.stderr `Ansi_tty;
   Logs.set_reporter (Logs_fmt.reporter ());
-  Logs.set_level (Some Logs.Debug);
+  Logs.set_level (Some Logs.Info);
   let open OUnit2 in
   run_test_tt_main
     ("haskell backend"
