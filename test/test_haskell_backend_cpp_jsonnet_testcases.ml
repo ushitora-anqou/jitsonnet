@@ -67,16 +67,16 @@ let suite =
     testcase0 "import_sorting_multiple_in_local" `SuccessSimple;
     testcase0 "import_sorting_unicode" `SuccessSimple;
     testcase0 "import_sorting_with_license" `SuccessSimple;
-    testcase0 "invariant" `SuccessSimple;
     *)
+    testcase0 "invariant" `SuccessSimple;
     testcase0 "invariant_manifest" `Success;
     testcase0 "local" `SuccessSimple;
     testcase0 "merge" `SuccessSimple;
     testcase0 "null" `SuccessSimple;
     testcase0 "object" `SuccessSimple;
     testcase0 "oop" `SuccessSimple;
-    (*
     testcase0 "oop_extra" `SuccessSimple;
+    (*
     testcase0 "parseJson_long_array_gc_test" `Success;
     *)
     testcase0 "parsing_edge_cases" `SuccessSimple;
