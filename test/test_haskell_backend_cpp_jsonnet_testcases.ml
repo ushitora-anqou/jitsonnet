@@ -74,8 +74,8 @@ let suite =
     testcase0 "merge" `SuccessSimple;
     testcase0 "null" `SuccessSimple;
     testcase0 "object" `SuccessSimple;
-    (*
     testcase0 "oop" `SuccessSimple;
+    (*
     testcase0 "oop_extra" `SuccessSimple;
     testcase0 "parseJson_long_array_gc_test" `Success;
     *)

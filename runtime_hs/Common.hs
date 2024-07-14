@@ -216,32 +216,40 @@ binaryAdd cs lhs (String s2 b2 v2) = do
   let b = valueToTextBuilder cs lhs <> b2
       s = TL.unpack $ TB.toLazyText b
    in String s b (UVector.fromList s)
-binaryAdd _ (Object asserts1 fields1@(GeneralFields m1)) (Object asserts2 (GeneralFields m2)) =
+binaryAdd _ (Object asserts1 fields1) (Object asserts2 fields2) =
   Object (asserts1 ++ map (\(i, v) -> (i, \self _ -> v self fields1)) asserts2) $
     fillObjectCache $
-      GeneralFields
-        ( HashMap.unionWith
-            (\(h1, _, _) (h2, _, v2) -> (if h2 == 1 then h1 else h2, Null, v2))
-            m1
-            ( HashMap.map
-                ( \(h, _, v) ->
-                    ( h
-                    , Null
-                    , \self _ ->
-                        v
-                          self
-                          ( GeneralFields $ HashMap.map (\(h, _, f) -> (h, f self emptyObjectFields, f)) m1
-                          {- We can't use fields1 directly here and need to
-                           - craft 'super' this way. Consider the following
-                           - example:
-                           -   { y: self.z, z: 0, a: super.xxx } { x: super.y, z: 1 } -}
-                          )
-                    )
-                )
-                m2
-            )
-        )
+      GeneralFields $
+        addObjectFields fields1 fields2
 binaryAdd cs _ _ = throwError cs "binaryAdd: invalid values"
+
+addObjectFields ::
+  Fields ->
+  Fields ->
+  HashMap String (Int, Value, Fields -> Fields -> Value)
+addObjectFields fields1@(GeneralFields m1) fields2@(GeneralFields m2) =
+  HashMap.unionWith
+    (\(h1, _, _) (h2, _, v2) -> (if h2 == 1 then h1 else h2, Null, v2))
+    m1
+    $ HashMap.map
+      ( \(h, _, v) ->
+          ( h
+          , Null
+          , \self super ->
+              v
+                self
+                $ GeneralFields
+                $ HashMap.map
+                  ( \(h, _, f) -> (h, f self emptyObjectFields, f)
+                  )
+                {- We can't use (super+fields1) directly here and need to
+                 - craft 'super' this way. Consider the following
+                 - example:
+                 -   { y: self.z, z: 0, a: super.xxx } { x: super.y, z: 1 } -}
+                $ addObjectFields super fields1
+          )
+      )
+      m2
 
 binarySub :: CallStack -> Value -> Value -> Value
 binarySub cs v1 v2 =
