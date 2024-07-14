@@ -295,13 +295,13 @@ binaryLsl :: CallStack -> Value -> Value -> Value
 binaryLsl cs v1 v2 =
   let l = truncate $ getNumber cs v1
       r = truncate $ getNumber cs v2
-   in Number $ fromIntegral (l `shiftL` r :: Int)
+   in Number $ fromIntegral (l `shiftL` (r `mod` 64) :: Int)
 
 binaryLsr :: CallStack -> Value -> Value -> Value
 binaryLsr cs v1 v2 =
   let l = truncate $ getNumber cs v1
       r = truncate $ getNumber cs v2
-   in Number $ fromIntegral (l `shiftR` r :: Int)
+   in Number $ fromIntegral (l `shiftR` (r `mod` 64) :: Int)
 
 binaryLt :: CallStack -> Value -> Value -> Value
 binaryLt cs v1 v2 = Bool $ stdCmp cs v1 v2 == LT

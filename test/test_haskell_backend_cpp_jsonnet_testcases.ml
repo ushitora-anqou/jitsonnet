@@ -30,9 +30,7 @@ let testcase0 src_file_path result_path =
 let suite =
   [
     testcase0 "arith_bool" `SuccessSimple;
-    (*
     testcase0 "arith_float" `SuccessSimple;
-    *)
     testcase0 "arith_string" `SuccessSimple;
     testcase0 "array" `SuccessSimple;
     testcase0 "array_comparison" `Success;
