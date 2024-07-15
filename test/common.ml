@@ -6,15 +6,16 @@ let read_all file_path =
     ~finally:(fun () -> close_in ic)
     (fun () -> In_channel.input_all ic)
 
-let assert_compile' ~loader_optimize ~compiler
-    ?(test_cases_dir = "../../../test/cases") ?(expected_suffix = ".expected")
-    ?(multi = false) ?(string = false) ?(ext_codes = []) ?(ext_strs = [])
-    src_file_path result_pat =
+let assert_compile' ~loader_optimize ~compiler ?test_cases_dir
+    ?(expected_suffix = ".expected") ?(multi = false) ?(string = false)
+    ?(ext_codes = []) ?(ext_strs = []) src_file_path result_pat =
   let input_file_path =
-    Filename.concat test_cases_dir (src_file_path ^ ".jsonnet")
+    (test_cases_dir |> Option.fold ~none:Fun.id ~some:Filename.concat)
+      (src_file_path ^ ".jsonnet")
   in
   let expected_path =
-    Filename.concat test_cases_dir (src_file_path ^ expected_suffix)
+    (test_cases_dir |> Option.fold ~none:Fun.id ~some:Filename.concat)
+      (src_file_path ^ expected_suffix)
   in
   match
     Loader.load_root ~optimize:loader_optimize ~ext_codes ~ext_strs
@@ -29,7 +30,8 @@ let assert_compile' ~loader_optimize ~compiler
         if multi then Some (Filename.temp_dir "jitsonnet_" "") else None
       in
       match compiler ~multi_output_dir ~t ~string with
-      | Unix.WEXITED 0, got, _ -> (
+      | Unix.WEXITED 0, got_stdout, got_stderr -> (
+          let got = got_stderr ^ got_stdout in
           match result_pat with
           | `Success when multi ->
               let exit_code =
@@ -73,3 +75,16 @@ let assert_compile' ~loader_optimize ~compiler
       | exception Executor.Execution_failed msg ->
           Logs.err (fun m -> m "failed to execute: '%s'" msg);
           assert false)
+
+let assert_compile_hs ?remove_work_dir ?(runtime_dir = "../../../runtime_hs")
+    ?test_cases_dir ?expected_suffix ?multi ?string ?ext_codes ?ext_strs
+    src_file_path result_pat =
+  assert_compile' ?test_cases_dir ?expected_suffix ?multi ?ext_codes ?ext_strs
+    ?string ~loader_optimize:false src_file_path result_pat
+    ~compiler:(fun ~multi_output_dir ~t ~string ->
+      let compiled = Loader.compile_haskell ?multi:multi_output_dir ~string t in
+      Executor_hs.(
+        execute
+          (make_config ?remove_work_dir ~interactive_compile:true
+             ~interactive_execute:false ~runtime_dir ())
+          compiled))

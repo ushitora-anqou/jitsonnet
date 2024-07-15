@@ -175,6 +175,7 @@ let compile_builtin_std = function
   | "exponent" -> Ok "stdExponent"
   | "mantissa" -> Ok "stdMantissa"
   | "md5" -> Ok "stdMd5"
+  | "trace" -> Ok "stdTrace"
   | _ -> Error "not found"
 
 let compile_loc = function

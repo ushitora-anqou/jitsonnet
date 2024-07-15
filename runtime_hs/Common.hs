@@ -91,6 +91,12 @@ data Value
   | Function Int (CallStack -> Arguments -> Value)
   | Object Asserts Fields
 
+{-# OPAQUE printTrace #-}
+printTrace :: String -> Int -> String -> ()
+printTrace filePath line msg =
+  unsafePerformIO $
+    hPrintf stderr "TRACE: %s:%d %s\n" filePath line msg
+
 {-# OPAQUE throwError #-}
 throwError :: CallStack -> String -> a
 throwError cs msg =
@@ -628,6 +634,15 @@ stdLog :: CallStack -> Arguments -> Value
 stdLog cs args =
   let x = getNumber cs $ functionParam cs args 0 "x" Nothing
    in Number $ log x
+
+stdTrace :: CallStack -> Arguments -> Value
+stdTrace cs args =
+  let msg = getString cs $ functionParam cs args 0 "msg" Nothing
+      arg = functionParam cs args 1 "arg" Nothing
+   in case cs of
+        [] -> throwError cs "stdTrace: invalid cs"
+        CFLocation{filePath, startLoc = (startLine, _), endLoc} : _ ->
+          printTrace filePath startLine msg `seq` arg
 
 insertStd :: String -> Fields -> Fields
 insertStd thisFile (GeneralFields fields) =

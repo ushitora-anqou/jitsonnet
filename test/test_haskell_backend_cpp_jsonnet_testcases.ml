@@ -1,27 +1,12 @@
-open Jitsonnet
 open Common
-
-let assert_compile ?remove_work_dir ?(runtime_dir = "../../../runtime_hs")
-    ?test_cases_dir ?expected_suffix ?multi ?string ?ext_codes ?ext_strs
-    src_file_path result_pat =
-  assert_compile' ?test_cases_dir ?expected_suffix ?multi ?ext_codes ?ext_strs
-    ?string ~loader_optimize:false src_file_path result_pat
-    ~compiler:(fun ~multi_output_dir ~t ~string ->
-      let compiled = Loader.compile_haskell ?multi:multi_output_dir ~string t in
-      Executor_hs.(
-        execute
-          (make_config ?remove_work_dir ~interactive_compile:true
-             ~interactive_execute:false ~runtime_dir ())
-          compiled))
 
 let assert_compile ?multi ?string ?ext_codes ?ext_strs src_file_path result_pat
     =
   let saved_wd = Unix.getcwd () in
-  Unix.chdir "../../../thirdparty/jsonnet";
+  Unix.chdir "../../../thirdparty/jsonnet/test_suite";
   Fun.protect ~finally:(fun () -> Unix.chdir saved_wd) @@ fun () ->
-  assert_compile ~test_cases_dir:"test_suite" ~expected_suffix:".jsonnet.golden"
-    ?multi ?string ?ext_codes ?ext_strs ~runtime_dir:"../../runtime_hs"
-    src_file_path result_pat
+  assert_compile_hs ~expected_suffix:".jsonnet.golden" ?multi ?string ?ext_codes
+    ?ext_strs ~runtime_dir:"../../../runtime_hs" src_file_path result_pat
 
 let testcase0 src_file_path result_path =
   let open OUnit2 in
@@ -90,8 +75,8 @@ let suite =
     testcase0 "text_block" `SuccessSimple;
     (*
     testcase0 "tla.simple" `SuccessSimple;
-    testcase0 "trace" `Success;
     *)
+    testcase0 "trace" `Success;
     testcase0 "unicode" `SuccessSimple;
     (*testcase0 "unicode_bmp" `Success;*)
     testcase0 "unix_line_endings" `Success;

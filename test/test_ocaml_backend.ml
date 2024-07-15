@@ -3,10 +3,10 @@ open Common
 
 let assert_compile ?(mode = `Bytecode) ?remove_work_dir
     ?(opam_lib = "../../../../_opam/lib")
-    ?(lib_runtime = "../../../_build/default/lib_runtime") ?test_cases_dir
-    ?expected_suffix ?multi ?string ?ext_codes ?ext_strs src_file_path
-    result_pat =
-  assert_compile' ?test_cases_dir ?expected_suffix ?multi ?ext_codes ?ext_strs
+    ?(lib_runtime = "../../../_build/default/lib_runtime")
+    ?(test_cases_dir = "../../../test/cases") ?expected_suffix ?multi ?string
+    ?ext_codes ?ext_strs src_file_path result_pat =
+  assert_compile' ~test_cases_dir ?expected_suffix ?multi ?ext_codes ?ext_strs
     ?string ~loader_optimize:true src_file_path result_pat
     ~compiler:(fun ~multi_output_dir ~t ~string ->
       let compiled = Loader.compile ?multi:multi_output_dir ~string t in
