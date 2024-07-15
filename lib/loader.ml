@@ -44,34 +44,46 @@ let rec load ~is_stdjsonnet ~optimize src t =
   let ( let* ) = Result.bind in
   match src with
   | `File path -> (
-      let* real_path = get_real_path path in
-      match Hashtbl.find_opt t.loaded real_path with
-      | Some _ -> Ok ()
-      | None ->
-          let* prog = Parser.parse_file path in
-          let desugared = Syntax.desugar ~is_stdjsonnet prog in
-          let desugared =
-            match optimize with
-            | false -> Syntax.Core.replace_std ~is_stdjsonnet desugared
-            | true ->
-                desugared
-                |> Syntax.Core.alpha_conv ~is_stdjsonnet
-                |> Syntax.Core.float_let_binds
-          in
-          let desugared =
-            desugared |> update_imported_files (Filename.dirname path)
-          in
-          let* () = Static_check.f is_stdjsonnet desugared in
-          Hashtbl.add t.loaded real_path (path, desugared);
-          let progs, bins, strs = list_imported_files desugared in
-          bins |> List.iter (fun k -> Hashtbl.replace t.importbins k ());
-          strs |> List.iter (fun k -> Hashtbl.replace t.importstrs k ());
-          progs
-          |> List.fold_left
-               (fun res file ->
-                 let* () = res in
-                 t |> load ~is_stdjsonnet ~optimize (`File file))
-               (Ok ()))
+      match get_real_path path with
+      | Error _ ->
+          Hashtbl.add t.loaded path
+            ( path,
+              Syntax.Core.
+                {
+                  loc = None;
+                  v = Error { loc = None; v = String "can't import" };
+                } );
+          Ok ()
+      | Ok real_path -> (
+          match Hashtbl.find_opt t.loaded real_path with
+          | Some _ -> Ok ()
+          | None ->
+              let* prog =
+                try Parser.parse_file path with Failure msg -> Error msg
+              in
+              let desugared = Syntax.desugar ~is_stdjsonnet prog in
+              let desugared =
+                match optimize with
+                | false -> Syntax.Core.replace_std ~is_stdjsonnet desugared
+                | true ->
+                    desugared
+                    |> Syntax.Core.alpha_conv ~is_stdjsonnet
+                    |> Syntax.Core.float_let_binds
+              in
+              let desugared =
+                desugared |> update_imported_files (Filename.dirname path)
+              in
+              let* () = Static_check.f is_stdjsonnet desugared in
+              Hashtbl.add t.loaded real_path (path, desugared);
+              let progs, bins, strs = list_imported_files desugared in
+              bins |> List.iter (fun k -> Hashtbl.replace t.importbins k ());
+              strs |> List.iter (fun k -> Hashtbl.replace t.importstrs k ());
+              progs
+              |> List.fold_left
+                   (fun res file ->
+                     let* () = res in
+                     t |> load ~is_stdjsonnet ~optimize (`File file))
+                   (Ok ())))
   | `Ext_code (key, prog_src) ->
       let* prog = Parser.parse_string prog_src in
       let desugared =

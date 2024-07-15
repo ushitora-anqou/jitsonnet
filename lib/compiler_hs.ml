@@ -96,7 +96,7 @@ let get_import_id kind file_path =
   | `Import -> "prog/"
   | `Importbin -> "bin/"
   | `Importstr -> "str/")
-  ^ Unix.realpath file_path
+  ^ try Unix.realpath file_path with Unix.Unix_error _ -> file_path
 
 let callstack_varname = "cs"
 let visited_assert_ids = "vaids"

@@ -11,6 +11,16 @@ docker build . -t jitsonnet:dev
 docker run -v $PWD:/pwd jitsonnet:dev run --haskell /pwd/path/to/file.jsonnet
 ```
 
+## How to setup cpp jsonnet tests
+
+```
+cd thirdparty/jsonnet/test_suite
+ls *.jsonnet | grep -v '^error' | while read line; do if [ -f "${line}.golden" ]; then echo $line; fi; done | sed -r 's/^(.*)\.jsonnet$/testcase0 "\1" `Success;/'
+ls *.jsonnet | grep -v '^error' | while read line; do if [ ! -f "${line}.golden" ]; then echo $line; fi; done | sed -r 's/^(.*)\.jsonnet$/testcase0 "\1" `SuccessSimple;/'
+ls *.jsonnet | grep '^error' | while read line; do if [ -f "${line}.golden" ]; then echo $line; fi; done | sed -r 's/^(.*)\.jsonnet$/testcase0 "\1" `Error;/'
+ls *.jsonnet | grep '^error' | while read line; do if [ ! -f "${line}.golden" ]; then echo $line; fi; done | sed -r 's/^(.*)\.jsonnet$/testcase0 "\1" `ErrorSimple;/'
+```
+
 ## How to install necessary Haskell's libraries
 
 ```

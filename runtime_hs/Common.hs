@@ -127,8 +127,8 @@ throwError cs msg =
                                   line1
                                   (col1 + 1)
                           )
-                        lineName = if name == "" then "" else printf "\tfunction <%s>" name
-                        line = "\t" ++ lineLoc ++ lineName
+                        lineName = if name == "" then "" else printf "function <%s>" name
+                        line = "\t" ++ lineLoc ++ "\t" ++ lineName
                      in (name, line : lines)
             )
             ("", [])

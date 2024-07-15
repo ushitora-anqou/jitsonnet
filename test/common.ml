@@ -21,6 +21,7 @@ let assert_compile' ~loader_optimize ~compiler ?test_cases_dir
     Loader.load_root ~optimize:loader_optimize ~ext_codes ~ext_strs
       input_file_path
   with
+  | Error _ when result_pat = `ErrorSimple -> ()
   | Error msg ->
       Logs.err (fun m ->
           m "assert_compile_expr: failed to load: %s: %s" input_file_path msg);
@@ -46,12 +47,13 @@ let assert_compile' ~loader_optimize ~compiler ?test_cases_dir
               let expected = read_all expected_path in
               Alcotest.(check string) "" expected got;
               ()
-          | `Error -> assert false)
+          | `ErrorSimple | `Error | `ErrorPrecise -> assert false)
       | Unix.WEXITED _, _, got -> (
           match result_pat with
           | `Success | `SuccessSimple ->
               Logs.err (fun m -> m "failed to execute: '%s'" got);
               assert false
+          | `ErrorSimple -> ()
           | `Error -> (
               let expected = read_all expected_path |> String.trim in
               match Str.(search_forward (regexp expected) got 0) with
@@ -62,13 +64,34 @@ let assert_compile' ~loader_optimize ~compiler ?test_cases_dir
                          '%s'"
                         expected got);
                   assert false
-              | _ -> ()))
+              | _ -> ())
+          | `ErrorPrecise ->
+              let expected = read_all expected_path in
+              (match
+                 Str.(
+                   search_forward
+                     (regexp
+                        "^RUNTIME ERROR:.*\n\
+                         \\(\t[^\t]*\t\\(function <.*>\\)?\n\
+                         ?\\)*")
+                     expected 0)
+               with
+              | exception Not_found -> assert false
+              | _ -> ());
+              let expected = Str.matched_string expected in
+              if String.trim got = String.trim expected then ()
+              else (
+                Logs.err (fun m ->
+                    m "not equal to the expected string: expect '%s', got '%s'"
+                      expected got);
+                assert false))
       | status, stdout_content, stderr_content ->
           Logs.err (fun m ->
               m "unexpected error: %s:\n%s\n%s"
                 (Executor.string_of_process_status status)
                 stdout_content stderr_content);
           assert false
+      | exception _ when result_pat = `ErrorSimple -> ()
       | exception Executor.Compilation_failed msg ->
           Logs.err (fun m -> m "failed to compile: '%s'" msg);
           assert false

@@ -8,7 +8,7 @@ update-stdjsonnet:
 
 .PHONY: test
 test: build
-	OUNIT_CI=true dune runtest -f
+	OUNIT_CI=true systemd-run --user --scope -p MemoryHigh=20G -- dune runtest
 
 .PHONY: env
 env:
