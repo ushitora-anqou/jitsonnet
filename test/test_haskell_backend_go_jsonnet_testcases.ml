@@ -100,12 +100,10 @@ let suite =
     testcase0 "builtinReverse_many" `Success;
     testcase0 "builtinReverse_single" `Success;
     testcase0 "builtinRound" `Success;
-    (*
     testcase0 "builtinSha1" `Success;
     testcase0 "builtinSha256" `Success;
     testcase0 "builtinSha3" `Success;
     testcase0 "builtinSha512" `Success;
-    *)
     testcase0 "builtinSubStr_length_larger" `Success;
     testcase0 "builtinSubStr_start_larger_then_size" `Success;
     testcase0 "builtinSubstr" `Success;
@@ -394,12 +392,12 @@ let suite =
     testcase0 "std.mantissa5" `Success;
     testcase0 "std.mantissa6" `Success;
     testcase0 "std.mantissa7" `Success;
+    *)
     testcase0 "std.md5" `Success;
     testcase0 "std.md5_2" `Success;
     testcase0 "std.md5_3" `Success;
     testcase0 "std.md5_4" `Success;
     testcase0 "std.md5_5" `Success;
-    *)
     testcase0 "std.mod_int" `Success;
     testcase0 "std.mod_string" `Success;
     testcase0 "std.modulo" `Success;

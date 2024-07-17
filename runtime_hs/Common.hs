@@ -4,8 +4,11 @@ module Common where
 
 import Control.Exception (evaluate)
 import Control.Monad (forM_)
+import Crypto.Hash (Digest, HashAlgorithm, MD5, SHA1, SHA256, SHA3_512, SHA512, hash)
 import Data.Bits (complement, shiftL, shiftR, xor, (.&.), (.|.))
+import Data.ByteString (ByteString)
 import Data.ByteString qualified as Bytestring
+import Data.ByteString.UTF8 qualified
 import Data.Char (chr, ord)
 import Data.Double.Conversion.Text qualified
 import Data.Fixed qualified
@@ -644,6 +647,31 @@ stdTrace cs args =
         CFLocation{filePath, startLoc = (startLine, _), endLoc} : _ ->
           printTrace filePath startLine msg `seq` arg
 
+stdHash ::
+  (HashAlgorithm a) =>
+  (ByteString -> Digest a) ->
+  CallStack ->
+  Arguments ->
+  Value
+stdHash hash cs args =
+  let s = getString cs $ functionParam cs args 0 "s" Nothing
+   in makeString $ show $ hash $ Data.ByteString.UTF8.fromString s
+
+stdMd5 :: CallStack -> Arguments -> Value
+stdMd5 = stdHash (hash :: ByteString -> Digest MD5)
+
+stdSha1 :: CallStack -> Arguments -> Value
+stdSha1 = stdHash (hash :: ByteString -> Digest SHA1)
+
+stdSha256 :: CallStack -> Arguments -> Value
+stdSha256 = stdHash (hash :: ByteString -> Digest SHA256)
+
+stdSha512 :: CallStack -> Arguments -> Value
+stdSha512 = stdHash (hash :: ByteString -> Digest SHA512)
+
+stdSha3 :: CallStack -> Arguments -> Value
+stdSha3 = stdHash (hash :: ByteString -> Digest SHA3_512)
+
 insertStd :: String -> Fields -> Fields
 insertStd thisFile (GeneralFields fields) =
   GeneralFields $
@@ -663,6 +691,11 @@ insertStd thisFile (GeneralFields fields) =
       , ("floor", (2, Null, \_ _ -> Function 1 stdFloor))
       , ("log", (2, Null, \_ _ -> Function 1 stdLog))
       , ("pow", (2, Null, \_ _ -> Function 2 stdPow))
+      , ("md5", (2, Null, \_ _ -> Function 1 stdMd5))
+      , ("sha1", (2, Null, \_ _ -> Function 1 stdSha1))
+      , ("sha256", (2, Null, \_ _ -> Function 1 stdSha256))
+      , ("sha512", (2, Null, \_ _ -> Function 1 stdSha512))
+      , ("sha3", (2, Null, \_ _ -> Function 1 stdSha3))
       , ("thisFile", (2, Null, \_ _ -> makeString thisFile))
       ]
 
