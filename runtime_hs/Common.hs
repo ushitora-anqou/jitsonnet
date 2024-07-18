@@ -672,6 +672,61 @@ stdSha512 = stdHash (hash :: ByteString -> Digest SHA512)
 stdSha3 :: CallStack -> Arguments -> Value
 stdSha3 = stdHash (hash :: ByteString -> Digest SHA3_512)
 
+stdAcos :: CallStack -> Arguments -> Value
+stdAcos cs args =
+  let x = getNumber cs $ functionParam cs args 0 "x" Nothing
+   in Number $ acos x
+
+stdAsin :: CallStack -> Arguments -> Value
+stdAsin cs args =
+  let x = getNumber cs $ functionParam cs args 0 "x" Nothing
+   in Number $ asin x
+
+stdAtan :: CallStack -> Arguments -> Value
+stdAtan cs args =
+  let x = getNumber cs $ functionParam cs args 0 "x" Nothing
+   in Number $ atan x
+
+stdCeil :: CallStack -> Arguments -> Value
+stdCeil cs args =
+  let x = getNumber cs $ functionParam cs args 0 "x" Nothing
+   in Number $ fromInteger $ ceiling x
+
+stdCos :: CallStack -> Arguments -> Value
+stdCos cs args =
+  let x = getNumber cs $ functionParam cs args 0 "x" Nothing
+   in Number $ cos x
+
+stdSin :: CallStack -> Arguments -> Value
+stdSin cs args =
+  let x = getNumber cs $ functionParam cs args 0 "x" Nothing
+   in Number $ sin x
+
+stdTan :: CallStack -> Arguments -> Value
+stdTan cs args =
+  let x = getNumber cs $ functionParam cs args 0 "x" Nothing
+   in Number $ tan x
+
+stdExp :: CallStack -> Arguments -> Value
+stdExp cs args =
+  let x = getNumber cs $ functionParam cs args 0 "x" Nothing
+   in Number $ exp x
+
+stdSqrt :: CallStack -> Arguments -> Value
+stdSqrt cs args =
+  let x = getNumber cs $ functionParam cs args 0 "x" Nothing
+   in Number $ sqrt x
+
+stdExponent :: CallStack -> Arguments -> Value
+stdExponent cs args =
+  let x = getNumber cs $ functionParam cs args 0 "x" Nothing
+   in Number $ fromIntegral $ exponent x
+
+stdMantissa :: CallStack -> Arguments -> Value
+stdMantissa cs args =
+  let x = getNumber cs $ functionParam cs args 0 "x" Nothing
+   in Number $ significand x
+
 insertStd :: String -> Fields -> Fields
 insertStd thisFile (GeneralFields fields) =
   GeneralFields $

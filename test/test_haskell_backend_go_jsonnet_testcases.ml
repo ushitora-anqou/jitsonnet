@@ -116,25 +116,23 @@ let suite =
     testcase0 "builtinXnor1" `Success;
     testcase0 "builtinXor" `Success;
     testcase0 "builtinXor1" `Success;
-    (*
     testcase0 "builtin_acos" `Success;
     testcase0 "builtin_asin" `Success;
     testcase0 "builtin_atan" `Success;
     testcase0 "builtin_ceil" `Success;
-    testcase0 "builtin_cos" `Success;
+    (*testcase0 "builtin_cos" `Success;*)
     testcase0 "builtin_exp" `Success;
     testcase0 "builtin_exp2" `Success;
-    testcase0 "builtin_exp4" `Success;
+    (*testcase0 "builtin_exp4" `Success;*)
     testcase0 "builtin_exp6" `Success;
     testcase0 "builtin_exp7" `Success;
     testcase0 "builtin_exp8" `Success;
     testcase0 "builtin_floor" `Success;
     testcase0 "builtin_log" `Success;
     testcase0 "builtin_log2" `Success;
-    testcase0 "builtin_log3" `Success;
+    (*testcase0 "builtin_log3" `Success;*)
     testcase0 "builtin_log4" `Success;
-    testcase0 "builtin_log6" `Success;
-    *)
+    (*testcase0 "builtin_log6" `Success;*)
     testcase0 "builtin_lstripChars" `Success;
     (*testcase0 "builtin_manifestTomlEx" `Success;*)
     testcase0 "builtin_member_array" `Success;
@@ -142,15 +140,11 @@ let suite =
     testcase0 "builtin_parseInt" `Success;
     testcase0 "builtin_parseInt2" `Success;
     testcase0 "builtin_rstripChars" `Success;
-    (*
     testcase0 "builtin_sin" `Success;
     testcase0 "builtin_sqrt" `Success;
-    *)
     testcase0 "builtin_stripChars" `Success;
     testcase0 "builtin_substr_multibyte" `Success;
-    (*
     testcase0 "builtin_tan" `Success;
-    *)
     testcase0 "comparisons" `Success;
     (*testcase0 "decodeUTF8" `Success;*)
     testcase0 "div1" `Success;
@@ -347,7 +341,6 @@ let suite =
     testcase0 "std.codepoint2" `Success;
     testcase0 "std.codepoint4" `Success;
     testcase0 "std.codepoint5" `Success;
-    (*
     testcase0 "std.exponent" `Success;
     testcase0 "std.exponent2" `Success;
     testcase0 "std.exponent3" `Success;
@@ -355,7 +348,6 @@ let suite =
     testcase0 "std.exponent5" `Success;
     testcase0 "std.exponent6" `Success;
     testcase0 "std.exponent7" `Success;
-    *)
     testcase0 "std.filter" `Success;
     testcase0 "std.filter3" `Success;
     testcase0 "std.filter7" `Success;
@@ -384,15 +376,13 @@ let suite =
     testcase0 "std.makeArrayNamed2" `Success;
     testcase0 "std.makeArrayNamed4" `Success;
     testcase0 "std.makeArray_recursive" `Success;
-    (*
     testcase0 "std.mantissa" `Success;
     testcase0 "std.mantissa2" `Success;
-    testcase0 "std.mantissa3" `Success;
+    (*testcase0 "std.mantissa3" `Success;*)
     testcase0 "std.mantissa4" `Success;
     testcase0 "std.mantissa5" `Success;
     testcase0 "std.mantissa6" `Success;
     testcase0 "std.mantissa7" `Success;
-    *)
     testcase0 "std.md5" `Success;
     testcase0 "std.md5_2" `Success;
     testcase0 "std.md5_3" `Success;
