@@ -2,6 +2,7 @@
 
 module Common where
 
+import Codec.Binary.UTF8.String qualified
 import Control.Exception (evaluate)
 import Control.Monad (forM_)
 import Crypto.Hash (Digest, HashAlgorithm, MD5, SHA1, SHA256, SHA3_512, SHA512, hash)
@@ -32,6 +33,7 @@ import Data.Text.Lazy.IO qualified as TLIO
 import Data.Vector (Vector)
 import Data.Vector qualified as Vector
 import Data.Vector.Unboxed qualified as UVector
+import Data.Yaml qualified as Yaml
 import Deque.Lazy (Deque)
 import Deque.Lazy qualified as Deque
 import GHC.IsList qualified
@@ -779,6 +781,30 @@ stdParseJson cs args =
         Nothing -> throwError cs "stdParseJson: invalid JSON"
         Just v -> aux v
 
+stdParseYaml :: CallStack -> Arguments -> Value
+stdParseYaml cs args =
+  let str = getString cs $ functionParam cs args 0 "str" Nothing
+      aux v =
+        case v of
+          Yaml.Null -> Null
+          Yaml.Bool b -> Bool b
+          Yaml.Number n -> Number $ Scientific.toRealFloat n
+          Yaml.String s -> makeString $ Text.unpack s
+          Yaml.Array xs -> makeArray $ Vector.map aux xs
+          Yaml.Object m ->
+            Object [] $
+              GeneralFields $
+                HashMap.fromList $
+                  map (\(k, v) -> (Aeson.Key.toString k, (1, aux v, \_ _ -> aux v))) $
+                    Aeson.KeyMap.toList m
+   in case Yaml.decodeAllEither' $
+            ByteString.pack $
+              Codec.Binary.UTF8.String.encode str ::
+            Either Yaml.ParseException [Yaml.Value] of
+        Left _ -> throwError cs "stdParseYaml: invalid YAML"
+        Right [x] -> aux x
+        Right xs -> makeArray $ Vector.fromList $ map aux xs
+
 insertStd :: String -> Fields -> Fields
 insertStd thisFile (GeneralFields fields) =
   GeneralFields $
@@ -806,6 +832,7 @@ insertStd thisFile (GeneralFields fields) =
       , ("encodeUTF8", (2, Null, \_ _ -> Function 1 stdEncodeUTF8))
       , ("decodeUTF8", (2, Null, \_ _ -> Function 1 stdDecodeUTF8))
       , ("parseJson", (2, Null, \_ _ -> Function 1 stdParseJson))
+      , ("parseYaml", (2, Null, \_ _ -> Function 1 stdParseYaml))
       , ("thisFile", (2, Null, \_ _ -> makeString thisFile))
       ]
 

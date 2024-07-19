@@ -19,7 +19,7 @@ FROM haskell:9-buster
 #RUN apt-get update && apt-get install -y \
 #    && rm -rf /var/lib/apt/lists/*
 
-RUN cabal update && cabal install --lib vector text unordered-containers bytestring double-conversion deque filepath directory utf8-string aeson scientific && rm -rf /root/.cache/cabal
+RUN cabal update && cabal install --lib vector text unordered-containers bytestring double-conversion deque filepath directory utf8-string aeson scientific yaml && rm -rf /root/.cache/cabal
 
 WORKDIR /jitsonnet
 COPY --from=0 /home/opam/jitsonnet/_build/default/bin/main.exe ./jitsonnet

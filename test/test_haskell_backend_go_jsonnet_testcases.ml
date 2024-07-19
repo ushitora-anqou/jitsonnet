@@ -295,9 +295,7 @@ let suite =
     testcase0 "or3" `Success;
     testcase0 "overriding_stdlib_desugared" `Success;
     testcase0 "parseJson" `Success;
-    (*
     testcase0 "parseYaml" `Success;
-    *)
     testcase0 "percent_format_float" `Success;
     testcase0 "percent_format_str" `Success;
     testcase0 "percent_format_str2" `Success;
@@ -429,7 +427,9 @@ let suite =
     testcase0 "std.toString8" `Success;
     testcase0 "std_in_local" `Success;
     testcase0 "std_substr" `Success;
-    (*testcase0 "stdlib_smoke_test" `Success;*)
+    (*
+    testcase0 "stdlib_smoke_test" `Success;
+    *)
     testcase0 "strReplace" `Success;
     testcase0 "strReplace2" `Success;
     testcase0 "string2" `Success;
