@@ -833,6 +833,7 @@ insertStd thisFile (GeneralFields fields) =
       , ("decodeUTF8", (2, Null, \_ _ -> Function 1 stdDecodeUTF8))
       , ("parseJson", (2, Null, \_ _ -> Function 1 stdParseJson))
       , ("parseYaml", (2, Null, \_ _ -> Function 1 stdParseYaml))
+      , ("sqrt", (2, Null, \_ _ -> Function 1 stdSqrt))
       , ("thisFile", (2, Null, \_ _ -> makeString thisFile))
       ]
 
