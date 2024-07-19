@@ -146,7 +146,7 @@ let suite =
     testcase0 "builtin_substr_multibyte" `Success;
     testcase0 "builtin_tan" `Success;
     testcase0 "comparisons" `Success;
-    (*testcase0 "decodeUTF8" `Success;*)
+    testcase0 "decodeUTF8" `Success;
     testcase0 "div1" `Success;
     testcase0 "div2" `Success;
     (*testcase0 "div3" `Success;*)
@@ -155,7 +155,7 @@ let suite =
     testcase0 "empty_array" `Success;
     testcase0 "empty_object" `Success;
     testcase0 "empty_object_comp" `Success;
-    (*testcase0 "encodeUTF8" `Success;*)
+    testcase0 "encodeUTF8" `Success;
     testcase0 "equals" `Success;
     testcase0 "equals2" `Success;
     testcase0 "equals3" `Success;

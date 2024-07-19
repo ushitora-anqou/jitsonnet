@@ -7,7 +7,7 @@ import Control.Monad (forM_)
 import Crypto.Hash (Digest, HashAlgorithm, MD5, SHA1, SHA256, SHA3_512, SHA512, hash)
 import Data.Bits (complement, shiftL, shiftR, xor, (.&.), (.|.))
 import Data.ByteString (ByteString)
-import Data.ByteString qualified as Bytestring
+import Data.ByteString qualified as ByteString
 import Data.ByteString.UTF8 qualified
 import Data.Char (chr, ord)
 import Data.Double.Conversion.Text qualified
@@ -18,8 +18,10 @@ import Data.HashMap.Lazy qualified as HashMap
 import Data.HashSet (HashSet)
 import Data.HashSet qualified as HashSet
 import Data.List (intercalate, lookup, sort, sortBy)
+import Data.String.UTF8 qualified
 import Data.Text (Text)
 import Data.Text qualified as Text
+import Data.Text.Encoding qualified
 import Data.Text.Lazy qualified as TL
 import Data.Text.Lazy.Builder qualified as TB
 import Data.Text.Lazy.IO qualified as TLIO
@@ -159,6 +161,12 @@ getString cs _ = throwError cs "not string"
 getNumber :: CallStack -> Value -> Double
 getNumber _ (Number n) = n
 getNumber cs _ = throwError cs "not number"
+
+getInteger :: CallStack -> Value -> Int
+getInteger cs (Number n) =
+  if n == fromIntegral (floor n)
+    then floor n
+    else throwError cs "not integer"
 
 getArray :: CallStack -> Value -> Vector Value
 getArray _ (Array _ v) = v
@@ -727,6 +735,26 @@ stdMantissa cs args =
   let x = getNumber cs $ functionParam cs args 0 "x" Nothing
    in Number $ significand x
 
+stdEncodeUTF8 :: CallStack -> Arguments -> Value
+stdEncodeUTF8 cs args =
+  let str = getString cs $ functionParam cs args 0 "str" Nothing
+   in makeArray $
+        Vector.fromList $
+          map (Number . fromIntegral) $
+            ByteString.unpack $
+              Data.Text.Encoding.encodeUtf8 $
+                Text.pack str
+
+stdDecodeUTF8 :: CallStack -> Arguments -> Value
+stdDecodeUTF8 cs args =
+  let arr = getArray cs $ functionParam cs args 0 "arr" Nothing
+   in makeString $
+        Text.unpack $
+          Data.Text.Encoding.decodeUtf8 $
+            ByteString.pack $
+              map (fromIntegral . getInteger cs) $
+                Vector.toList arr
+
 insertStd :: String -> Fields -> Fields
 insertStd thisFile (GeneralFields fields) =
   GeneralFields $
@@ -751,16 +779,18 @@ insertStd thisFile (GeneralFields fields) =
       , ("sha256", (2, Null, \_ _ -> Function 1 stdSha256))
       , ("sha512", (2, Null, \_ _ -> Function 1 stdSha512))
       , ("sha3", (2, Null, \_ _ -> Function 1 stdSha3))
+      , ("encodeUTF8", (2, Null, \_ _ -> Function 1 stdEncodeUTF8))
+      , ("decodeUTF8", (2, Null, \_ _ -> Function 1 stdDecodeUTF8))
       , ("thisFile", (2, Null, \_ _ -> makeString thisFile))
       ]
 
 readBin :: String -> IO Value
 readBin path = do
-  body <- Bytestring.readFile path
+  body <- ByteString.readFile path
   pure $
     makeArrayFromList $
       reverse $
-        Bytestring.foldl (\acc x -> Number (fromIntegral x) : acc) [] body
+        ByteString.foldl (\acc x -> Number (fromIntegral x) : acc) [] body
 
 readStr :: String -> IO Value
 readStr path = do
