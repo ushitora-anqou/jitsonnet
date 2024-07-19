@@ -294,8 +294,8 @@ let suite =
     testcase0 "optional_args7" `Success;
     testcase0 "or3" `Success;
     testcase0 "overriding_stdlib_desugared" `Success;
-    (*
     testcase0 "parseJson" `Success;
+    (*
     testcase0 "parseYaml" `Success;
     *)
     testcase0 "percent_format_float" `Success;

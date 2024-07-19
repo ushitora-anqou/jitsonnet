@@ -24,7 +24,7 @@ ls *.jsonnet | grep '^error' | while read line; do if [ ! -f "${line}.golden" ];
 ## How to install necessary Haskell's libraries
 
 ```
-cabal install --lib vector text unordered-containers bytestring double-conversion deque filepath directory
+cabal install --lib vector text unordered-containers bytestring double-conversion deque filepath directory utf8-string aeson scientific
 ```
 
 ## How to run native mode with mold linker

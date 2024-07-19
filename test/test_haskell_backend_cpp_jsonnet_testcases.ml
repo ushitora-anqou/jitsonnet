@@ -30,8 +30,8 @@ let suite =
     testcase0 "invariant_manifest" `Success;
     (*
     testcase0 "native_not_found" `Success;
-    testcase0 "parseJson_long_array_gc_test" `Success;
     *)
+    testcase0 "parseJson_long_array_gc_test" `Success;
     testcase0 "sanity" `Success;
     testcase0 "sanity2" `Success;
     (*

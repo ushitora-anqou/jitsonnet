@@ -5,6 +5,9 @@ module Common where
 import Control.Exception (evaluate)
 import Control.Monad (forM_)
 import Crypto.Hash (Digest, HashAlgorithm, MD5, SHA1, SHA256, SHA3_512, SHA512, hash)
+import Data.Aeson qualified as Aeson
+import Data.Aeson.Key qualified as Aeson.Key
+import Data.Aeson.KeyMap qualified as Aeson.KeyMap
 import Data.Bits (complement, shiftL, shiftR, xor, (.&.), (.|.))
 import Data.ByteString (ByteString)
 import Data.ByteString qualified as ByteString
@@ -18,6 +21,7 @@ import Data.HashMap.Lazy qualified as HashMap
 import Data.HashSet (HashSet)
 import Data.HashSet qualified as HashSet
 import Data.List (intercalate, lookup, sort, sortBy)
+import Data.Scientific qualified as Scientific
 import Data.String.UTF8 qualified
 import Data.Text (Text)
 import Data.Text qualified as Text
@@ -755,6 +759,26 @@ stdDecodeUTF8 cs args =
               map (fromIntegral . getInteger cs) $
                 Vector.toList arr
 
+stdParseJson :: CallStack -> Arguments -> Value
+stdParseJson cs args =
+  let str = getString cs $ functionParam cs args 0 "str" Nothing
+      aux (v :: Aeson.Value) =
+        case v of
+          Aeson.Null -> Null
+          Aeson.Bool b -> Bool b
+          Aeson.Number n -> Number $ Scientific.toRealFloat n
+          Aeson.String s -> makeString $ Text.unpack s
+          Aeson.Array xs -> makeArray $ Vector.map aux xs
+          Aeson.Object m ->
+            Object [] $
+              GeneralFields $
+                HashMap.fromList $
+                  map (\(k, v) -> (Aeson.Key.toString k, (1, aux v, \_ _ -> aux v))) $
+                    Aeson.KeyMap.toList m
+   in case Aeson.decodeStrictText $ Text.pack str :: Maybe Aeson.Value of
+        Nothing -> throwError cs "stdParseJson: invalid JSON"
+        Just v -> aux v
+
 insertStd :: String -> Fields -> Fields
 insertStd thisFile (GeneralFields fields) =
   GeneralFields $
@@ -781,6 +805,7 @@ insertStd thisFile (GeneralFields fields) =
       , ("sha3", (2, Null, \_ _ -> Function 1 stdSha3))
       , ("encodeUTF8", (2, Null, \_ _ -> Function 1 stdEncodeUTF8))
       , ("decodeUTF8", (2, Null, \_ _ -> Function 1 stdDecodeUTF8))
+      , ("parseJson", (2, Null, \_ _ -> Function 1 stdParseJson))
       , ("thisFile", (2, Null, \_ _ -> makeString thisFile))
       ]
 
