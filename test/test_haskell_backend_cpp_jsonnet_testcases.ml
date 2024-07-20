@@ -8,9 +8,10 @@ let assert_compile ?multi ?string ?ext_codes ?ext_strs src_file_path result_pat
   assert_compile_hs ~expected_suffix:".jsonnet.golden" ?multi ?string ?ext_codes
     ?ext_strs ~runtime_dir:"../../../runtime_hs" src_file_path result_pat
 
-let testcase0 src_file_path result_path =
+let testcase0 ?ext_codes ?ext_strs src_file_path result_path =
   let open OUnit2 in
-  src_file_path >:: fun _test_ctxt -> assert_compile src_file_path result_path
+  src_file_path >:: fun _test_ctxt ->
+  assert_compile ?ext_codes ?ext_strs src_file_path result_path
 
 let suite =
   [
@@ -34,9 +35,8 @@ let suite =
     testcase0 "parseJson_long_array_gc_test" `Success;
     testcase0 "sanity" `Success;
     testcase0 "sanity2" `Success;
-    (*
-    testcase0 "stdlib" `Success;
-    *)
+    testcase0 ~ext_strs:[ "var1=test" ] ~ext_codes:[ "var2={x:1,y:2}" ] "stdlib"
+      `Success;
     testcase0 "trace" `Success;
     (*
     testcase0 "unicode_bmp" `Success;
