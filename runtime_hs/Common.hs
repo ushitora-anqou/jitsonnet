@@ -523,8 +523,19 @@ manifestation' hasInitInd ind multiLine v =
 manifestation :: Bool -> Value -> TL.Text
 manifestation multi x = TB.toLazyText $ manifestation' True 0 multi x
 
-mainNormal :: (CallStack -> VisitedAssertIDs -> Value) -> IO ()
-mainNormal f = TLIO.putStrLn $ manifestation True $ f [] HashSet.empty
+mainNormal ::
+  HashMap String (CallStack -> VisitedAssertIDs -> Value) ->
+  (CallStack -> VisitedAssertIDs -> Value) ->
+  IO ()
+mainNormal tlaCodes f =
+  TLIO.putStrLn $
+    manifestation True $
+      case f [] HashSet.empty of
+        v@(Function _ f) ->
+          if null tlaCodes
+            then v
+            else f [] ([], HashMap.map (\f -> f [] HashSet.empty) tlaCodes)
+        v -> v
 
 mainString :: (CallStack -> VisitedAssertIDs -> Value) -> IO ()
 mainString f =

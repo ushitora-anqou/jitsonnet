@@ -500,10 +500,38 @@ let compile_prog_body env e =
       ],
       compile_expr env e )
 
-let get_ext_code_id key = "extCode/" ^ key
+let get_code_id kind key =
+  match kind with `Ext -> "extCode/" ^ key | `Tla -> "tlaCode/" ^ key
+
+let compile_codes_from_cli_args env kind codes =
+  let bindings =
+    codes
+    |> List.map (function
+         | key, Error msg ->
+             ( varname env (get_code_id kind key),
+               make_call (Symbol "throwError") [ StringLiteral msg ] )
+         | key, Ok code ->
+             (varname env (get_code_id kind key), compile_prog_body env code))
+  in
+  let map =
+    make_call (Symbol "HashMap.fromList")
+      [
+        List
+          (codes
+          |> List.map (fun (key, _) ->
+                 Haskell.Tuple
+                   [
+                     StringLiteral key;
+                     make_call
+                       (Symbol (varname env (get_code_id kind key)))
+                       [ Symbol imported_data_varname ];
+                   ]));
+      ]
+  in
+  (bindings, map)
 
 let compile ?multi ?(string = false) ?(target = `Main) root_prog_path progs bins
-    strs ext_codes =
+    strs ext_codes tla_codes =
   let env = { vars = Hashtbl.create 0; is_stdjsonnet = target = `Stdjsonnet } in
 
   let bind_ids =
@@ -512,7 +540,8 @@ let compile ?multi ?(string = false) ?(target = `Main) root_prog_path progs bins
         |> List.map (fun (real_path, _) -> get_import_id `Import real_path))
        @ (bins |> List.map (get_import_id `Importbin))
        @ (strs |> List.map (get_import_id `Importstr))
-       @ (ext_codes |> List.map fst |> List.map get_ext_code_id))
+       @ (ext_codes |> List.map fst |> List.map (get_code_id `Ext))
+       @ (tla_codes |> List.map fst |> List.map (get_code_id `Tla)))
   in
 
   with_binds env bind_ids @@ fun () ->
@@ -534,14 +563,11 @@ let compile ?multi ?(string = false) ?(target = `Main) root_prog_path progs bins
            ( varname env (get_import_id `Importstr path),
              make_call (Symbol "readStr") [ StringLiteral path ] ))
   in
-  let ext_codes_bindings =
-    ext_codes
-    |> List.map (function
-         | key, Error msg ->
-             ( varname env (get_ext_code_id key),
-               make_call (Symbol "throwError") [ StringLiteral msg ] )
-         | key, Ok code ->
-             (varname env (get_ext_code_id key), compile_prog_body env code))
+  let ext_codes_bindings, ext_codes_map =
+    compile_codes_from_cli_args env `Ext ext_codes
+  in
+  let tla_codes_bindings, tla_codes_map =
+    compile_codes_from_cli_args env `Tla tla_codes
   in
 
   let imported_data_fields =
@@ -551,7 +577,7 @@ let compile ?multi ?(string = false) ?(target = `Main) root_prog_path progs bins
   in
 
   let progs_flatten =
-    progs_bindings @ ext_codes_bindings
+    progs_bindings @ ext_codes_bindings @ tla_codes_bindings
     |> List.map (fun (id, e) ->
            Printf.sprintf
              "%s :: ImportedData -> CallStack -> VisitedAssertIDs -> Value\n\
@@ -562,15 +588,16 @@ let compile ?multi ?(string = false) ?(target = `Main) root_prog_path progs bins
 
   match target with
   | `Main ->
+      let imported_data =
+        Haskell.RecordConstruction
+          ( "MkImportedData",
+            bins_bindings @ strs_bindings
+            |> List.map (fun (id, _) -> (id, Haskell.Symbol id)) )
+      in
       let v =
         make_call
           (Symbol (varname env (get_import_id `Import root_prog_path)))
-          [
-            Haskell.RecordConstruction
-              ( "MkImportedData",
-                bins_bindings @ strs_bindings
-                |> List.map (fun (id, _) -> (id, Haskell.Symbol id)) );
-          ]
+          [ Symbol imported_data_varname ]
       in
       let v =
         if Option.is_some multi then
@@ -582,7 +609,7 @@ let compile ?multi ?(string = false) ?(target = `Main) root_prog_path progs bins
           make_call (Symbol "mainMulti")
             [ StringLiteral target_dir; BoolLiteral string; v ]
         else if string then make_call (Symbol "mainString") [ v ]
-        else make_call (Symbol "mainNormal") [ v ]
+        else make_call (Symbol "mainNormal") [ tla_codes_map; v ]
       in
       let main =
         Haskell.Do
@@ -590,25 +617,8 @@ let compile ?multi ?(string = false) ?(target = `Main) root_prog_path progs bins
              [
                bins_bindings |> List.map (fun x -> Haskell.Assign x);
                strs_bindings |> List.map (fun x -> Haskell.Assign x);
-               [ v ];
+               [ Let ([ (imported_data_varname, imported_data) ], v) ];
              ])
-        |> Haskell.show_expr
-      in
-
-      let ext_codes_map =
-        make_call (Symbol "HashMap.fromList")
-          [
-            List
-              (ext_codes
-              |> List.map (fun (key, _) ->
-                     Haskell.Tuple
-                       [
-                         StringLiteral key;
-                         make_call
-                           (Symbol (varname env (get_ext_code_id key)))
-                           [ Symbol imported_data_varname ];
-                       ]));
-          ]
         |> Haskell.show_expr
       in
 
@@ -641,7 +651,7 @@ main = {{ main }}|}
           [
             ("imported_data_fields", Tstr imported_data_fields);
             ("imported_data_varname", Tstr imported_data_varname);
-            ("ext_codes_map", Tstr ext_codes_map);
+            ("ext_codes_map", Tstr (Haskell.show_expr ext_codes_map));
             ("progs_flatten", Tstr progs_flatten);
             ("main", Tstr main);
           ]

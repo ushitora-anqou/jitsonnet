@@ -8,7 +8,8 @@ let read_all file_path =
 
 let assert_compile' ~loader_optimize ~compiler ?test_cases_dir
     ?(expected_suffix = ".expected") ?(multi = false) ?(string = false)
-    ?(ext_codes = []) ?(ext_strs = []) src_file_path result_pat =
+    ?(tla_codes = []) ?(tla_strs = []) ?(ext_codes = []) ?(ext_strs = [])
+    src_file_path result_pat =
   let input_file_path =
     (test_cases_dir |> Option.fold ~none:Fun.id ~some:Filename.concat)
       (src_file_path ^ ".jsonnet")
@@ -18,8 +19,8 @@ let assert_compile' ~loader_optimize ~compiler ?test_cases_dir
       (src_file_path ^ expected_suffix)
   in
   match
-    Loader.load_root ~optimize:loader_optimize ~ext_codes ~ext_strs
-      input_file_path
+    Loader.load_root ~optimize:loader_optimize ~tla_codes ~tla_strs ~ext_codes
+      ~ext_strs input_file_path
   with
   | Error _ when result_pat = `ErrorSimple -> ()
   | Error msg ->
@@ -101,9 +102,9 @@ let assert_compile' ~loader_optimize ~compiler ?test_cases_dir
 
 let assert_compile_hs ?remove_work_dir ?(runtime_dir = "../../../runtime_hs")
     ?test_cases_dir ?expected_suffix ?multi ?string ?ext_codes ?ext_strs
-    src_file_path result_pat =
+    ?tla_codes ?tla_strs src_file_path result_pat =
   assert_compile' ?test_cases_dir ?expected_suffix ?multi ?ext_codes ?ext_strs
-    ?string ~loader_optimize:false src_file_path result_pat
+    ?tla_codes ?tla_strs ?string ~loader_optimize:false src_file_path result_pat
     ~compiler:(fun ~multi_output_dir ~t ~string ->
       let compiled = Loader.compile_haskell ?multi:multi_output_dir ~string t in
       Executor_hs.(

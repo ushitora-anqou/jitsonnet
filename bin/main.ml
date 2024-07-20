@@ -32,7 +32,9 @@ let () =
               $ Arg.(value & flag & info [ "haskell" ])
               $ Arg.(
                   value & opt string ""
-                  & info ~env:(Env.info "JITSONNET_RUNTIME_HS") [ "runtime-hs" ]));
+                  & info ~env:(Env.info "JITSONNET_RUNTIME_HS") [ "runtime-hs" ])
+              $ Arg.(value & opt_all string [] & info [ "tla-code" ])
+              $ Arg.(value & opt_all string [] & info [ "A"; "tla-str" ]));
           v (info "compile")
             Term.(
               const compile
@@ -43,7 +45,9 @@ let () =
                   & info ~docv:"TARGET" [ "target" ])
               $ Arg.(value & flag & info [ "haskell" ])
               $ Arg.(value & flag & info [ "parse-only" ])
-              $ Arg.(value & opt_all string [] & info [ "ext-code" ]));
+              $ Arg.(value & opt_all string [] & info [ "ext-code" ])
+              $ Arg.(value & opt_all string [] & info [ "tla-code" ])
+              $ Arg.(value & opt_all string [] & info [ "A"; "tla-str" ]));
         ]
       |> eval))
   |> exit

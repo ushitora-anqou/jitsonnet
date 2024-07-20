@@ -4,6 +4,7 @@ type t = {
   importstrs : (string, unit) Hashtbl.t;
   root_prog_path : string;
   ext_codes : (string, (Syntax.Core.expr, string) result) Hashtbl.t;
+  tla_codes : (string, (Syntax.Core.expr, string) result) Hashtbl.t;
 }
 
 let list_imported_files e =
@@ -40,7 +41,54 @@ let update_imported_files root desugared =
         | _ -> n)
       desugared
 
-let rec load ~is_stdjsonnet ~optimize src t =
+let rec load_code ~is_stdjsonnet ~optimize kind key prog_src t =
+  let ( let* ) = Result.bind in
+  let* prog =
+    Parser.parse_string
+      ~filename:
+        (Printf.sprintf
+           (match kind with `Ext -> "<extvar:%s>" | `Tla -> "<tlavar:%s>")
+           key)
+      prog_src
+  in
+  let desugared =
+    Syntax.desugar ~is_stdjsonnet prog
+    |> Syntax.Core.alpha_conv ~is_stdjsonnet
+    |> Syntax.Core.float_let_binds
+  in
+  let* () = Static_check.f is_stdjsonnet desugared in
+  let progs, bins, strs = list_imported_files desugared in
+  bins |> List.iter (fun k -> Hashtbl.replace t.importbins k ());
+  strs |> List.iter (fun k -> Hashtbl.replace t.importstrs k ());
+  let* () =
+    progs
+    |> List.fold_left
+         (fun res file ->
+           let* () = res in
+           t |> load ~is_stdjsonnet ~optimize (`File file))
+         (Ok ())
+  in
+  Hashtbl.replace
+    (match kind with `Ext -> t.ext_codes | `Tla -> t.tla_codes)
+    key (Ok desugared);
+  Ok ()
+
+and load_str kind key value t =
+  Hashtbl.replace
+    (match kind with `Ext -> t.ext_codes | `Tla -> t.tla_codes)
+    key
+    (Ok
+       {
+         v = Syntax.Core.String value;
+         loc =
+           {
+             fname = (match kind with `Ext -> "<extstr>" | `Tla -> "<tlastr>");
+             ran = None;
+           };
+       });
+  Ok ()
+
+and load ~is_stdjsonnet ~optimize src t =
   let ( let* ) = Result.bind in
   match src with
   | `File path -> (
@@ -90,38 +138,11 @@ let rec load ~is_stdjsonnet ~optimize src t =
                      t |> load ~is_stdjsonnet ~optimize (`File file))
                    (Ok ())))
   | `Ext_code (key, prog_src) ->
-      let* prog =
-        Parser.parse_string
-          ~filename:(Printf.sprintf "<extvar:%s>" key)
-          prog_src
-      in
-      let desugared =
-        Syntax.desugar ~is_stdjsonnet prog
-        |> Syntax.Core.alpha_conv ~is_stdjsonnet
-        |> Syntax.Core.float_let_binds
-      in
-      let* () = Static_check.f is_stdjsonnet desugared in
-      let progs, bins, strs = list_imported_files desugared in
-      bins |> List.iter (fun k -> Hashtbl.replace t.importbins k ());
-      strs |> List.iter (fun k -> Hashtbl.replace t.importstrs k ());
-      let* () =
-        progs
-        |> List.fold_left
-             (fun res file ->
-               let* () = res in
-               t |> load ~is_stdjsonnet ~optimize (`File file))
-             (Ok ())
-      in
-      Hashtbl.replace t.ext_codes key (Ok desugared);
-      Ok ()
-  | `Ext_str (key, value) ->
-      Hashtbl.replace t.ext_codes key
-        (Ok
-           {
-             v = Syntax.Core.String value;
-             loc = { fname = "<extstr>"; ran = None };
-           });
-      Ok ()
+      load_code ~is_stdjsonnet ~optimize `Ext key prog_src t
+  | `Tla_code (key, prog_src) ->
+      load_code ~is_stdjsonnet ~optimize `Tla key prog_src t
+  | `Ext_str (key, value) -> load_str `Ext key value t
+  | `Tla_str (key, value) -> load_str `Tla key value t
 
 let compile ?multi ?string ?target t =
   Compiler.compile ?multi ?string ?target t.root_prog_path
@@ -138,8 +159,9 @@ let compile_haskell ?multi ?string ?target t =
     (t.importbins |> Hashtbl.to_seq_keys |> List.of_seq)
     (t.importstrs |> Hashtbl.to_seq_keys |> List.of_seq)
     (t.ext_codes |> Hashtbl.to_seq |> List.of_seq)
+    (t.tla_codes |> Hashtbl.to_seq |> List.of_seq)
 
-let load_ext ext_code =
+let parse_code_from_cli_args ext_code =
   match String.index_opt ext_code '=' with
   | None -> (
       match Sys.getenv_opt ext_code with
@@ -154,17 +176,35 @@ let load_ext_codes ~optimize ext_codes t =
   |> List.iter (fun ext_code ->
          ignore
            (load ~is_stdjsonnet:false ~optimize
-              (`Ext_code (load_ext ext_code))
+              (`Ext_code (parse_code_from_cli_args ext_code))
               t))
 
 let load_ext_strs ~optimize ext_strs t =
   ext_strs
   |> List.iter (fun ext_str ->
          ignore
-           (load ~is_stdjsonnet:false ~optimize (`Ext_str (load_ext ext_str)) t))
+           (load ~is_stdjsonnet:false ~optimize
+              (`Ext_str (parse_code_from_cli_args ext_str))
+              t))
+
+let load_tla_codes ~optimize tla_codes t =
+  tla_codes
+  |> List.iter (fun tla_code ->
+         ignore
+           (load ~is_stdjsonnet:false ~optimize
+              (`Tla_code (parse_code_from_cli_args tla_code))
+              t))
+
+let load_tla_strs ~optimize tla_strs t =
+  tla_strs
+  |> List.iter (fun tla_str ->
+         ignore
+           (load ~is_stdjsonnet:false ~optimize
+              (`Tla_str (parse_code_from_cli_args tla_str))
+              t))
 
 let load_root ?(is_stdjsonnet = false) ?(ext_codes = []) ?(ext_strs = [])
-    ~optimize root_prog_path =
+    ?(tla_codes = []) ?(tla_strs = []) ~optimize root_prog_path =
   let t =
     {
       loaded = Hashtbl.create 1;
@@ -172,9 +212,12 @@ let load_root ?(is_stdjsonnet = false) ?(ext_codes = []) ?(ext_strs = [])
       importstrs = Hashtbl.create 0;
       root_prog_path;
       ext_codes = Hashtbl.create 0;
+      tla_codes = Hashtbl.create 0;
     }
   in
   load_ext_codes ~optimize ext_codes t;
   load_ext_strs ~optimize ext_strs t;
+  load_tla_codes ~optimize tla_codes t;
+  load_tla_strs ~optimize tla_strs t;
   load ~is_stdjsonnet ~optimize (`File root_prog_path) t
   |> Result.map (Fun.const t)

@@ -2,9 +2,10 @@ let errf fmt = Printf.ksprintf (fun s -> Error s) fmt
 
 let run file_path show_profile work_dir_prefix native mold
     (multi : string option) (string : bool) ext_codes ext_strs opam_lib
-    lib_runtime haskell runtime_hs =
+    lib_runtime haskell runtime_hs tla_codes tla_strs =
   match
-    Loader.load_root ~optimize:(not haskell) ~ext_codes ~ext_strs file_path
+    Loader.load_root ~optimize:(not haskell) ~ext_codes ~ext_strs ~tla_codes
+      ~tla_strs file_path
   with
   | Error msg ->
       Logs.err (fun m -> m "%s" msg);
@@ -58,7 +59,7 @@ let run file_path show_profile work_dir_prefix native mold
           Logs.err (fun m -> m "BUG: execution failed: %s" msg);
           exit 1)
 
-let compile file_path target haskell parse_only ext_codes =
+let compile file_path target haskell parse_only ext_codes tla_codes tla_strs =
   if parse_only then
     match Parser.parse_file file_path with
     | Error msg ->
@@ -71,7 +72,7 @@ let compile file_path target haskell parse_only ext_codes =
     in
     match
       Loader.load_root ~is_stdjsonnet:(target = `Stdjsonnet)
-        ~optimize:(not haskell) ~ext_codes file_path
+        ~optimize:(not haskell) ~ext_codes ~tla_codes ~tla_strs file_path
     with
     | Error msg ->
         Logs.err (fun m -> m "%s" msg);

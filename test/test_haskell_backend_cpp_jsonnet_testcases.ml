@@ -1,17 +1,20 @@
 open Common
 
-let assert_compile ?multi ?string ?ext_codes ?ext_strs src_file_path result_pat
-    =
+let assert_compile ?multi ?string ?ext_codes ?ext_strs ?tla_codes ?tla_strs
+    src_file_path result_pat =
   let saved_wd = Unix.getcwd () in
   Unix.chdir "../../../thirdparty/jsonnet/test_suite";
   Fun.protect ~finally:(fun () -> Unix.chdir saved_wd) @@ fun () ->
   assert_compile_hs ~expected_suffix:".jsonnet.golden" ?multi ?string ?ext_codes
-    ?ext_strs ~runtime_dir:"../../../runtime_hs" src_file_path result_pat
+    ?ext_strs ?tla_codes ?tla_strs ~runtime_dir:"../../../runtime_hs"
+    src_file_path result_pat
 
-let testcase0 ?ext_codes ?ext_strs src_file_path result_path =
+let testcase0 ?ext_codes ?ext_strs ?tla_codes ?tla_strs src_file_path
+    result_path =
   let open OUnit2 in
   src_file_path >:: fun _test_ctxt ->
-  assert_compile ?ext_codes ?ext_strs src_file_path result_path
+  assert_compile ?ext_codes ?ext_strs ?tla_codes ?tla_strs src_file_path
+    result_path
 
 let suite =
   [
@@ -84,8 +87,9 @@ let suite =
     testcase0 "slice.sugar" `SuccessSimple;
     testcase0 "std_all_hidden" `SuccessSimple;
     testcase0 "text_block" `SuccessSimple;
+    testcase0 ~tla_strs:[ "var1=test" ] ~tla_codes:[ "var2={x:1,y:2}" ]
+      "tla.simple" `SuccessSimple;
     (*
-    testcase0 "tla.simple" `SuccessSimple;
     testcase0 "unicode" `SuccessSimple;
     *)
     testcase0 "verbatim_strings" `SuccessSimple;
