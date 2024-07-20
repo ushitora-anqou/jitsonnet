@@ -41,25 +41,44 @@ let update_imported_files root desugared =
         | _ -> n)
       desugared
 
-let rec load_code ~is_stdjsonnet ~optimize kind key prog_src t =
+let rec load_code ~is_stdjsonnet ~optimize code_src t =
   let ( let* ) = Result.bind in
   let* prog =
-    Parser.parse_string
-      ~filename:
-        (Printf.sprintf
-           (match kind with `Ext -> "<extvar:%s>" | `Tla -> "<tlavar:%s>")
-           key)
-      prog_src
+    match code_src with
+    | `File (path, _real_path) -> (
+        try Parser.parse_file path with Failure msg -> Error msg)
+    | `Ext (key, code) ->
+        Parser.parse_string ~filename:(Printf.sprintf "<extvar:%s>" key) code
+    | `Tla (key, code) ->
+        Parser.parse_string ~filename:(Printf.sprintf "<tlavar:%s>" key) code
+  in
+
+  let desugared = Syntax.desugar ~is_stdjsonnet prog in
+  let desugared =
+    match optimize with
+    | false -> Syntax.Core.replace_std ~is_stdjsonnet desugared
+    | true ->
+        desugared
+        |> Syntax.Core.alpha_conv ~is_stdjsonnet
+        |> Syntax.Core.float_let_binds
   in
   let desugared =
-    Syntax.desugar ~is_stdjsonnet prog
-    |> Syntax.Core.alpha_conv ~is_stdjsonnet
-    |> Syntax.Core.float_let_binds
+    match code_src with
+    | `File (path, _) ->
+        desugared |> update_imported_files (Filename.dirname path)
+    | _ -> desugared
   in
+
   let* () = Static_check.f is_stdjsonnet desugared in
+
+  (match code_src with
+  | `File (path, real_path) -> Hashtbl.add t.loaded real_path (path, desugared)
+  | _ -> ());
+
   let progs, bins, strs = list_imported_files desugared in
   bins |> List.iter (fun k -> Hashtbl.replace t.importbins k ());
   strs |> List.iter (fun k -> Hashtbl.replace t.importstrs k ());
+
   let* () =
     progs
     |> List.fold_left
@@ -68,9 +87,12 @@ let rec load_code ~is_stdjsonnet ~optimize kind key prog_src t =
            t |> load ~is_stdjsonnet ~optimize (`File file))
          (Ok ())
   in
-  Hashtbl.replace
-    (match kind with `Ext -> t.ext_codes | `Tla -> t.tla_codes)
-    key (Ok desugared);
+
+  (match code_src with
+  | `Ext (key, _) -> Hashtbl.replace t.ext_codes key (Ok desugared)
+  | `Tla (key, _) -> Hashtbl.replace t.tla_codes key (Ok desugared)
+  | _ -> ());
+
   Ok ()
 
 and load_str kind key value t =
@@ -89,7 +111,6 @@ and load_str kind key value t =
   Ok ()
 
 and load ~is_stdjsonnet ~optimize src t =
-  let ( let* ) = Result.bind in
   match src with
   | `File path -> (
       match get_real_path path with
@@ -111,36 +132,11 @@ and load ~is_stdjsonnet ~optimize src t =
           match Hashtbl.find_opt t.loaded real_path with
           | Some _ -> Ok ()
           | None ->
-              let* prog =
-                try Parser.parse_file path with Failure msg -> Error msg
-              in
-              let desugared = Syntax.desugar ~is_stdjsonnet prog in
-              let desugared =
-                match optimize with
-                | false -> Syntax.Core.replace_std ~is_stdjsonnet desugared
-                | true ->
-                    desugared
-                    |> Syntax.Core.alpha_conv ~is_stdjsonnet
-                    |> Syntax.Core.float_let_binds
-              in
-              let desugared =
-                desugared |> update_imported_files (Filename.dirname path)
-              in
-              let* () = Static_check.f is_stdjsonnet desugared in
-              Hashtbl.add t.loaded real_path (path, desugared);
-              let progs, bins, strs = list_imported_files desugared in
-              bins |> List.iter (fun k -> Hashtbl.replace t.importbins k ());
-              strs |> List.iter (fun k -> Hashtbl.replace t.importstrs k ());
-              progs
-              |> List.fold_left
-                   (fun res file ->
-                     let* () = res in
-                     t |> load ~is_stdjsonnet ~optimize (`File file))
-                   (Ok ())))
+              load_code ~is_stdjsonnet ~optimize (`File (path, real_path)) t))
   | `Ext_code (key, prog_src) ->
-      load_code ~is_stdjsonnet ~optimize `Ext key prog_src t
+      load_code ~is_stdjsonnet ~optimize (`Ext (key, prog_src)) t
   | `Tla_code (key, prog_src) ->
-      load_code ~is_stdjsonnet ~optimize `Tla key prog_src t
+      load_code ~is_stdjsonnet ~optimize (`Tla (key, prog_src)) t
   | `Ext_str (key, value) -> load_str `Ext key value t
   | `Tla_str (key, value) -> load_str `Tla key value t
 
