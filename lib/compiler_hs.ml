@@ -179,18 +179,19 @@ let compile_builtin_std = function
   | "trace" -> Ok "stdTrace"
   | _ -> Error "not found"
 
-let compile_loc = function
+let compile_loc loc =
+  match loc.Syntax.ran with
   | None -> Haskell.Symbol "Nothing"
-  | Some loc ->
+  | Some ran ->
       make_call (Symbol "Just")
         [
           Tuple
             [
-              StringLiteral loc.Syntax.startpos.fname;
-              IntLiteral loc.Syntax.startpos.line;
-              IntLiteral loc.Syntax.startpos.column;
-              IntLiteral loc.Syntax.endpos.line;
-              IntLiteral loc.Syntax.endpos.column;
+              StringLiteral loc.fname;
+              IntLiteral ran.startpos.line;
+              IntLiteral ran.startpos.column;
+              IntLiteral ran.endpos.line;
+              IntLiteral ran.endpos.column;
             ];
         ]
 
@@ -489,6 +490,16 @@ and compile_call_args env positional named =
         ];
     ]
 
+let compile_prog_body env e =
+  Haskell.Let
+    ( [
+        ( varname env "$std",
+          make_call (Symbol "makeStd")
+            [ StringLiteral e.Syntax.loc.fname; Symbol imported_data_varname ]
+        );
+      ],
+      compile_expr env e )
+
 let get_ext_code_id key = "extCode/" ^ key
 
 let compile ?multi ?(string = false) ?(target = `Main) root_prog_path progs bins
@@ -498,7 +509,7 @@ let compile ?multi ?(string = false) ?(target = `Main) root_prog_path progs bins
   let bind_ids =
     "$std"
     :: ((progs
-        |> List.map (fun (real_path, _, _) -> get_import_id `Import real_path))
+        |> List.map (fun (real_path, _) -> get_import_id `Import real_path))
        @ (bins |> List.map (get_import_id `Importbin))
        @ (strs |> List.map (get_import_id `Importstr))
        @ (ext_codes |> List.map fst |> List.map get_ext_code_id))
@@ -507,15 +518,9 @@ let compile ?multi ?(string = false) ?(target = `Main) root_prog_path progs bins
   with_binds env bind_ids @@ fun () ->
   let progs_bindings =
     progs
-    |> List.map (fun (real_path, path, e) ->
+    |> List.map (fun (real_path, e) ->
            ( varname env (get_import_id `Import real_path),
-             Haskell.Let
-               ( [
-                   ( varname env "$std",
-                     make_call (Symbol "makeStd")
-                       [ StringLiteral path; Symbol imported_data_varname ] );
-                 ],
-                 compile_expr env e ) ))
+             compile_prog_body env e ))
   in
   let bins_bindings =
     bins
@@ -536,17 +541,7 @@ let compile ?multi ?(string = false) ?(target = `Main) root_prog_path progs bins
              ( varname env (get_ext_code_id key),
                make_call (Symbol "throwError") [ StringLiteral msg ] )
          | key, Ok code ->
-             ( varname env (get_ext_code_id key),
-               Haskell.Let
-                 ( [
-                     ( varname env "$std",
-                       make_call (Symbol "makeStd")
-                         [
-                           StringLiteral (Printf.sprintf "<extvar:%s>" key);
-                           Symbol imported_data_varname;
-                         ] );
-                   ],
-                   compile_expr env code ) ))
+             (varname env (get_ext_code_id key), compile_prog_body env code))
   in
 
   let imported_data_fields =
@@ -674,7 +669,7 @@ v = \ {{ callstack_varname }} {{ visited_assert_ids }} -> {{ progs }}
             ( "progs",
               Tstr
                 (progs |> List.hd
-                |> (fun (_, _, s) -> s)
+                |> (fun (_, s) -> s)
                 |> compile_expr env |> Haskell.show_expr) );
           ]
         ~env:{ std_env with autoescape = false }

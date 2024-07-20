@@ -1,10 +1,8 @@
 { Syntax.v = (Syntax.String "abc");
   loc =
-  (Some { Syntax.startpos =
-          { Syntax.fname = "test/cases/parse/string.in"; line = 1; column = 0
-            };
-          endpos =
-          { Syntax.fname = "test/cases/parse/string.in"; line = 1; column = 5
-            }
-          })
+  { Syntax.fname = "test/cases/parse/string.in";
+    ran =
+    (Some { Syntax.startpos = { Syntax.line = 1; column = 0 };
+            endpos = { Syntax.line = 1; column = 5 } })
+    }
   }

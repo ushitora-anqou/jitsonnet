@@ -151,12 +151,15 @@ let wloc (startpos, endpos) v =
     {
       v;
       loc =
-        Some
-          {
-            startpos =
-              { fname = ""; line = fst startpos; column = snd startpos };
-            endpos = { fname = ""; line = fst endpos; column = snd endpos };
-          };
+        {
+          fname = "";
+          ran =
+            Some
+              {
+                startpos = { line = fst startpos; column = snd startpos };
+                endpos = { line = fst endpos; column = snd endpos };
+              };
+        };
     }
 [@@warning "-32"]
 

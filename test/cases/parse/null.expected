@@ -1,8 +1,8 @@
 { Syntax.v = Syntax.Null;
   loc =
-  (Some { Syntax.startpos =
-          { Syntax.fname = "test/cases/parse/null.in"; line = 1; column = 0 };
-          endpos =
-          { Syntax.fname = "test/cases/parse/null.in"; line = 1; column = 4 }
-          })
+  { Syntax.fname = "test/cases/parse/null.in";
+    ran =
+    (Some { Syntax.startpos = { Syntax.line = 1; column = 0 };
+            endpos = { Syntax.line = 1; column = 4 } })
+    }
   }

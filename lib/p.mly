@@ -4,21 +4,19 @@ let wloc ((startpos : Lexing.position), (endpos : Lexing.position)) v =
     {
       v;
       loc =
-        Some
-          {
-            startpos =
-              {
-                fname = startpos.pos_fname;
-                line = startpos.pos_lnum;
-                column = startpos.pos_cnum - startpos.pos_bol;
-              };
-            endpos =
-              {
-                fname = endpos.pos_fname;
-                line = endpos.pos_lnum;
-                column = endpos.pos_cnum - endpos.pos_bol;
-              };
+        {
+          fname = startpos.pos_fname;
+          ran = Some {
+            startpos = {
+              line = startpos.pos_lnum;
+              column = startpos.pos_cnum - startpos.pos_bol;
+            };
+            endpos = {
+              line = endpos.pos_lnum;
+              column = endpos.pos_cnum - endpos.pos_bol;
+            };
           };
+        };
     }
 %}
 

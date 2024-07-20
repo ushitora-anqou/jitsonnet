@@ -5,69 +5,55 @@
            (Syntax.Binary
               ({ Syntax.v = (Syntax.Var "x");
                  loc =
-                 (Some { Syntax.startpos =
-                         { Syntax.fname = "test/cases/parse/assert_w_msg.in";
-                           line = 1; column = 7 };
-                         endpos =
-                         { Syntax.fname = "test/cases/parse/assert_w_msg.in";
-                           line = 1; column = 8 }
-                         })
+                 { Syntax.fname = "test/cases/parse/assert_w_msg.in";
+                   ran =
+                   (Some { Syntax.startpos = { Syntax.line = 1; column = 7 };
+                           endpos = { Syntax.line = 1; column = 8 } })
+                   }
                  },
                `Equal,
                { Syntax.v = (Syntax.Number 3.);
                  loc =
-                 (Some { Syntax.startpos =
-                         { Syntax.fname = "test/cases/parse/assert_w_msg.in";
-                           line = 1; column = 12 };
-                         endpos =
-                         { Syntax.fname = "test/cases/parse/assert_w_msg.in";
-                           line = 1; column = 15 }
-                         })
+                 { Syntax.fname = "test/cases/parse/assert_w_msg.in";
+                   ran =
+                   (Some { Syntax.startpos = { Syntax.line = 1; column = 12 };
+                           endpos = { Syntax.line = 1; column = 15 } })
+                   }
                  }));
            loc =
-           (Some { Syntax.startpos =
-                   { Syntax.fname = "test/cases/parse/assert_w_msg.in";
-                     line = 1; column = 7 };
-                   endpos =
-                   { Syntax.fname = "test/cases/parse/assert_w_msg.in";
-                     line = 1; column = 15 }
-                   })
+           { Syntax.fname = "test/cases/parse/assert_w_msg.in";
+             ran =
+             (Some { Syntax.startpos = { Syntax.line = 1; column = 7 };
+                     endpos = { Syntax.line = 1; column = 15 } })
+             }
            },
          (Some { Syntax.v = (Syntax.String "s");
                  loc =
-                 (Some { Syntax.startpos =
-                         { Syntax.fname = "test/cases/parse/assert_w_msg.in";
-                           line = 1; column = 18 };
-                         endpos =
-                         { Syntax.fname = "test/cases/parse/assert_w_msg.in";
-                           line = 1; column = 21 }
-                         })
+                 { Syntax.fname = "test/cases/parse/assert_w_msg.in";
+                   ran =
+                   (Some { Syntax.startpos = { Syntax.line = 1; column = 18 };
+                           endpos = { Syntax.line = 1; column = 21 } })
+                   }
                  }));
         loc =
-        (Some { Syntax.startpos =
-                { Syntax.fname = "test/cases/parse/assert_w_msg.in";
-                  line = 1; column = 0 };
-                endpos =
-                { Syntax.fname = "test/cases/parse/assert_w_msg.in";
-                  line = 1; column = 21 }
-                })
+        { Syntax.fname = "test/cases/parse/assert_w_msg.in";
+          ran =
+          (Some { Syntax.startpos = { Syntax.line = 1; column = 0 };
+                  endpos = { Syntax.line = 1; column = 21 } })
+          }
         },
       { Syntax.v = (Syntax.Number 0.);
         loc =
-        (Some { Syntax.startpos =
-                { Syntax.fname = "test/cases/parse/assert_w_msg.in";
-                  line = 1; column = 23 };
-                endpos =
-                { Syntax.fname = "test/cases/parse/assert_w_msg.in";
-                  line = 1; column = 26 }
-                })
+        { Syntax.fname = "test/cases/parse/assert_w_msg.in";
+          ran =
+          (Some { Syntax.startpos = { Syntax.line = 1; column = 23 };
+                  endpos = { Syntax.line = 1; column = 26 } })
+          }
         }));
   loc =
-  (Some { Syntax.startpos =
-          { Syntax.fname = "test/cases/parse/assert_w_msg.in"; line = 1;
-            column = 0 };
-          endpos =
-          { Syntax.fname = "test/cases/parse/assert_w_msg.in"; line = 1;
-            column = 26 }
-          })
+  { Syntax.fname = "test/cases/parse/assert_w_msg.in";
+    ran =
+    (Some { Syntax.startpos = { Syntax.line = 1; column = 0 };
+            endpos = { Syntax.line = 1; column = 26 } })
+    }
   }

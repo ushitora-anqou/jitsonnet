@@ -1,10 +1,8 @@
 { Syntax.v = (Syntax.String "\nabc\n\ndef\n  gh\n\n|||\n |||\n");
   loc =
-  (Some { Syntax.startpos =
-          { Syntax.fname = "test/cases/parse/block_string.in"; line = 3;
-            column = 1 };
-          endpos =
-          { Syntax.fname = "test/cases/parse/block_string.in"; line = 12;
-            column = 4 }
-          })
+  { Syntax.fname = "test/cases/parse/block_string.in";
+    ran =
+    (Some { Syntax.startpos = { Syntax.line = 3; column = 1 };
+            endpos = { Syntax.line = 12; column = 4 } })
+    }
   }

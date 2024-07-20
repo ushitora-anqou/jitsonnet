@@ -8,38 +8,33 @@
                      ((Syntax.FieldnameID
                          { Syntax.v = "x";
                            loc =
-                           (Some { Syntax.startpos =
-                                   { Syntax.fname =
-                                     "test/cases/parse/binary_add_implicit.in";
-                                     line = 1; column = 1 };
-                                   endpos =
-                                   { Syntax.fname =
-                                     "test/cases/parse/binary_add_implicit.in";
-                                     line = 1; column = 2 }
-                                   })
+                           { Syntax.fname =
+                             "test/cases/parse/binary_add_implicit.in";
+                             ran =
+                             (Some { Syntax.startpos =
+                                     { Syntax.line = 1; column = 1 };
+                                     endpos = { Syntax.line = 1; column = 2 }
+                                     })
+                             }
                            }),
                       false, (Syntax.H 1),
                       { Syntax.v = (Syntax.String "a");
                         loc =
-                        (Some { Syntax.startpos =
-                                { Syntax.fname =
-                                  "test/cases/parse/binary_add_implicit.in";
-                                  line = 1; column = 4 };
-                                endpos =
-                                { Syntax.fname =
-                                  "test/cases/parse/binary_add_implicit.in";
-                                  line = 1; column = 7 }
-                                })
+                        { Syntax.fname =
+                          "test/cases/parse/binary_add_implicit.in";
+                          ran =
+                          (Some { Syntax.startpos =
+                                  { Syntax.line = 1; column = 4 };
+                                  endpos = { Syntax.line = 1; column = 7 } })
+                          }
                         })))
                 ]));
         loc =
-        (Some { Syntax.startpos =
-                { Syntax.fname = "test/cases/parse/binary_add_implicit.in";
-                  line = 1; column = 0 };
-                endpos =
-                { Syntax.fname = "test/cases/parse/binary_add_implicit.in";
-                  line = 1; column = 8 }
-                })
+        { Syntax.fname = "test/cases/parse/binary_add_implicit.in";
+          ran =
+          (Some { Syntax.startpos = { Syntax.line = 1; column = 0 };
+                  endpos = { Syntax.line = 1; column = 8 } })
+          }
         },
       (Syntax.ObjectMemberList
          [(Syntax.MemberField
@@ -47,49 +42,40 @@
                 ((Syntax.FieldnameID
                     { Syntax.v = "y";
                       loc =
-                      (Some { Syntax.startpos =
-                              { Syntax.fname =
-                                "test/cases/parse/binary_add_implicit.in";
-                                line = 1; column = 10 };
-                              endpos =
-                              { Syntax.fname =
-                                "test/cases/parse/binary_add_implicit.in";
-                                line = 1; column = 11 }
-                              })
+                      { Syntax.fname =
+                        "test/cases/parse/binary_add_implicit.in";
+                        ran =
+                        (Some { Syntax.startpos =
+                                { Syntax.line = 1; column = 10 };
+                                endpos = { Syntax.line = 1; column = 11 } })
+                        }
                       }),
                  false, (Syntax.H 1),
                  { Syntax.v =
                    (Syntax.InSuper
                       { Syntax.v = (Syntax.String "x");
                         loc =
-                        (Some { Syntax.startpos =
-                                { Syntax.fname =
-                                  "test/cases/parse/binary_add_implicit.in";
-                                  line = 1; column = 13 };
-                                endpos =
-                                { Syntax.fname =
-                                  "test/cases/parse/binary_add_implicit.in";
-                                  line = 1; column = 16 }
-                                })
+                        { Syntax.fname =
+                          "test/cases/parse/binary_add_implicit.in";
+                          ran =
+                          (Some { Syntax.startpos =
+                                  { Syntax.line = 1; column = 13 };
+                                  endpos = { Syntax.line = 1; column = 16 } })
+                          }
                         });
                    loc =
-                   (Some { Syntax.startpos =
-                           { Syntax.fname =
-                             "test/cases/parse/binary_add_implicit.in";
-                             line = 1; column = 13 };
-                           endpos =
-                           { Syntax.fname =
-                             "test/cases/parse/binary_add_implicit.in";
-                             line = 1; column = 25 }
-                           })
+                   { Syntax.fname = "test/cases/parse/binary_add_implicit.in";
+                     ran =
+                     (Some { Syntax.startpos =
+                             { Syntax.line = 1; column = 13 };
+                             endpos = { Syntax.line = 1; column = 25 } })
+                     }
                    })))
            ])));
   loc =
-  (Some { Syntax.startpos =
-          { Syntax.fname = "test/cases/parse/binary_add_implicit.in";
-            line = 1; column = 0 };
-          endpos =
-          { Syntax.fname = "test/cases/parse/binary_add_implicit.in";
-            line = 1; column = 26 }
-          })
+  { Syntax.fname = "test/cases/parse/binary_add_implicit.in";
+    ran =
+    (Some { Syntax.startpos = { Syntax.line = 1; column = 0 };
+            endpos = { Syntax.line = 1; column = 26 } })
+    }
   }

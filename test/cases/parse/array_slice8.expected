@@ -2,31 +2,25 @@
   (Syntax.ArraySlice
      ({ Syntax.v = (Syntax.Array []);
         loc =
-        (Some { Syntax.startpos =
-                { Syntax.fname = "test/cases/parse/array_slice8.in";
-                  line = 1; column = 0 };
-                endpos =
-                { Syntax.fname = "test/cases/parse/array_slice8.in";
-                  line = 1; column = 2 }
-                })
+        { Syntax.fname = "test/cases/parse/array_slice8.in";
+          ran =
+          (Some { Syntax.startpos = { Syntax.line = 1; column = 0 };
+                  endpos = { Syntax.line = 1; column = 2 } })
+          }
         },
       (Some { Syntax.v = (Syntax.Number 1.);
               loc =
-              (Some { Syntax.startpos =
-                      { Syntax.fname = "test/cases/parse/array_slice8.in";
-                        line = 1; column = 11 };
-                      endpos =
-                      { Syntax.fname = "test/cases/parse/array_slice8.in";
-                        line = 1; column = 12 }
-                      })
+              { Syntax.fname = "test/cases/parse/array_slice8.in";
+                ran =
+                (Some { Syntax.startpos = { Syntax.line = 1; column = 11 };
+                        endpos = { Syntax.line = 1; column = 12 } })
+                }
               }),
       None, None));
   loc =
-  (Some { Syntax.startpos =
-          { Syntax.fname = "test/cases/parse/array_slice8.in"; line = 1;
-            column = 0 };
-          endpos =
-          { Syntax.fname = "test/cases/parse/array_slice8.in"; line = 1;
-            column = 29 }
-          })
+  { Syntax.fname = "test/cases/parse/array_slice8.in";
+    ran =
+    (Some { Syntax.startpos = { Syntax.line = 1; column = 0 };
+            endpos = { Syntax.line = 1; column = 29 } })
+    }
   }

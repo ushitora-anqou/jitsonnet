@@ -1,10 +1,8 @@
 { Syntax.v = (Syntax.Import "foo");
   loc =
-  (Some { Syntax.startpos =
-          { Syntax.fname = "test/cases/parse/import_unmarked.in"; line = 1;
-            column = 0 };
-          endpos =
-          { Syntax.fname = "test/cases/parse/import_unmarked.in"; line = 1;
-            column = 12 }
-          })
+  { Syntax.fname = "test/cases/parse/import_unmarked.in";
+    ran =
+    (Some { Syntax.startpos = { Syntax.line = 1; column = 0 };
+            endpos = { Syntax.line = 1; column = 12 } })
+    }
   }

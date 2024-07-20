@@ -5,60 +5,48 @@
            (Syntax.Binary
               ({ Syntax.v = (Syntax.Var "x");
                  loc =
-                 (Some { Syntax.startpos =
-                         { Syntax.fname = "test/cases/parse/assert_no_msg.in";
-                           line = 1; column = 7 };
-                         endpos =
-                         { Syntax.fname = "test/cases/parse/assert_no_msg.in";
-                           line = 1; column = 8 }
-                         })
+                 { Syntax.fname = "test/cases/parse/assert_no_msg.in";
+                   ran =
+                   (Some { Syntax.startpos = { Syntax.line = 1; column = 7 };
+                           endpos = { Syntax.line = 1; column = 8 } })
+                   }
                  },
                `Equal,
                { Syntax.v = (Syntax.Number 3.);
                  loc =
-                 (Some { Syntax.startpos =
-                         { Syntax.fname = "test/cases/parse/assert_no_msg.in";
-                           line = 1; column = 12 };
-                         endpos =
-                         { Syntax.fname = "test/cases/parse/assert_no_msg.in";
-                           line = 1; column = 15 }
-                         })
+                 { Syntax.fname = "test/cases/parse/assert_no_msg.in";
+                   ran =
+                   (Some { Syntax.startpos = { Syntax.line = 1; column = 12 };
+                           endpos = { Syntax.line = 1; column = 15 } })
+                   }
                  }));
            loc =
-           (Some { Syntax.startpos =
-                   { Syntax.fname = "test/cases/parse/assert_no_msg.in";
-                     line = 1; column = 7 };
-                   endpos =
-                   { Syntax.fname = "test/cases/parse/assert_no_msg.in";
-                     line = 1; column = 15 }
-                   })
+           { Syntax.fname = "test/cases/parse/assert_no_msg.in";
+             ran =
+             (Some { Syntax.startpos = { Syntax.line = 1; column = 7 };
+                     endpos = { Syntax.line = 1; column = 15 } })
+             }
            },
          None);
         loc =
-        (Some { Syntax.startpos =
-                { Syntax.fname = "test/cases/parse/assert_no_msg.in";
-                  line = 1; column = 0 };
-                endpos =
-                { Syntax.fname = "test/cases/parse/assert_no_msg.in";
-                  line = 1; column = 15 }
-                })
+        { Syntax.fname = "test/cases/parse/assert_no_msg.in";
+          ran =
+          (Some { Syntax.startpos = { Syntax.line = 1; column = 0 };
+                  endpos = { Syntax.line = 1; column = 15 } })
+          }
         },
       { Syntax.v = (Syntax.Number 0.);
         loc =
-        (Some { Syntax.startpos =
-                { Syntax.fname = "test/cases/parse/assert_no_msg.in";
-                  line = 1; column = 17 };
-                endpos =
-                { Syntax.fname = "test/cases/parse/assert_no_msg.in";
-                  line = 1; column = 20 }
-                })
+        { Syntax.fname = "test/cases/parse/assert_no_msg.in";
+          ran =
+          (Some { Syntax.startpos = { Syntax.line = 1; column = 17 };
+                  endpos = { Syntax.line = 1; column = 20 } })
+          }
         }));
   loc =
-  (Some { Syntax.startpos =
-          { Syntax.fname = "test/cases/parse/assert_no_msg.in"; line = 1;
-            column = 0 };
-          endpos =
-          { Syntax.fname = "test/cases/parse/assert_no_msg.in"; line = 1;
-            column = 20 }
-          })
+  { Syntax.fname = "test/cases/parse/assert_no_msg.in";
+    ran =
+    (Some { Syntax.startpos = { Syntax.line = 1; column = 0 };
+            endpos = { Syntax.line = 1; column = 20 } })
+    }
   }

@@ -2,34 +2,28 @@
   (Syntax.Call
      ({ Syntax.v = (Syntax.Var "x");
         loc =
-        (Some { Syntax.startpos =
-                { Syntax.fname = "test/cases/parse/call_named_arg2.in";
-                  line = 1; column = 0 };
-                endpos =
-                { Syntax.fname = "test/cases/parse/call_named_arg2.in";
-                  line = 1; column = 1 }
-                })
+        { Syntax.fname = "test/cases/parse/call_named_arg2.in";
+          ran =
+          (Some { Syntax.startpos = { Syntax.line = 1; column = 0 };
+                  endpos = { Syntax.line = 1; column = 1 } })
+          }
         },
       ([],
        [("a",
          { Syntax.v = (Syntax.Var "b");
            loc =
-           (Some { Syntax.startpos =
-                   { Syntax.fname = "test/cases/parse/call_named_arg2.in";
-                     line = 1; column = 4 };
-                   endpos =
-                   { Syntax.fname = "test/cases/parse/call_named_arg2.in";
-                     line = 1; column = 5 }
-                   })
+           { Syntax.fname = "test/cases/parse/call_named_arg2.in";
+             ran =
+             (Some { Syntax.startpos = { Syntax.line = 1; column = 4 };
+                     endpos = { Syntax.line = 1; column = 5 } })
+             }
            })
          ]),
       false));
   loc =
-  (Some { Syntax.startpos =
-          { Syntax.fname = "test/cases/parse/call_named_arg2.in"; line = 1;
-            column = 0 };
-          endpos =
-          { Syntax.fname = "test/cases/parse/call_named_arg2.in"; line = 1;
-            column = 7 }
-          })
+  { Syntax.fname = "test/cases/parse/call_named_arg2.in";
+    ran =
+    (Some { Syntax.startpos = { Syntax.line = 1; column = 0 };
+            endpos = { Syntax.line = 1; column = 7 } })
+    }
   }

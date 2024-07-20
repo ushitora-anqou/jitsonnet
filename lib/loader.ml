@@ -50,8 +50,13 @@ let rec load ~is_stdjsonnet ~optimize src t =
             ( path,
               Syntax.Core.
                 {
-                  loc = None;
-                  v = Error { loc = None; v = String "can't import" };
+                  loc = { fname = path; ran = None };
+                  v =
+                    Error
+                      {
+                        loc = { fname = path; ran = None };
+                        v = String "can't import";
+                      };
                 } );
           Ok ()
       | Ok real_path -> (
@@ -111,7 +116,11 @@ let rec load ~is_stdjsonnet ~optimize src t =
       Ok ()
   | `Ext_str (key, value) ->
       Hashtbl.replace t.ext_codes key
-        (Ok { v = Syntax.Core.String value; loc = None });
+        (Ok
+           {
+             v = Syntax.Core.String value;
+             loc = { fname = "<extstr>"; ran = None };
+           });
       Ok ()
 
 let compile ?multi ?string ?target t =
@@ -125,7 +134,7 @@ let compile ?multi ?string ?target t =
 let compile_haskell ?multi ?string ?target t =
   Compiler_hs.compile ?multi ?string ?target t.root_prog_path
     (t.loaded |> Hashtbl.to_seq |> List.of_seq
-    |> List.map (fun (real_path, (path, e)) -> (real_path, path, e)))
+    |> List.map (fun (real_path, (_, e)) -> (real_path, e)))
     (t.importbins |> Hashtbl.to_seq_keys |> List.of_seq)
     (t.importstrs |> Hashtbl.to_seq_keys |> List.of_seq)
     (t.ext_codes |> Hashtbl.to_seq |> List.of_seq)

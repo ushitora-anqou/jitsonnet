@@ -7,77 +7,63 @@
                 ("w",
                  (Some { Syntax.v = (Syntax.Number 1.);
                          loc =
-                         (Some { Syntax.startpos =
-                                 { Syntax.fname =
-                                   "test/cases/parse/local_func2.in";
-                                   line = 1; column = 13 };
-                                 endpos =
-                                 { Syntax.fname =
-                                   "test/cases/parse/local_func2.in";
-                                   line = 1; column = 14 }
-                                 })
+                         { Syntax.fname = "test/cases/parse/local_func2.in";
+                           ran =
+                           (Some { Syntax.startpos =
+                                   { Syntax.line = 1; column = 13 };
+                                   endpos = { Syntax.line = 1; column = 14 }
+                                   })
+                           }
                          }))
                 ],
               { Syntax.v = (Syntax.Var "v");
                 loc =
-                (Some { Syntax.startpos =
-                        { Syntax.fname = "test/cases/parse/local_func2.in";
-                          line = 1; column = 18 };
-                        endpos =
-                        { Syntax.fname = "test/cases/parse/local_func2.in";
-                          line = 1; column = 19 }
-                        })
+                { Syntax.fname = "test/cases/parse/local_func2.in";
+                  ran =
+                  (Some { Syntax.startpos = { Syntax.line = 1; column = 18 };
+                          endpos = { Syntax.line = 1; column = 19 } })
+                  }
                 });
              loc =
-             (Some { Syntax.startpos =
-                     { Syntax.fname = "test/cases/parse/local_func2.in";
-                       line = 1; column = 6 };
-                     endpos =
-                     { Syntax.fname = "test/cases/parse/local_func2.in";
-                       line = 1; column = 19 }
-                     })
+             { Syntax.fname = "test/cases/parse/local_func2.in";
+               ran =
+               (Some { Syntax.startpos = { Syntax.line = 1; column = 6 };
+                       endpos = { Syntax.line = 1; column = 19 } })
+               }
              }))
         ],
       { Syntax.v =
         (Syntax.Call
            ({ Syntax.v = (Syntax.Var "a");
               loc =
-              (Some { Syntax.startpos =
-                      { Syntax.fname = "test/cases/parse/local_func2.in";
-                        line = 1; column = 21 };
-                      endpos =
-                      { Syntax.fname = "test/cases/parse/local_func2.in";
-                        line = 1; column = 22 }
-                      })
+              { Syntax.fname = "test/cases/parse/local_func2.in";
+                ran =
+                (Some { Syntax.startpos = { Syntax.line = 1; column = 21 };
+                        endpos = { Syntax.line = 1; column = 22 } })
+                }
               },
             ([{ Syntax.v = (Syntax.Number 0.);
                 loc =
-                (Some { Syntax.startpos =
-                        { Syntax.fname = "test/cases/parse/local_func2.in";
-                          line = 1; column = 23 };
-                        endpos =
-                        { Syntax.fname = "test/cases/parse/local_func2.in";
-                          line = 1; column = 24 }
-                        })
+                { Syntax.fname = "test/cases/parse/local_func2.in";
+                  ran =
+                  (Some { Syntax.startpos = { Syntax.line = 1; column = 23 };
+                          endpos = { Syntax.line = 1; column = 24 } })
+                  }
                 }
                ],
              []),
             false));
         loc =
-        (Some { Syntax.startpos =
-                { Syntax.fname = "test/cases/parse/local_func2.in"; line = 1;
-                  column = 21 };
-                endpos =
-                { Syntax.fname = "test/cases/parse/local_func2.in"; line = 1;
-                  column = 25 }
-                })
+        { Syntax.fname = "test/cases/parse/local_func2.in";
+          ran =
+          (Some { Syntax.startpos = { Syntax.line = 1; column = 21 };
+                  endpos = { Syntax.line = 1; column = 25 } })
+          }
         }));
   loc =
-  (Some { Syntax.startpos =
-          { Syntax.fname = "test/cases/parse/local_func2.in"; line = 1;
-            column = 0 };
-          endpos =
-          { Syntax.fname = "test/cases/parse/local_func2.in"; line = 1;
-            column = 25 }
-          })
+  { Syntax.fname = "test/cases/parse/local_func2.in";
+    ran =
+    (Some { Syntax.startpos = { Syntax.line = 1; column = 0 };
+            endpos = { Syntax.line = 1; column = 25 } })
+    }
   }

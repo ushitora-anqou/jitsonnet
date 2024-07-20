@@ -8,147 +8,115 @@
                     (Syntax.Binary
                        ({ Syntax.v = (Syntax.Var "x");
                           loc =
-                          (Some { Syntax.startpos =
-                                  { Syntax.fname =
-                                    "test/cases/parse/assert_complex.in";
-                                    line = 1; column = 14 };
-                                  endpos =
-                                  { Syntax.fname =
-                                    "test/cases/parse/assert_complex.in";
-                                    line = 1; column = 15 }
-                                  })
+                          { Syntax.fname =
+                            "test/cases/parse/assert_complex.in";
+                            ran =
+                            (Some { Syntax.startpos =
+                                    { Syntax.line = 1; column = 14 };
+                                    endpos = { Syntax.line = 1; column = 15 }
+                                    })
+                            }
                           },
                         `Equal,
                         { Syntax.v = (Syntax.Number 3.);
                           loc =
-                          (Some { Syntax.startpos =
-                                  { Syntax.fname =
-                                    "test/cases/parse/assert_complex.in";
-                                    line = 1; column = 19 };
-                                  endpos =
-                                  { Syntax.fname =
-                                    "test/cases/parse/assert_complex.in";
-                                    line = 1; column = 22 }
-                                  })
+                          { Syntax.fname =
+                            "test/cases/parse/assert_complex.in";
+                            ran =
+                            (Some { Syntax.startpos =
+                                    { Syntax.line = 1; column = 19 };
+                                    endpos = { Syntax.line = 1; column = 22 }
+                                    })
+                            }
                           }));
                     loc =
-                    (Some { Syntax.startpos =
-                            { Syntax.fname =
-                              "test/cases/parse/assert_complex.in"; line = 1;
-                              column = 14 };
-                            endpos =
-                            { Syntax.fname =
-                              "test/cases/parse/assert_complex.in"; line = 1;
-                              column = 22 }
-                            })
+                    { Syntax.fname = "test/cases/parse/assert_complex.in";
+                      ran =
+                      (Some { Syntax.startpos =
+                              { Syntax.line = 1; column = 14 };
+                              endpos = { Syntax.line = 1; column = 22 } })
+                      }
                     },
                   (Some { Syntax.v = (Syntax.String "s1");
                           loc =
-                          (Some { Syntax.startpos =
-                                  { Syntax.fname =
-                                    "test/cases/parse/assert_complex.in";
-                                    line = 1; column = 25 };
-                                  endpos =
-                                  { Syntax.fname =
-                                    "test/cases/parse/assert_complex.in";
-                                    line = 1; column = 29 }
-                                  })
+                          { Syntax.fname =
+                            "test/cases/parse/assert_complex.in";
+                            ran =
+                            (Some { Syntax.startpos =
+                                    { Syntax.line = 1; column = 25 };
+                                    endpos = { Syntax.line = 1; column = 29 }
+                                    })
+                            }
                           }));
                  loc =
-                 (Some { Syntax.startpos =
-                         { Syntax.fname =
-                           "test/cases/parse/assert_complex.in"; line = 1;
-                           column = 7 };
-                         endpos =
-                         { Syntax.fname =
-                           "test/cases/parse/assert_complex.in"; line = 1;
-                           column = 29 }
-                         })
+                 { Syntax.fname = "test/cases/parse/assert_complex.in";
+                   ran =
+                   (Some { Syntax.startpos = { Syntax.line = 1; column = 7 };
+                           endpos = { Syntax.line = 1; column = 29 } })
+                   }
                  },
                { Syntax.v =
                  (Syntax.Binary
                     ({ Syntax.v = (Syntax.Number 0.);
                        loc =
-                       (Some { Syntax.startpos =
-                               { Syntax.fname =
-                                 "test/cases/parse/assert_complex.in";
-                                 line = 1; column = 31 };
-                               endpos =
-                               { Syntax.fname =
-                                 "test/cases/parse/assert_complex.in";
-                                 line = 1; column = 34 }
-                               })
+                       { Syntax.fname = "test/cases/parse/assert_complex.in";
+                         ran =
+                         (Some { Syntax.startpos =
+                                 { Syntax.line = 1; column = 31 };
+                                 endpos = { Syntax.line = 1; column = 34 } })
+                         }
                        },
                      `Equal,
                      { Syntax.v = (Syntax.Number 0.);
                        loc =
-                       (Some { Syntax.startpos =
-                               { Syntax.fname =
-                                 "test/cases/parse/assert_complex.in";
-                                 line = 1; column = 38 };
-                               endpos =
-                               { Syntax.fname =
-                                 "test/cases/parse/assert_complex.in";
-                                 line = 1; column = 41 }
-                               })
+                       { Syntax.fname = "test/cases/parse/assert_complex.in";
+                         ran =
+                         (Some { Syntax.startpos =
+                                 { Syntax.line = 1; column = 38 };
+                                 endpos = { Syntax.line = 1; column = 41 } })
+                         }
                        }));
                  loc =
-                 (Some { Syntax.startpos =
-                         { Syntax.fname =
-                           "test/cases/parse/assert_complex.in"; line = 1;
-                           column = 31 };
-                         endpos =
-                         { Syntax.fname =
-                           "test/cases/parse/assert_complex.in"; line = 1;
-                           column = 41 }
-                         })
+                 { Syntax.fname = "test/cases/parse/assert_complex.in";
+                   ran =
+                   (Some { Syntax.startpos = { Syntax.line = 1; column = 31 };
+                           endpos = { Syntax.line = 1; column = 41 } })
+                   }
                  }));
            loc =
-           (Some { Syntax.startpos =
-                   { Syntax.fname = "test/cases/parse/assert_complex.in";
-                     line = 1; column = 7 };
-                   endpos =
-                   { Syntax.fname = "test/cases/parse/assert_complex.in";
-                     line = 1; column = 41 }
-                   })
+           { Syntax.fname = "test/cases/parse/assert_complex.in";
+             ran =
+             (Some { Syntax.startpos = { Syntax.line = 1; column = 7 };
+                     endpos = { Syntax.line = 1; column = 41 } })
+             }
            },
          (Some { Syntax.v = (Syntax.String "s2");
                  loc =
-                 (Some { Syntax.startpos =
-                         { Syntax.fname =
-                           "test/cases/parse/assert_complex.in"; line = 1;
-                           column = 44 };
-                         endpos =
-                         { Syntax.fname =
-                           "test/cases/parse/assert_complex.in"; line = 1;
-                           column = 48 }
-                         })
+                 { Syntax.fname = "test/cases/parse/assert_complex.in";
+                   ran =
+                   (Some { Syntax.startpos = { Syntax.line = 1; column = 44 };
+                           endpos = { Syntax.line = 1; column = 48 } })
+                   }
                  }));
         loc =
-        (Some { Syntax.startpos =
-                { Syntax.fname = "test/cases/parse/assert_complex.in";
-                  line = 1; column = 0 };
-                endpos =
-                { Syntax.fname = "test/cases/parse/assert_complex.in";
-                  line = 1; column = 48 }
-                })
+        { Syntax.fname = "test/cases/parse/assert_complex.in";
+          ran =
+          (Some { Syntax.startpos = { Syntax.line = 1; column = 0 };
+                  endpos = { Syntax.line = 1; column = 48 } })
+          }
         },
       { Syntax.v = (Syntax.Number 0.);
         loc =
-        (Some { Syntax.startpos =
-                { Syntax.fname = "test/cases/parse/assert_complex.in";
-                  line = 1; column = 50 };
-                endpos =
-                { Syntax.fname = "test/cases/parse/assert_complex.in";
-                  line = 1; column = 53 }
-                })
+        { Syntax.fname = "test/cases/parse/assert_complex.in";
+          ran =
+          (Some { Syntax.startpos = { Syntax.line = 1; column = 50 };
+                  endpos = { Syntax.line = 1; column = 53 } })
+          }
         }));
   loc =
-  (Some { Syntax.startpos =
-          { Syntax.fname = "test/cases/parse/assert_complex.in"; line = 1;
-            column = 0 };
-          endpos =
-          { Syntax.fname = "test/cases/parse/assert_complex.in"; line = 1;
-            column = 53 }
-          })
+  { Syntax.fname = "test/cases/parse/assert_complex.in";
+    ran =
+    (Some { Syntax.startpos = { Syntax.line = 1; column = 0 };
+            endpos = { Syntax.line = 1; column = 53 } })
+    }
   }

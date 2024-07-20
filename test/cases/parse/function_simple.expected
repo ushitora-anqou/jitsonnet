@@ -3,20 +3,16 @@
      ([],
       { Syntax.v = (Syntax.Number 1.);
         loc =
-        (Some { Syntax.startpos =
-                { Syntax.fname = "test/cases/parse/function_simple.in";
-                  line = 1; column = 11 };
-                endpos =
-                { Syntax.fname = "test/cases/parse/function_simple.in";
-                  line = 1; column = 14 }
-                })
+        { Syntax.fname = "test/cases/parse/function_simple.in";
+          ran =
+          (Some { Syntax.startpos = { Syntax.line = 1; column = 11 };
+                  endpos = { Syntax.line = 1; column = 14 } })
+          }
         }));
   loc =
-  (Some { Syntax.startpos =
-          { Syntax.fname = "test/cases/parse/function_simple.in"; line = 1;
-            column = 0 };
-          endpos =
-          { Syntax.fname = "test/cases/parse/function_simple.in"; line = 1;
-            column = 14 }
-          })
+  { Syntax.fname = "test/cases/parse/function_simple.in";
+    ran =
+    (Some { Syntax.startpos = { Syntax.line = 1; column = 0 };
+            endpos = { Syntax.line = 1; column = 14 } })
+    }
   }

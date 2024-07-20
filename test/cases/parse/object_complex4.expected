@@ -6,261 +6,205 @@
                ((Syntax.FieldnameExpr
                    { Syntax.v = (Syntax.String "foo");
                      loc =
-                     (Some { Syntax.startpos =
-                             { Syntax.fname =
-                               "test/cases/parse/object_complex4.in";
-                               line = 2; column = 3 };
-                             endpos =
-                             { Syntax.fname =
-                               "test/cases/parse/object_complex4.in";
-                               line = 2; column = 8 }
-                             })
+                     { Syntax.fname = "test/cases/parse/object_complex4.in";
+                       ran =
+                       (Some { Syntax.startpos =
+                               { Syntax.line = 2; column = 3 };
+                               endpos = { Syntax.line = 2; column = 8 } })
+                       }
                      }),
                 true, (Syntax.H 1),
                 { Syntax.v = (Syntax.String "bar");
                   loc =
-                  (Some { Syntax.startpos =
-                          { Syntax.fname =
-                            "test/cases/parse/object_complex4.in"; line = 2;
-                            column = 12 };
-                          endpos =
-                          { Syntax.fname =
-                            "test/cases/parse/object_complex4.in"; line = 2;
-                            column = 17 }
-                          })
+                  { Syntax.fname = "test/cases/parse/object_complex4.in";
+                    ran =
+                    (Some { Syntax.startpos =
+                            { Syntax.line = 2; column = 12 };
+                            endpos = { Syntax.line = 2; column = 17 } })
+                    }
                   })));
           (Syntax.MemberField
              (Syntax.Field
                 ((Syntax.FieldnameID
                     { Syntax.v = "x";
                       loc =
-                      (Some { Syntax.startpos =
-                              { Syntax.fname =
-                                "test/cases/parse/object_complex4.in";
-                                line = 3; column = 2 };
-                              endpos =
-                              { Syntax.fname =
-                                "test/cases/parse/object_complex4.in";
-                                line = 3; column = 3 }
-                              })
+                      { Syntax.fname = "test/cases/parse/object_complex4.in";
+                        ran =
+                        (Some { Syntax.startpos =
+                                { Syntax.line = 3; column = 2 };
+                                endpos = { Syntax.line = 3; column = 3 } })
+                        }
                       }),
                  true, (Syntax.H 1),
                  { Syntax.v = (Syntax.Number 1.);
                    loc =
-                   (Some { Syntax.startpos =
-                           { Syntax.fname =
-                             "test/cases/parse/object_complex4.in"; line = 3;
-                             column = 6 };
-                           endpos =
-                           { Syntax.fname =
-                             "test/cases/parse/object_complex4.in"; line = 3;
-                             column = 7 }
-                           })
+                   { Syntax.fname = "test/cases/parse/object_complex4.in";
+                     ran =
+                     (Some { Syntax.startpos =
+                             { Syntax.line = 3; column = 6 };
+                             endpos = { Syntax.line = 3; column = 7 } })
+                     }
                    })));
           (Syntax.MemberObjlocal
              (Syntax.Bind
                 ("a",
                  { Syntax.v = (Syntax.String "b");
                    loc =
-                   (Some { Syntax.startpos =
-                           { Syntax.fname =
-                             "test/cases/parse/object_complex4.in"; line = 4;
-                             column = 12 };
-                           endpos =
-                           { Syntax.fname =
-                             "test/cases/parse/object_complex4.in"; line = 4;
-                             column = 15 }
-                           })
+                   { Syntax.fname = "test/cases/parse/object_complex4.in";
+                     ran =
+                     (Some { Syntax.startpos =
+                             { Syntax.line = 4; column = 12 };
+                             endpos = { Syntax.line = 4; column = 15 } })
+                     }
                    })));
           (Syntax.MemberField
              (Syntax.FieldFunc
                 ((Syntax.FieldnameID
                     { Syntax.v = "y";
                       loc =
-                      (Some { Syntax.startpos =
-                              { Syntax.fname =
-                                "test/cases/parse/object_complex4.in";
-                                line = 5; column = 2 };
-                              endpos =
-                              { Syntax.fname =
-                                "test/cases/parse/object_complex4.in";
-                                line = 5; column = 3 }
-                              })
+                      { Syntax.fname = "test/cases/parse/object_complex4.in";
+                        ran =
+                        (Some { Syntax.startpos =
+                                { Syntax.line = 5; column = 2 };
+                                endpos = { Syntax.line = 5; column = 3 } })
+                        }
                       }),
                  { Syntax.v =
                    ([], (Syntax.H 2),
                     { Syntax.v = (Syntax.String "a");
                       loc =
-                      (Some { Syntax.startpos =
-                              { Syntax.fname =
-                                "test/cases/parse/object_complex4.in";
-                                line = 5; column = 8 };
-                              endpos =
-                              { Syntax.fname =
-                                "test/cases/parse/object_complex4.in";
-                                line = 5; column = 11 }
-                              })
+                      { Syntax.fname = "test/cases/parse/object_complex4.in";
+                        ran =
+                        (Some { Syntax.startpos =
+                                { Syntax.line = 5; column = 8 };
+                                endpos = { Syntax.line = 5; column = 11 } })
+                        }
                       });
                    loc =
-                   (Some { Syntax.startpos =
-                           { Syntax.fname =
-                             "test/cases/parse/object_complex4.in"; line = 5;
-                             column = 2 };
-                           endpos =
-                           { Syntax.fname =
-                             "test/cases/parse/object_complex4.in"; line = 5;
-                             column = 11 }
-                           })
+                   { Syntax.fname = "test/cases/parse/object_complex4.in";
+                     ran =
+                     (Some { Syntax.startpos =
+                             { Syntax.line = 5; column = 2 };
+                             endpos = { Syntax.line = 5; column = 11 } })
+                     }
                    })));
           (Syntax.MemberAssert
              { Syntax.v =
                ({ Syntax.v = Syntax.True;
                   loc =
-                  (Some { Syntax.startpos =
-                          { Syntax.fname =
-                            "test/cases/parse/object_complex4.in"; line = 6;
-                            column = 9 };
-                          endpos =
-                          { Syntax.fname =
-                            "test/cases/parse/object_complex4.in"; line = 6;
-                            column = 13 }
-                          })
+                  { Syntax.fname = "test/cases/parse/object_complex4.in";
+                    ran =
+                    (Some { Syntax.startpos = { Syntax.line = 6; column = 9 };
+                            endpos = { Syntax.line = 6; column = 13 } })
+                    }
                   },
                 None);
                loc =
-               (Some { Syntax.startpos =
-                       { Syntax.fname = "test/cases/parse/object_complex4.in";
-                         line = 6; column = 2 };
-                       endpos =
-                       { Syntax.fname = "test/cases/parse/object_complex4.in";
-                         line = 6; column = 13 }
-                       })
+               { Syntax.fname = "test/cases/parse/object_complex4.in";
+                 ran =
+                 (Some { Syntax.startpos = { Syntax.line = 6; column = 2 };
+                         endpos = { Syntax.line = 6; column = 13 } })
+                 }
                });
           (Syntax.MemberField
              (Syntax.FieldFunc
                 ((Syntax.FieldnameID
                     { Syntax.v = "z";
                       loc =
-                      (Some { Syntax.startpos =
-                              { Syntax.fname =
-                                "test/cases/parse/object_complex4.in";
-                                line = 7; column = 2 };
-                              endpos =
-                              { Syntax.fname =
-                                "test/cases/parse/object_complex4.in";
-                                line = 7; column = 3 }
-                              })
+                      { Syntax.fname = "test/cases/parse/object_complex4.in";
+                        ran =
+                        (Some { Syntax.startpos =
+                                { Syntax.line = 7; column = 2 };
+                                endpos = { Syntax.line = 7; column = 3 } })
+                        }
                       }),
                  { Syntax.v =
                    ([("v1", None);
                       ("v2",
                        (Some { Syntax.v = (Syntax.String "s");
                                loc =
-                               (Some { Syntax.startpos =
-                                       { Syntax.fname =
-                                         "test/cases/parse/object_complex4.in";
-                                         line = 7; column = 11 };
-                                       endpos =
-                                       { Syntax.fname =
-                                         "test/cases/parse/object_complex4.in";
-                                         line = 7; column = 14 }
-                                       })
+                               { Syntax.fname =
+                                 "test/cases/parse/object_complex4.in";
+                                 ran =
+                                 (Some { Syntax.startpos =
+                                         { Syntax.line = 7; column = 11 };
+                                         endpos =
+                                         { Syntax.line = 7; column = 14 } })
+                                 }
                                }))
                       ],
                     (Syntax.H 2),
                     { Syntax.v = (Syntax.String "s");
                       loc =
-                      (Some { Syntax.startpos =
-                              { Syntax.fname =
-                                "test/cases/parse/object_complex4.in";
-                                line = 7; column = 17 };
-                              endpos =
-                              { Syntax.fname =
-                                "test/cases/parse/object_complex4.in";
-                                line = 7; column = 20 }
-                              })
+                      { Syntax.fname = "test/cases/parse/object_complex4.in";
+                        ran =
+                        (Some { Syntax.startpos =
+                                { Syntax.line = 7; column = 17 };
+                                endpos = { Syntax.line = 7; column = 20 } })
+                        }
                       });
                    loc =
-                   (Some { Syntax.startpos =
-                           { Syntax.fname =
-                             "test/cases/parse/object_complex4.in"; line = 7;
-                             column = 2 };
-                           endpos =
-                           { Syntax.fname =
-                             "test/cases/parse/object_complex4.in"; line = 7;
-                             column = 20 }
-                           })
+                   { Syntax.fname = "test/cases/parse/object_complex4.in";
+                     ran =
+                     (Some { Syntax.startpos =
+                             { Syntax.line = 7; column = 2 };
+                             endpos = { Syntax.line = 7; column = 20 } })
+                     }
                    })));
           (Syntax.MemberAssert
              { Syntax.v =
                ({ Syntax.v = Syntax.True;
                   loc =
-                  (Some { Syntax.startpos =
-                          { Syntax.fname =
-                            "test/cases/parse/object_complex4.in"; line = 8;
-                            column = 9 };
-                          endpos =
-                          { Syntax.fname =
-                            "test/cases/parse/object_complex4.in"; line = 8;
-                            column = 13 }
-                          })
+                  { Syntax.fname = "test/cases/parse/object_complex4.in";
+                    ran =
+                    (Some { Syntax.startpos = { Syntax.line = 8; column = 9 };
+                            endpos = { Syntax.line = 8; column = 13 } })
+                    }
                   },
                 (Some { Syntax.v = (Syntax.String "s");
                         loc =
-                        (Some { Syntax.startpos =
-                                { Syntax.fname =
-                                  "test/cases/parse/object_complex4.in";
-                                  line = 8; column = 16 };
-                                endpos =
-                                { Syntax.fname =
-                                  "test/cases/parse/object_complex4.in";
-                                  line = 8; column = 19 }
-                                })
+                        { Syntax.fname =
+                          "test/cases/parse/object_complex4.in";
+                          ran =
+                          (Some { Syntax.startpos =
+                                  { Syntax.line = 8; column = 16 };
+                                  endpos = { Syntax.line = 8; column = 19 } })
+                          }
                         }));
                loc =
-               (Some { Syntax.startpos =
-                       { Syntax.fname = "test/cases/parse/object_complex4.in";
-                         line = 8; column = 2 };
-                       endpos =
-                       { Syntax.fname = "test/cases/parse/object_complex4.in";
-                         line = 8; column = 19 }
-                       })
+               { Syntax.fname = "test/cases/parse/object_complex4.in";
+                 ran =
+                 (Some { Syntax.startpos = { Syntax.line = 8; column = 2 };
+                         endpos = { Syntax.line = 8; column = 19 } })
+                 }
                });
           (Syntax.MemberField
              (Syntax.Field
                 ((Syntax.FieldnameString
                     { Syntax.v = "w";
                       loc =
-                      (Some { Syntax.startpos =
-                              { Syntax.fname =
-                                "test/cases/parse/object_complex4.in";
-                                line = 9; column = 2 };
-                              endpos =
-                              { Syntax.fname =
-                                "test/cases/parse/object_complex4.in";
-                                line = 9; column = 5 }
-                              })
+                      { Syntax.fname = "test/cases/parse/object_complex4.in";
+                        ran =
+                        (Some { Syntax.startpos =
+                                { Syntax.line = 9; column = 2 };
+                                endpos = { Syntax.line = 9; column = 5 } })
+                        }
                       }),
                  false, (Syntax.H 3),
                  { Syntax.v = (Syntax.Number 1.);
                    loc =
-                   (Some { Syntax.startpos =
-                           { Syntax.fname =
-                             "test/cases/parse/object_complex4.in"; line = 9;
-                             column = 8 };
-                           endpos =
-                           { Syntax.fname =
-                             "test/cases/parse/object_complex4.in"; line = 9;
-                             column = 11 }
-                           })
+                   { Syntax.fname = "test/cases/parse/object_complex4.in";
+                     ran =
+                     (Some { Syntax.startpos =
+                             { Syntax.line = 9; column = 8 };
+                             endpos = { Syntax.line = 9; column = 11 } })
+                     }
                    })))
           ]));
   loc =
-  (Some { Syntax.startpos =
-          { Syntax.fname = "test/cases/parse/object_complex4.in"; line = 1;
-            column = 0 };
-          endpos =
-          { Syntax.fname = "test/cases/parse/object_complex4.in"; line = 10;
-            column = 1 }
-          })
+  { Syntax.fname = "test/cases/parse/object_complex4.in";
+    ran =
+    (Some { Syntax.startpos = { Syntax.line = 1; column = 0 };
+            endpos = { Syntax.line = 10; column = 1 } })
+    }
   }

@@ -24,9 +24,10 @@ type binop =
   | `Xor ]
 [@@deriving show]
 
-type position = { fname : string; line : int; column : int } [@@deriving show]
-type location = { startpos : position; endpos : position } [@@deriving show]
-type 'a with_location = { v : 'a; loc : location option } [@@deriving show]
+type position = { line : int; column : int } [@@deriving show]
+type range = { startpos : position; endpos : position } [@@deriving show]
+type location = { fname : string; ran : range option } [@@deriving show]
+type 'a with_location = { v : 'a; loc : location } [@@deriving show]
 
 type expr' =
   | Array of expr list
@@ -109,10 +110,7 @@ let gensym ?(suffix = "") () =
   "$v" ^ string_of_int !gensym_i ^ suffix
 
 module Core = struct
-  type nonrec 'a with_location = 'a with_location = {
-    v : 'a;
-    loc : location option;
-  }
+  type nonrec 'a with_location = 'a with_location = { v : 'a; loc : location }
 
   type binop =
     [ `Add (* + *)

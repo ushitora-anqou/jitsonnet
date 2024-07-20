@@ -4,31 +4,25 @@
         (Syntax.Select
            ({ Syntax.v = (Syntax.Var "x");
               loc =
-              (Some { Syntax.startpos =
-                      { Syntax.fname = "test/cases/parse/select_double.in";
-                        line = 1; column = 0 };
-                      endpos =
-                      { Syntax.fname = "test/cases/parse/select_double.in";
-                        line = 1; column = 1 }
-                      })
+              { Syntax.fname = "test/cases/parse/select_double.in";
+                ran =
+                (Some { Syntax.startpos = { Syntax.line = 1; column = 0 };
+                        endpos = { Syntax.line = 1; column = 1 } })
+                }
               },
             "y"));
         loc =
-        (Some { Syntax.startpos =
-                { Syntax.fname = "test/cases/parse/select_double.in";
-                  line = 1; column = 0 };
-                endpos =
-                { Syntax.fname = "test/cases/parse/select_double.in";
-                  line = 1; column = 3 }
-                })
+        { Syntax.fname = "test/cases/parse/select_double.in";
+          ran =
+          (Some { Syntax.startpos = { Syntax.line = 1; column = 0 };
+                  endpos = { Syntax.line = 1; column = 3 } })
+          }
         },
       "z"));
   loc =
-  (Some { Syntax.startpos =
-          { Syntax.fname = "test/cases/parse/select_double.in"; line = 1;
-            column = 0 };
-          endpos =
-          { Syntax.fname = "test/cases/parse/select_double.in"; line = 1;
-            column = 5 }
-          })
+  { Syntax.fname = "test/cases/parse/select_double.in";
+    ran =
+    (Some { Syntax.startpos = { Syntax.line = 1; column = 0 };
+            endpos = { Syntax.line = 1; column = 5 } })
+    }
   }

@@ -2,20 +2,16 @@
   (Syntax.SuperIndex
      { Syntax.v = (Syntax.String "x");
        loc =
-       (Some { Syntax.startpos =
-               { Syntax.fname = "test/cases/parse/select_super2.in";
-                 line = 1; column = 6 };
-               endpos =
-               { Syntax.fname = "test/cases/parse/select_super2.in";
-                 line = 1; column = 9 }
-               })
+       { Syntax.fname = "test/cases/parse/select_super2.in";
+         ran =
+         (Some { Syntax.startpos = { Syntax.line = 1; column = 6 };
+                 endpos = { Syntax.line = 1; column = 9 } })
+         }
        });
   loc =
-  (Some { Syntax.startpos =
-          { Syntax.fname = "test/cases/parse/select_super2.in"; line = 1;
-            column = 0 };
-          endpos =
-          { Syntax.fname = "test/cases/parse/select_super2.in"; line = 1;
-            column = 10 }
-          })
+  { Syntax.fname = "test/cases/parse/select_super2.in";
+    ran =
+    (Some { Syntax.startpos = { Syntax.line = 1; column = 0 };
+            endpos = { Syntax.line = 1; column = 10 } })
+    }
   }
