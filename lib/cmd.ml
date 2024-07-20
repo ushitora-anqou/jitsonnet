@@ -59,7 +59,8 @@ let run file_path show_profile work_dir_prefix native mold
           Logs.err (fun m -> m "BUG: execution failed: %s" msg);
           exit 1)
 
-let compile file_path target haskell parse_only ext_codes tla_codes tla_strs =
+let compile file_path target haskell parse_only ext_codes ext_strs tla_codes
+    tla_strs =
   if parse_only then
     match Parser.parse_file file_path with
     | Error msg ->
@@ -72,7 +73,8 @@ let compile file_path target haskell parse_only ext_codes tla_codes tla_strs =
     in
     match
       Loader.load_root ~is_stdjsonnet:(target = `Stdjsonnet)
-        ~optimize:(not haskell) ~ext_codes ~tla_codes ~tla_strs file_path
+        ~optimize:(not haskell) ~ext_codes ~ext_strs ~tla_codes ~tla_strs
+        file_path
     with
     | Error msg ->
         Logs.err (fun m -> m "%s" msg);

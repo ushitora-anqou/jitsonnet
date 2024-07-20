@@ -46,6 +46,7 @@ let () =
               $ Arg.(value & flag & info [ "haskell" ])
               $ Arg.(value & flag & info [ "parse-only" ])
               $ Arg.(value & opt_all string [] & info [ "ext-code" ])
+              $ Arg.(value & opt_all string [] & info [ "V"; "ext-str" ])
               $ Arg.(value & opt_all string [] & info [ "tla-code" ])
               $ Arg.(value & opt_all string [] & info [ "A"; "tla-str" ]));
         ]
