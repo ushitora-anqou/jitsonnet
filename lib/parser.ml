@@ -70,8 +70,9 @@ let parse_lex lex =
       format_error "parser: syntax error: %s" msg
   | x -> Ok x
 
-let parse_string str =
+let parse_string ?(filename = "") str =
   let lex = Lexing.from_string ~with_positions:true str in
+  Lexing.set_filename lex filename;
   parse_lex lex
 
 let parse_file file_path =

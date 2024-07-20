@@ -3,7 +3,7 @@ module Stdjsonnet where
 import Common
 import Data.HashMap.Lazy qualified as HashMap
 
-var_1__std = Object [] $ fillObjectCache $ insertStd "" emptyObjectFields
+var_1__std = Object [] $ fillObjectCache $ insertStd "" emptyObjectFields HashMap.empty
 
 v :: CallStack -> VisitedAssertIDs -> Value
 v = \cs vaids ->

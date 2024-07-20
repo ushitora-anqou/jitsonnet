@@ -98,6 +98,7 @@ let get_import_id kind file_path =
   | `Importstr -> "str/")
   ^ try Unix.realpath file_path with Unix.Unix_error _ -> file_path
 
+let imported_data_varname = "importedData"
 let callstack_varname = "cs"
 let visited_assert_ids = "vaids"
 
@@ -441,7 +442,7 @@ let rec compile_expr ?toplevel:_ env (e0 : Syntax.Core.expr) : Haskell.expr =
       make_call
         (Symbol (varname env import_id))
         [
-          Symbol "importedData";
+          Symbol imported_data_varname;
           Symbol callstack_varname;
           Symbol visited_assert_ids;
         ]
@@ -455,7 +456,9 @@ let rec compile_expr ?toplevel:_ env (e0 : Syntax.Core.expr) : Haskell.expr =
           | _ -> assert false)
           file_path
       in
-      make_call (Symbol (varname env import_id)) [ Symbol "importedData" ]
+      make_call
+        (Symbol (varname env import_id))
+        [ Symbol imported_data_varname ]
 
 and compile_unary env sym e =
   make_call (Symbol sym) [ Symbol callstack_varname; compile_expr env e ]
@@ -509,7 +512,8 @@ let compile ?multi ?(string = false) ?(target = `Main) root_prog_path progs bins
              Haskell.Let
                ( [
                    ( varname env "$std",
-                     make_call (Symbol "makeStd") [ StringLiteral path ] );
+                     make_call (Symbol "makeStd")
+                       [ StringLiteral path; Symbol imported_data_varname ] );
                  ],
                  compile_expr env e ) ))
   in
@@ -525,19 +529,38 @@ let compile ?multi ?(string = false) ?(target = `Main) root_prog_path progs bins
            ( varname env (get_import_id `Importstr path),
              make_call (Symbol "readStr") [ StringLiteral path ] ))
   in
+  let ext_codes_bindings =
+    ext_codes
+    |> List.map (function
+         | key, Error msg ->
+             ( varname env (get_ext_code_id key),
+               make_call (Symbol "throwError") [ StringLiteral msg ] )
+         | key, Ok code ->
+             ( varname env (get_ext_code_id key),
+               Haskell.Let
+                 ( [
+                     ( varname env "$std",
+                       make_call (Symbol "makeStd")
+                         [
+                           StringLiteral (Printf.sprintf "<extvar:%s>" key);
+                           Symbol imported_data_varname;
+                         ] );
+                   ],
+                   compile_expr env code ) ))
+  in
 
-  let importedDataFields =
+  let imported_data_fields =
     (bins_bindings |> List.map fst) @ (strs_bindings |> List.map fst)
     |> List.map (fun name -> Printf.sprintf "%s :: Value" name)
     |> String.concat ", "
   in
 
   let progs_flatten =
-    progs_bindings
+    progs_bindings @ ext_codes_bindings
     |> List.map (fun (id, e) ->
            Printf.sprintf
              "%s :: ImportedData -> CallStack -> VisitedAssertIDs -> Value\n\
-              %s importedData %s %s = %s" id id callstack_varname
+              %s %s %s %s = %s" id id imported_data_varname callstack_varname
              visited_assert_ids (Haskell.show_expr e))
     |> String.concat "\n"
   in
@@ -577,7 +600,27 @@ let compile ?multi ?(string = false) ?(target = `Main) root_prog_path progs bins
         |> Haskell.show_expr
       in
 
-      Printf.sprintf
+      let ext_codes_map =
+        make_call (Symbol "HashMap.fromList")
+          [
+            List
+              (ext_codes
+              |> List.map (fun (key, _) ->
+                     Haskell.Tuple
+                       [
+                         StringLiteral key;
+                         make_call
+                           (Symbol (varname env (get_ext_code_id key)))
+                           [ Symbol imported_data_varname ];
+                       ]));
+          ]
+        |> Haskell.show_expr
+      in
+
+      let open Jingoo in
+      let open Jg_template in
+      let open Jg_types in
+      from_string
         {|module Main (main) where
 
 import Common
@@ -586,21 +629,28 @@ import qualified Data.Text.Lazy.IO as TLIO
 import qualified Data.HashMap.Lazy as HashMap
 import qualified Data.HashSet as HashSet
 
-data ImportedData = MkImportedData { %s }
+data ImportedData = MkImportedData { {{ imported_data_fields }} }
 
-makeStd :: String -> Value
-makeStd thisFile =
+extCodes {{ imported_data_varname }} = {{ ext_codes_map }}
+
+makeStd :: String -> ImportedData -> Value
+makeStd thisFile {{ imported_data_varname }} =
   case Stdjsonnet.v [] HashSet.empty of
-    (Object _ fields) -> Object [] $ fillObjectCache $ insertStd thisFile fields
+    (Object _ fields) -> Object [] $ fillObjectCache $ insertStd thisFile fields (extCodes {{ imported_data_varname }})
 
-%s = makeStd ""
-
-%s
+{{ progs_flatten }}
 
 main :: IO ()
-main = %s
-|}
-        importedDataFields (varname env "$std") progs_flatten main
+main = {{ main }}|}
+        ~models:
+          [
+            ("imported_data_fields", Tstr imported_data_fields);
+            ("imported_data_varname", Tstr imported_data_varname);
+            ("ext_codes_map", Tstr ext_codes_map);
+            ("progs_flatten", Tstr progs_flatten);
+            ("main", Tstr main);
+          ]
+        ~env:{ std_env with autoescape = false }
   | _ ->
       Printf.sprintf
         {|module Stdjsonnet where
@@ -608,7 +658,7 @@ main = %s
 import Common
 import qualified Data.HashMap.Lazy as HashMap
 
-%s = Object [] $ fillObjectCache $ insertStd "" emptyObjectFields
+%s = Object [] $ fillObjectCache $ insertStd "" emptyObjectFields HashMap.empty
 
 v :: CallStack -> VisitedAssertIDs -> Value
 v = \%s %s -> %s

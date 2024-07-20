@@ -9,9 +9,10 @@ let assert_compile ?multi ?string ?ext_codes ?ext_strs src_file_path result_pat
     ?string ?ext_codes ?ext_strs ~runtime_dir:"../../runtime_hs" src_file_path
     result_pat
 
-let testcase0 src_file_path result_path =
+let testcase0 ?ext_codes ?ext_strs src_file_path result_path =
   let open OUnit2 in
-  src_file_path >:: fun _test_ctxt -> assert_compile src_file_path result_path
+  src_file_path >:: fun _test_ctxt ->
+  assert_compile ?ext_codes ?ext_strs src_file_path result_path
 
 let suite =
   [
@@ -164,7 +165,6 @@ let suite =
     testcase0 "equals6" `Success;
     testcase0 "escaped_fields" `Success;
     testcase0 "escaped_single_quote" `Success;
-    (*
     testcase0 ~ext_codes:[ "codeVar=3+3" ] "extvar_code" `Success;
     testcase0
       ~ext_codes:
@@ -178,7 +178,6 @@ let suite =
         [ {|selfRecursiveVar=[42, std.extVar("selfRecursiveVar")[0] + 1]|} ]
       "extvar_self_recursive" `Success;
     testcase0 ~ext_strs:[ {|stringVar=2 + 2|} ] "extvar_string" `Success;
-    *)
     testcase0 "false" `Success;
     testcase0 "filled_thunk" `Success;
     testcase0 "foldl_empty" `Success;

@@ -805,8 +805,17 @@ stdParseYaml cs args =
         Right [x] -> aux x
         Right xs -> makeArray $ Vector.fromList $ map aux xs
 
-insertStd :: String -> Fields -> Fields
-insertStd thisFile (GeneralFields fields) =
+stdExtVar ::
+  HashMap String (CallStack -> VisitedAssertIDs -> Value) -> CallStack -> Arguments -> Value
+stdExtVar map cs args =
+  let x = getString cs $ functionParam cs args 0 "x" Nothing
+   in case HashMap.lookup x map of
+        Nothing -> throwError cs ("stdExtVar: not found: " ++ x)
+        Just f -> f cs HashSet.empty
+
+insertStd ::
+  String -> Fields -> HashMap String (CallStack -> VisitedAssertIDs -> Value) -> Fields
+insertStd thisFile (GeneralFields fields) extVarMap =
   GeneralFields $
     foldl
       (\a (k, v) -> HashMap.insert k v a)
@@ -835,6 +844,7 @@ insertStd thisFile (GeneralFields fields) =
       , ("parseYaml", (2, Null, \_ _ -> Function 1 stdParseYaml))
       , ("sqrt", (2, Null, \_ _ -> Function 1 stdSqrt))
       , ("thisFile", (2, Null, \_ _ -> makeString thisFile))
+      , ("extVar", (2, Null, \_ _ -> Function 1 (stdExtVar extVarMap)))
       ]
 
 readBin :: String -> IO Value

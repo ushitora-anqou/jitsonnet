@@ -85,7 +85,11 @@ let rec load ~is_stdjsonnet ~optimize src t =
                      t |> load ~is_stdjsonnet ~optimize (`File file))
                    (Ok ())))
   | `Ext_code (key, prog_src) ->
-      let* prog = Parser.parse_string prog_src in
+      let* prog =
+        Parser.parse_string
+          ~filename:(Printf.sprintf "<extvar:%s>" key)
+          prog_src
+      in
       let desugared =
         Syntax.desugar ~is_stdjsonnet prog
         |> Syntax.Core.alpha_conv ~is_stdjsonnet

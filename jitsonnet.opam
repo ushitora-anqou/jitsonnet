@@ -15,6 +15,7 @@ depends: [
   "dtoa"
   "dune" {>= "3.15"}
   "fmt"
+  "jingoo"
   "logs"
   "menhir"
   "ocaml"
