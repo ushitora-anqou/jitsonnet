@@ -652,18 +652,29 @@ main = {{ main }}|}
           ]
         ~env:{ std_env with autoescape = false }
   | _ ->
-      Printf.sprintf
+      let open Jingoo in
+      let open Jg_template in
+      let open Jg_types in
+      from_string
         {|module Stdjsonnet where
 
 import Common
 import qualified Data.HashMap.Lazy as HashMap
 
-%s = Object [] $ fillObjectCache $ insertStd "" emptyObjectFields HashMap.empty
+{{ varname_std }} = Object [] $ fillObjectCache $ insertStd "" emptyObjectFields HashMap.empty
 
 v :: CallStack -> VisitedAssertIDs -> Value
-v = \%s %s -> %s
+v = \ {{ callstack_varname }} {{ visited_assert_ids }} -> {{ progs }}
 |}
-        (varname env "$std") callstack_varname visited_assert_ids
-        (progs |> List.hd
-        |> (fun (_, _, s) -> s)
-        |> compile_expr env |> Haskell.show_expr)
+        ~models:
+          [
+            ("varname_std", Tstr (varname env "$std"));
+            ("callstack_varname", Tstr callstack_varname);
+            ("visited_assert_ids", Tstr visited_assert_ids);
+            ( "progs",
+              Tstr
+                (progs |> List.hd
+                |> (fun (_, _, s) -> s)
+                |> compile_expr env |> Haskell.show_expr) );
+          ]
+        ~env:{ std_env with autoescape = false }
