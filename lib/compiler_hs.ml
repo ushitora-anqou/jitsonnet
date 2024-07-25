@@ -195,12 +195,19 @@ let compile_loc loc =
             ];
         ]
 
+let compile_callstack_use env =
+  if env.is_stdjsonnet then
+    (* we don't need to track the callstack in std.jsonnet
+       because no one cares it *)
+    Haskell.List []
+  else Symbol callstack_varname
+
 let compile_with_loc env loc e =
   if env.is_stdjsonnet then e
   else
     make_call (Symbol "withLoc")
       [
-        Symbol callstack_varname;
+        compile_callstack_use env;
         compile_loc loc;
         Function (callstack_varname, e);
       ]
@@ -210,7 +217,7 @@ let compile_with_name env name e =
   else
     make_call (Symbol "withName")
       [
-        Symbol callstack_varname;
+        compile_callstack_use env;
         StringLiteral name;
         Function (callstack_varname, e);
       ]
@@ -227,7 +234,7 @@ let rec compile_expr ?toplevel:_ env (e0 : Syntax.Core.expr) : Haskell.expr =
   | ArrayIndex (e1, e2) ->
       make_call (Symbol "arrayIndex")
         [
-          Symbol callstack_varname;
+          compile_callstack_use env;
           Symbol visited_assert_ids;
           compile_expr env e1;
           compile_expr env e2;
@@ -254,7 +261,7 @@ let rec compile_expr ?toplevel:_ env (e0 : Syntax.Core.expr) : Haskell.expr =
   | If (e1, e2, e3) ->
       make_call (Symbol "if_")
         [
-          Symbol callstack_varname;
+          compile_callstack_use env;
           compile_expr env e1;
           compile_expr env e2;
           compile_expr env e3;
@@ -267,7 +274,7 @@ let rec compile_expr ?toplevel:_ env (e0 : Syntax.Core.expr) : Haskell.expr =
            ( varname env id,
              make_call (Symbol "functionParam")
                [
-                 Symbol callstack_varname;
+                 compile_callstack_use env;
                  Symbol "args";
                  IntLiteral i;
                  StringLiteral id;
@@ -292,14 +299,15 @@ let rec compile_expr ?toplevel:_ env (e0 : Syntax.Core.expr) : Haskell.expr =
         | Ok func ->
             make_call (Symbol func)
               [
-                Symbol callstack_varname; compile_call_args env positional named;
+                compile_callstack_use env;
+                compile_call_args env positional named;
               ]
         | Error _ -> compile_generic_call env (e, positional, named))
   | Call call -> compile_with_loc env e0.loc (compile_generic_call env call)
   | Error e ->
       compile_with_loc env e0.loc
         (make_call (Symbol "error'")
-           [ Symbol callstack_varname; compile_expr env e ])
+           [ compile_callstack_use env; compile_expr env e ])
   | Local (binds, body) ->
       with_binds env (binds |> List.map fst) @@ fun () ->
       let bindings =
@@ -316,14 +324,14 @@ let rec compile_expr ?toplevel:_ env (e0 : Syntax.Core.expr) : Haskell.expr =
   | InSuper e ->
       make_call (Symbol "inSuper")
         [
-          Symbol callstack_varname;
+          compile_callstack_use env;
           Symbol (varname env "super");
           compile_expr env e;
         ]
   | SuperIndex e ->
       make_call (Symbol "superIndex")
         [
-          Symbol callstack_varname;
+          compile_callstack_use env;
           Symbol (varname env "super");
           compile_expr env e;
         ]
@@ -385,7 +393,7 @@ let rec compile_expr ?toplevel:_ env (e0 : Syntax.Core.expr) : Haskell.expr =
                let e2 = compile_expr env e2 in
                make_call (Symbol "objectField")
                  [
-                   Symbol callstack_varname;
+                   compile_callstack_use env;
                    IntLiteral h;
                    Symbol (varname env e1_key);
                    Haskell.Function
@@ -395,7 +403,7 @@ let rec compile_expr ?toplevel:_ env (e0 : Syntax.Core.expr) : Haskell.expr =
                            if plus then
                              make_call (Symbol "objectFieldPlusValue")
                                [
-                                 Symbol callstack_varname;
+                                 compile_callstack_use env;
                                  Symbol (varname env "super");
                                  Symbol (varname env e1_key);
                                  e2;
@@ -420,14 +428,14 @@ let rec compile_expr ?toplevel:_ env (e0 : Syntax.Core.expr) : Haskell.expr =
           List [];
           make_call (Symbol "objectFor")
             [
-              Symbol callstack_varname;
+              compile_callstack_use env;
               Function
                 ( "acc",
                   Function
                     ( varname env x,
                       make_call (Symbol "objectField")
                         [
-                          Symbol callstack_varname;
+                          compile_callstack_use env;
                           IntLiteral 1;
                           compiled_e1;
                           Function
@@ -444,7 +452,7 @@ let rec compile_expr ?toplevel:_ env (e0 : Syntax.Core.expr) : Haskell.expr =
         (Symbol (varname env import_id))
         [
           Symbol imported_data_varname;
-          Symbol callstack_varname;
+          compile_callstack_use env;
           Symbol visited_assert_ids;
         ]
   | (Importbin file_path | Importstr file_path) as node ->
@@ -462,19 +470,19 @@ let rec compile_expr ?toplevel:_ env (e0 : Syntax.Core.expr) : Haskell.expr =
         [ Symbol imported_data_varname ]
 
 and compile_unary env sym e =
-  make_call (Symbol sym) [ Symbol callstack_varname; compile_expr env e ]
+  make_call (Symbol sym) [ compile_callstack_use env; compile_expr env e ]
 
 and compile_binary env sym e1 e2 =
   make_call (Symbol sym)
-    [ Symbol callstack_varname; compile_expr env e1; compile_expr env e2 ]
+    [ compile_callstack_use env; compile_expr env e1; compile_expr env e2 ]
 
 and compile_generic_call env (e, positional, named) =
   let funcname = match e.v with Syntax.Core.Var s -> s | _ -> "anonymous" in
   compile_with_name env funcname
     (make_call
        (make_call (Symbol "getFunction")
-          [ Symbol callstack_varname; compile_expr env e ])
-       [ Symbol callstack_varname; compile_call_args env positional named ])
+          [ compile_callstack_use env; compile_expr env e ])
+       [ compile_callstack_use env; compile_call_args env positional named ])
 
 and compile_call_args env positional named =
   Tuple
