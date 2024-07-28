@@ -35,7 +35,8 @@ let () =
                   & info ~env:(Env.info "JITSONNET_RUNTIME_HS") [ "runtime-hs" ])
               $ Arg.(value & opt_all string [] & info [ "tla-code" ])
               $ Arg.(value & opt_all string [] & info [ "A"; "tla-str" ])
-              $ Arg.(value & opt (some string) None & info [ "e"; "exec" ]));
+              $ Arg.(value & opt (some string) None & info [ "e"; "exec" ])
+              $ Arg.(value & flag & info [ "c"; "create-output-dirs" ]));
           v (info "compile")
             Term.(
               const compile

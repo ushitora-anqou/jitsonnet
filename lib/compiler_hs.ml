@@ -539,8 +539,8 @@ let compile_codes_from_cli_args env kind codes =
   in
   (bindings, map)
 
-let compile ?multi ?(string = false) ?(target = `Main) root_prog progs bins strs
-    ext_codes tla_codes =
+let compile ?multi ?(create_output_dirs = false) ?(string = false)
+    ?(target = `Main) root_prog progs bins strs ext_codes tla_codes =
   let env = { vars = Hashtbl.create 0; is_stdjsonnet = target = `Stdjsonnet } in
 
   let bind_ids =
@@ -629,7 +629,12 @@ let compile ?multi ?(string = false) ?(target = `Main) root_prog progs bins strs
             else Option.get multi
           in
           make_call (Symbol "mainMulti")
-            [ StringLiteral target_dir; BoolLiteral string; v ]
+            [
+              StringLiteral target_dir;
+              BoolLiteral string;
+              BoolLiteral create_output_dirs;
+              v;
+            ]
         else if string then make_call (Symbol "mainString") [ v ]
         else make_call (Symbol "mainNormal") [ tla_codes_map; v ]
       in

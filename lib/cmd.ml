@@ -2,7 +2,7 @@ let errf fmt = Printf.ksprintf (fun s -> Error s) fmt
 
 let run file_path show_profile work_dir_prefix native mold
     (multi : string option) (string : bool) ext_codes ext_strs opam_lib
-    lib_runtime haskell runtime_hs tla_codes tla_strs exec =
+    lib_runtime haskell runtime_hs tla_codes tla_strs exec create_output_dirs =
   match
     Loader.load_root ~optimize:(not haskell) ~ext_codes ~ext_strs ~tla_codes
       ~tla_strs
@@ -16,7 +16,9 @@ let run file_path show_profile work_dir_prefix native mold
       Logs.err (fun m -> m "%s" msg);
       exit 1
   | Ok t when haskell -> (
-      let compiled = Loader.compile_haskell ?multi ~string t in
+      let compiled =
+        Loader.compile_haskell ?multi ~create_output_dirs ~string t
+      in
       match
         Executor_hs.(
           execute

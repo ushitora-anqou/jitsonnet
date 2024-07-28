@@ -4,7 +4,7 @@ module Common where
 
 import Codec.Binary.UTF8.String qualified
 import Control.Exception (evaluate)
-import Control.Monad (forM_)
+import Control.Monad (forM_, when)
 import Crypto.Hash (Digest, HashAlgorithm, MD5, SHA1, SHA256, SHA3_512, SHA512, hash)
 import Data.Aeson qualified as Aeson
 import Data.Aeson.Key qualified as Aeson.Key
@@ -543,19 +543,23 @@ mainString f =
     String s _ _ -> putStr s
     _ -> error "stringManifestation: not string"
 
-mainMulti :: String -> Bool -> (CallStack -> VisitedAssertIDs -> Value) -> IO ()
-mainMulti targetDir string f =
+mainMulti :: String -> Bool -> Bool -> (CallStack -> VisitedAssertIDs -> Value) -> IO ()
+mainMulti targetDir string createOutputDirs f =
   case f [] HashSet.empty of
     (Object _ fields) ->
       forM_ (extractVisibleFields fields) $ \(k, v) ->
         let filePath = joinPath [targetDir, k]
          in case (v, string) of
               (String s _ _, True) -> do
-                createDirectoryIfMissing True $ dropFileName filePath
+                when
+                  createOutputDirs
+                  (createDirectoryIfMissing True $ dropFileName filePath)
                 writeFile filePath s
               (_, True) -> error "multiManifestation: expect string values in objects"
               (_, False) -> do
-                createDirectoryIfMissing True $ dropFileName filePath
+                when
+                  createOutputDirs
+                  (createDirectoryIfMissing True $ dropFileName filePath)
                 TLIO.writeFile filePath $ manifestation True v
     _ -> error "mainMulti: not object"
 

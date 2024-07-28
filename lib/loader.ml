@@ -154,8 +154,8 @@ let compile ?multi ?string ?target t =
         (t.importstrs |> Hashtbl.to_seq_keys |> List.of_seq)
         (t.ext_codes |> Hashtbl.to_seq |> List.of_seq)
 
-let compile_haskell ?multi ?string ?target t =
-  Compiler_hs.compile ?multi ?string ?target
+let compile_haskell ?multi ?create_output_dirs ?string ?target t =
+  Compiler_hs.compile ?multi ?create_output_dirs ?string ?target
     (match t.root_prog with
     | `File path -> `File path
     | `Immediate _ -> `Immediate (Option.get t.immediate))

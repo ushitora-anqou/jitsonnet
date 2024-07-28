@@ -106,7 +106,10 @@ let assert_compile_hs ?remove_work_dir ?(runtime_dir = "../../../runtime_hs")
   assert_compile' ?test_cases_dir ?expected_suffix ?multi ?ext_codes ?ext_strs
     ?tla_codes ?tla_strs ?string ~loader_optimize:false src_file_path result_pat
     ~compiler:(fun ~multi_output_dir ~t ~string ->
-      let compiled = Loader.compile_haskell ?multi:multi_output_dir ~string t in
+      let compiled =
+        Loader.compile_haskell ?multi:multi_output_dir ~create_output_dirs:true
+          ~string t
+      in
       Executor_hs.(
         execute
           (make_config ?remove_work_dir ~interactive_compile:true
