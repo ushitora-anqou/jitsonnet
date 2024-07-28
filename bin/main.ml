@@ -12,7 +12,7 @@ let () =
           v (info "run")
             Term.(
               const run
-              $ Arg.(required & pos 0 (some string) None & info ~docv:"FILE" [])
+              $ Arg.(value & pos 0 (some string) None & info ~docv:"FILE" [])
               $ Arg.(value & flag & info [ "profile" ])
               $ Arg.(value & opt (some string) None & info [ "work-dir" ])
               $ Arg.(value & flag & info [ "native" ])
@@ -34,7 +34,8 @@ let () =
                   value & opt string ""
                   & info ~env:(Env.info "JITSONNET_RUNTIME_HS") [ "runtime-hs" ])
               $ Arg.(value & opt_all string [] & info [ "tla-code" ])
-              $ Arg.(value & opt_all string [] & info [ "A"; "tla-str" ]));
+              $ Arg.(value & opt_all string [] & info [ "A"; "tla-str" ])
+              $ Arg.(value & opt (some string) None & info [ "e"; "exec" ]));
           v (info "compile")
             Term.(
               const compile

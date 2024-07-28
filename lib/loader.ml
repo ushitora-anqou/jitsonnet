@@ -1,8 +1,9 @@
 type t = {
   loaded : (string, string * Syntax.Core.expr) Hashtbl.t;
+  mutable immediate : Syntax.Core.expr option;
   importbins : (string, unit) Hashtbl.t;
   importstrs : (string, unit) Hashtbl.t;
-  root_prog_path : string;
+  root_prog : [ `File of string | `Immediate of string ];
   ext_codes : (string, (Syntax.Core.expr, string) result) Hashtbl.t;
   tla_codes : (string, (Syntax.Core.expr, string) result) Hashtbl.t;
 }
@@ -47,6 +48,7 @@ let rec load_code ~is_stdjsonnet ~optimize code_src t =
     match code_src with
     | `File (path, _real_path) -> (
         try Parser.parse_file path with Failure msg -> Error msg)
+    | `Immediate code -> Parser.parse_string ~filename:"<cmdline>" code
     | `Ext (key, code) ->
         Parser.parse_string ~filename:(Printf.sprintf "<extvar:%s>" key) code
     | `Tla (key, code) ->
@@ -78,7 +80,6 @@ let rec load_code ~is_stdjsonnet ~optimize code_src t =
   let progs, bins, strs = list_imported_files desugared in
   bins |> List.iter (fun k -> Hashtbl.replace t.importbins k ());
   strs |> List.iter (fun k -> Hashtbl.replace t.importstrs k ());
-
   let* () =
     progs
     |> List.fold_left
@@ -91,6 +92,7 @@ let rec load_code ~is_stdjsonnet ~optimize code_src t =
   (match code_src with
   | `Ext (key, _) -> Hashtbl.replace t.ext_codes key (Ok desugared)
   | `Tla (key, _) -> Hashtbl.replace t.tla_codes key (Ok desugared)
+  | `Immediate _ -> t.immediate <- Some desugared
   | _ -> ());
 
   Ok ()
@@ -139,17 +141,24 @@ and load ~is_stdjsonnet ~optimize src t =
       load_code ~is_stdjsonnet ~optimize (`Tla (key, prog_src)) t
   | `Ext_str (key, value) -> load_str `Ext key value t
   | `Tla_str (key, value) -> load_str `Tla key value t
+  | `Immediate code -> load_code ~is_stdjsonnet ~optimize (`Immediate code) t
 
 let compile ?multi ?string ?target t =
-  Compiler.compile ?multi ?string ?target t.root_prog_path
-    (t.loaded |> Hashtbl.to_seq |> List.of_seq
-    |> List.map (fun (real_path, (path, e)) -> (real_path, path, e)))
-    (t.importbins |> Hashtbl.to_seq_keys |> List.of_seq)
-    (t.importstrs |> Hashtbl.to_seq_keys |> List.of_seq)
-    (t.ext_codes |> Hashtbl.to_seq |> List.of_seq)
+  match t.root_prog with
+  | `Immediate _ -> failwith "not implemented"
+  | `File path ->
+      Compiler.compile ?multi ?string ?target path
+        (t.loaded |> Hashtbl.to_seq |> List.of_seq
+        |> List.map (fun (real_path, (path, e)) -> (real_path, path, e)))
+        (t.importbins |> Hashtbl.to_seq_keys |> List.of_seq)
+        (t.importstrs |> Hashtbl.to_seq_keys |> List.of_seq)
+        (t.ext_codes |> Hashtbl.to_seq |> List.of_seq)
 
 let compile_haskell ?multi ?string ?target t =
-  Compiler_hs.compile ?multi ?string ?target t.root_prog_path
+  Compiler_hs.compile ?multi ?string ?target
+    (match t.root_prog with
+    | `File path -> `File path
+    | `Immediate _ -> `Immediate (Option.get t.immediate))
     (t.loaded |> Hashtbl.to_seq |> List.of_seq
     |> List.map (fun (real_path, (_, e)) -> (real_path, e)))
     (t.importbins |> Hashtbl.to_seq_keys |> List.of_seq)
@@ -200,20 +209,20 @@ let load_tla_strs ~optimize tla_strs t =
               t))
 
 let load_root ?(is_stdjsonnet = false) ?(ext_codes = []) ?(ext_strs = [])
-    ?(tla_codes = []) ?(tla_strs = []) ~optimize root_prog_path =
+    ?(tla_codes = []) ?(tla_strs = []) ~optimize root_prog =
   let t =
     {
       loaded = Hashtbl.create 1;
       importbins = Hashtbl.create 0;
       importstrs = Hashtbl.create 0;
-      root_prog_path;
+      root_prog;
       ext_codes = Hashtbl.create 0;
       tla_codes = Hashtbl.create 0;
+      immediate = None;
     }
   in
   load_ext_codes ~optimize ext_codes t;
   load_ext_strs ~optimize ext_strs t;
   load_tla_codes ~optimize tla_codes t;
   load_tla_strs ~optimize tla_strs t;
-  load ~is_stdjsonnet ~optimize (`File root_prog_path) t
-  |> Result.map (Fun.const t)
+  load ~is_stdjsonnet ~optimize root_prog t |> Result.map (Fun.const t)

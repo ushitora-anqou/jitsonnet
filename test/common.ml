@@ -20,7 +20,7 @@ let assert_compile' ~loader_optimize ~compiler ?test_cases_dir
   in
   match
     Loader.load_root ~optimize:loader_optimize ~tla_codes ~tla_strs ~ext_codes
-      ~ext_strs input_file_path
+      ~ext_strs (`File input_file_path)
   with
   | Error _ when result_pat = `ErrorSimple -> ()
   | Error msg ->

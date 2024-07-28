@@ -98,6 +98,7 @@ let get_import_id kind file_path =
   | `Importstr -> "str/")
   ^ try Unix.realpath file_path with Unix.Unix_error _ -> file_path
 
+let immediate_bind_id = "imm"
 let imported_data_varname = "importedData"
 let callstack_varname = "cs"
 let visited_assert_ids = "vaids"
@@ -538,14 +539,17 @@ let compile_codes_from_cli_args env kind codes =
   in
   (bindings, map)
 
-let compile ?multi ?(string = false) ?(target = `Main) root_prog_path progs bins
-    strs ext_codes tla_codes =
+let compile ?multi ?(string = false) ?(target = `Main) root_prog progs bins strs
+    ext_codes tla_codes =
   let env = { vars = Hashtbl.create 0; is_stdjsonnet = target = `Stdjsonnet } in
 
   let bind_ids =
     "$std"
-    :: ((progs
-        |> List.map (fun (real_path, _) -> get_import_id `Import real_path))
+    :: ((match root_prog with
+        | `File _ -> []
+        | `Immediate _ -> [ immediate_bind_id ])
+       @ (progs
+         |> List.map (fun (real_path, _) -> get_import_id `Import real_path))
        @ (bins |> List.map (get_import_id `Importbin))
        @ (strs |> List.map (get_import_id `Importstr))
        @ (ext_codes |> List.map fst |> List.map (get_code_id `Ext))
@@ -553,6 +557,12 @@ let compile ?multi ?(string = false) ?(target = `Main) root_prog_path progs bins
   in
 
   with_binds env bind_ids @@ fun () ->
+  let imm_bindings =
+    match root_prog with
+    | `File _ -> []
+    | `Immediate code ->
+        [ (varname env immediate_bind_id, compile_prog_body env code) ]
+  in
   let progs_bindings =
     progs
     |> List.map (fun (real_path, e) ->
@@ -585,7 +595,7 @@ let compile ?multi ?(string = false) ?(target = `Main) root_prog_path progs bins
   in
 
   let progs_flatten =
-    progs_bindings @ ext_codes_bindings @ tla_codes_bindings
+    imm_bindings @ progs_bindings @ ext_codes_bindings @ tla_codes_bindings
     |> List.map (fun (id, e) ->
            Printf.sprintf
              "%s :: ImportedData -> CallStack -> VisitedAssertIDs -> Value\n\
@@ -604,7 +614,11 @@ let compile ?multi ?(string = false) ?(target = `Main) root_prog_path progs bins
       in
       let v =
         make_call
-          (Symbol (varname env (get_import_id `Import root_prog_path)))
+          (Symbol
+             (varname env
+                (match root_prog with
+                | `File path -> get_import_id `Import path
+                | `Immediate _ -> immediate_bind_id)))
           [ Symbol imported_data_varname ]
       in
       let v =
